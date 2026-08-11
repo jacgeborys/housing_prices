@@ -103,12 +103,12 @@ def parse_lokale_page(xml_bytes):
 
         rec = {}
 
-        # Geometry — Point
+        # Geometry — Point (GML urn:ogc axis order is northing, easting; swap for Shapely x,y)
         pt = feat.find(".//gml:pos", NS)
         if pt is not None and pt.text:
             coords = pt.text.strip().split()
             if len(coords) >= 2:
-                rec["geometry"] = Point(float(coords[0]), float(coords[1]))
+                rec["geometry"] = Point(float(coords[1]), float(coords[0]))
         if "geometry" not in rec:
             continue
 
@@ -136,11 +136,11 @@ def parse_budynki_page(xml_bytes):
 
         rec = {}
 
-        # Geometry — Polygon (exterior ring)
+        # Geometry — Polygon (GML urn:ogc axis order is northing, easting; swap for Shapely x,y)
         pos_list = feat.find(".//gml:posList", NS)
         if pos_list is not None and pos_list.text:
             coords_flat = list(map(float, pos_list.text.strip().split()))
-            pairs = [(coords_flat[i], coords_flat[i + 1]) for i in range(0, len(coords_flat), 2)]
+            pairs = [(coords_flat[i + 1], coords_flat[i]) for i in range(0, len(coords_flat), 2)]
             if len(pairs) >= 4:
                 rec["geometry"] = Polygon(pairs)
         if "geometry" not in rec:
@@ -149,7 +149,7 @@ def parse_budynki_page(xml_bytes):
             if pt is not None and pt.text:
                 coords = pt.text.strip().split()
                 if len(coords) >= 2:
-                    rec["geometry"] = Point(float(coords[0]), float(coords[1]))
+                    rec["geometry"] = Point(float(coords[1]), float(coords[0]))
         if "geometry" not in rec:
             continue
 
@@ -179,7 +179,7 @@ def parse_dzialki_page(xml_bytes):
         pos_list = feat.find(".//gml:posList", NS)
         if pos_list is not None and pos_list.text:
             coords_flat = list(map(float, pos_list.text.strip().split()))
-            pairs = [(coords_flat[i], coords_flat[i + 1]) for i in range(0, len(coords_flat), 2)]
+            pairs = [(coords_flat[i + 1], coords_flat[i]) for i in range(0, len(coords_flat), 2)]
             if len(pairs) >= 4:
                 rec["geometry"] = Polygon(pairs)
         if "geometry" not in rec:
