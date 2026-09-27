@@ -63,16 +63,35 @@ OVERPASS_HEADERS = {"User-Agent": "ceny-mieszkan-fetcher/1.0"}
 
 # Warsaw address WFS
 ADDR_WFS_URL = "https://wfs.um.warszawa.pl/serwis"
-ADDR_PAGE_SIZE = 5000
+ADDR_PAGE_SIZE = 10000
+
+# Warsaw districts — used to partition address fetching (startIndex is broken)
+WARSAW_DISTRICTS = [
+    "Bemowo", "Białołęka", "Bielany", "Mokotów", "Ochota",
+    "Praga-Południe", "Praga-Północ", "Rembertów", "Targówek",
+    "Ursus", "Ursynów", "Wawer", "Wesoła", "Wilanów",
+    "Wola", "Włochy", "Śródmieście", "Żoliborz",
+]
 
 BUILDINGS_QUERY = """
 [out:json][timeout:180];
 (
   way["building"]({bbox});
   relation["building"]({bbox});
+  way["building:part"]({bbox});
+  relation["building:part"]({bbox});
 );
 out geom;
 """
+
+# Tags to preserve from OSM elements
+OSM_KEEP_TAGS = [
+    "building", "building:part", "building:levels", "building:min_level",
+    "building:colour", "building:material",
+    "height", "min_height",
+    "roof:shape", "roof:colour", "roof:material",
+    "name", "addr:street", "addr:housenumber", "addr:city",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -171,15 +190,12 @@ def fetch_osm_buildings(force=False):
             if geom is None:
                 continue
             tags = el.get("tags", {})
-            all_rows.append({
-                "osm_id": el["id"],
-                "building": tags.get("building"),
-                "building_levels": tags.get("building:levels"),
-                "name": tags.get("name"),
-                "geometry": geom,
-            })
+            row = {"osm_id": el["id"], "geometry": geom}
+            for tag in OSM_KEEP_TAGS:
+                row[tag.replace(":", "_")] = tags.get(tag)
+            all_rows.append(row)
             count += 1
-        print(f"{count:,} buildings")
+        print(f"{count:,} features")
         if idx < len(tiles):
             time.sleep(5)
 
@@ -243,45 +259,47 @@ def _parse_address_page(xml_bytes):
     return records
 
 
-def fetch_address_points(force=False):
-    """Fetch address points from Warsaw city WFS to canonical location."""
-    if os.path.exists(ADDR_GPKG) and not force:
-        print(f"  Address points already at {ADDR_GPKG}")
-        return True
-
-    print(f"  Fetching address points from Warsaw WFS -> {ADDR_GPKG}")
-
-    # Test connectivity
-    test_params = {
-        "service": "WFS", "version": "1.1.0", "request": "GetFeature",
-        "typeName": "wfs:PUNKTY_ADRESOWE_WGS84", "maxFeatures": "1",
-        "bbox": "21.0,52.2,21.05,52.25",
-    }
-    try:
-        test_resp = requests.get(ADDR_WFS_URL, params=test_params, timeout=30)
-        test_root = ET.fromstring(test_resp.content)
-        if not test_root.findall(".//gml:featureMember", ADDR_NS):
-            print("  ERROR: Test query returned 0 results, WFS may be down")
-            return False
-        print("  Connection OK")
-    except Exception as e:
-        print(f"  ERROR connecting to WFS: {e}")
-        return False
-
-    bbox = BBOX_WGS84
-    bbox_filter = f"{bbox['west']},{bbox['south']},{bbox['east']},{bbox['north']}"
+def _fetch_district_addresses(district):
+    """Fetch all address points for one district, with ID-based pagination."""
     all_records = []
-    offset = 0
+    seen_ids = set()
+    last_id = None
 
     while True:
+        # Build OGC filter: district + optional ID > last_id for pagination
+        if last_id is None:
+            ogc_filter = (
+                '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">'
+                "<ogc:PropertyIsEqualTo>"
+                "<ogc:PropertyName>DZIELNICA</ogc:PropertyName>"
+                f"<ogc:Literal>{district}</ogc:Literal>"
+                "</ogc:PropertyIsEqualTo>"
+                "</ogc:Filter>"
+            )
+        else:
+            ogc_filter = (
+                '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">'
+                "<ogc:And>"
+                "<ogc:PropertyIsEqualTo>"
+                "<ogc:PropertyName>DZIELNICA</ogc:PropertyName>"
+                f"<ogc:Literal>{district}</ogc:Literal>"
+                "</ogc:PropertyIsEqualTo>"
+                "<ogc:PropertyIsGreaterThan>"
+                "<ogc:PropertyName>ID</ogc:PropertyName>"
+                f"<ogc:Literal>{last_id}</ogc:Literal>"
+                "</ogc:PropertyIsGreaterThan>"
+                "</ogc:And>"
+                "</ogc:Filter>"
+            )
+
         params = {
             "service": "WFS",
             "version": "1.1.0",
             "request": "GetFeature",
             "typeName": "wfs:PUNKTY_ADRESOWE_WGS84",
-            "bbox": bbox_filter,
             "maxFeatures": str(ADDR_PAGE_SIZE),
-            "startIndex": str(offset),
+            "Filter": ogc_filter,
+            "sortBy": "ID",
         }
 
         resp = None
@@ -292,28 +310,76 @@ def fetch_address_points(force=False):
                 break
             except Exception as e:
                 if attempt == 2:
-                    print(f"\n  FAILED at offset {offset}: {e}")
+                    print(f" FAILED: {e}", end="")
                 time.sleep(5 * (attempt + 1))
 
         if resp is None or resp.status_code != 200:
             break
 
         records = _parse_address_page(resp.content)
-        all_records.extend(records)
-        print(f"  Fetched {len(all_records):,} address points...", end="\r", flush=True)
+        if not records:
+            break
 
+        for r in records:
+            aid = r.get("addr_id")
+            if aid and aid not in seen_ids:
+                seen_ids.add(aid)
+                all_records.append(r)
+                last_id = aid
+
+        # If we got less than page size, we're done with this district
         if len(records) < ADDR_PAGE_SIZE:
             break
-        offset += ADDR_PAGE_SIZE
         time.sleep(1)
 
-    print()
+    return all_records
+
+
+def fetch_address_points(force=False):
+    """Fetch address points from Warsaw city WFS, partitioned by district."""
+    if os.path.exists(ADDR_GPKG) and not force:
+        print(f"  Address points already at {ADDR_GPKG}")
+        return True
+
+    print(f"  Fetching address points from Warsaw WFS -> {ADDR_GPKG}")
+    print(f"  Partitioning by {len(WARSAW_DISTRICTS)} districts...")
+
+    # Test connectivity
+    test_params = {
+        "service": "WFS", "version": "1.1.0", "request": "GetFeature",
+        "typeName": "wfs:PUNKTY_ADRESOWE_WGS84", "maxFeatures": "1",
+    }
+    try:
+        test_resp = requests.get(ADDR_WFS_URL, params=test_params, timeout=30)
+        test_root = ET.fromstring(test_resp.content)
+        if not test_root.findall(".//gml:featureMember", ADDR_NS):
+            print("  ERROR: WFS returned 0 results, may be down")
+            return False
+        print("  Connection OK")
+    except Exception as e:
+        print(f"  ERROR connecting to WFS: {e}")
+        return False
+
+    all_records = []
+    for i, district in enumerate(WARSAW_DISTRICTS, 1):
+        print(f"  [{i}/{len(WARSAW_DISTRICTS)}] {district}...", end=" ", flush=True)
+        records = _fetch_district_addresses(district)
+        all_records.extend(records)
+        print(f"{len(records):,} pts (total: {len(all_records):,})")
+        time.sleep(1)
 
     if not all_records:
         print("  ERROR: No address points fetched!")
         return False
 
     gdf = gpd.GeoDataFrame(all_records, crs="EPSG:4326")
+
+    # Deduplicate by addr_id
+    if "addr_id" in gdf.columns:
+        before = len(gdf)
+        gdf = gdf.drop_duplicates(subset=["addr_id"], keep="first")
+        if before != len(gdf):
+            print(f"  Dedup: {before:,} -> {len(gdf):,}")
 
     out_dir = os.path.dirname(ADDR_GPKG)
     os.makedirs(out_dir, exist_ok=True)
@@ -407,9 +473,15 @@ def extract_osm(force=False):
     if gdf.crs and gdf.crs.to_epsg() != 2180:
         gdf = gdf.to_crs(TARGET_CRS)
 
+    # Summary of building vs building:part
+    if "building_part" in gdf.columns:
+        n_parts = gdf["building_part"].notna().sum()
+        n_buildings = gdf["building"].notna().sum()
+        print(f"  Buildings: {n_buildings:,}, Building parts: {n_parts:,}")
+
     os.makedirs(DATA_DIR, exist_ok=True)
     gdf.to_file(out_path, driver="GPKG", layer="osm_buildings")
-    print(f"  -> {out_path} ({len(gdf):,} buildings)")
+    print(f"  -> {out_path} ({len(gdf):,} features)")
     return gdf
 
 
