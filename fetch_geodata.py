@@ -7,7 +7,7 @@ Two-tier architecture:
 
 Sources:
   - OSM buildings    — Overpass API -> D:/QGIS/osm_basemap/<city>/buildings.gpkg
-  - BDOT buildings   — local shapefile (manual download, WFS requires GUGiK auth)
+  - BDOT buildings   — GUGiK opendata download -> D:/QGIS/bdot_basemap/<city>/
   - Address points   — Warsaw city WFS -> D:/QGIS/punkty_adresowe/output/
 
 Usage:
@@ -20,9 +20,11 @@ Usage:
 """
 
 import argparse
+import io
 import os
 import time
 import xml.etree.ElementTree as ET
+import zipfile
 
 import geopandas as gpd
 import pandas as pd
@@ -48,6 +50,12 @@ BDOT_SHP = os.path.join(QGIS_ROOT, "bdot_basemap", "Warszawa",
                         "PL.PZGiK.330.1465__OT_BUBD_A.shp")
 ADDR_GPKG = os.path.join(QGIS_ROOT, "punkty_adresowe", "output",
                          "punkty_adresowe_warszawa.gpkg")
+
+# BDOT10k download (GUGiK opendata)
+# URL pattern: {base}{teryt[:2]}/{teryt}_{format}.zip
+BDOT_DOWNLOAD_BASE = "https://opendata.geoportal.gov.pl/bdot10k/schemat2021/SHP/"
+BDOT_TERYT = "1465"  # Warsaw powiat
+BDOT_DIR = os.path.join(QGIS_ROOT, "bdot_basemap", "Warszawa")
 
 # Overpass API
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -319,19 +327,59 @@ def fetch_address_points(force=False):
 # ---------------------------------------------------------------------------
 
 def fetch_bdot_buildings(force=False):
-    """Check BDOT source file exists. No auto-fetch (WFS requires auth)."""
-    if os.path.exists(BDOT_SHP):
+    """Download BDOT10k SHP from GUGiK opendata to canonical location."""
+    if os.path.exists(BDOT_SHP) and not force:
         import datetime
         mtime = datetime.datetime.fromtimestamp(os.path.getmtime(BDOT_SHP))
         print(f"  BDOT source: {BDOT_SHP}")
         print(f"  File date:   {mtime.strftime('%Y-%m-%d')}")
-        print(f"  NOTE: Auto-fetch not available (GUGiK WFS requires auth).")
-        print(f"         To refresh, download from https://dane.gov.pl/pl/dataset/726")
+        print(f"  (use --force to re-download)")
+        return True
+
+    teryt = BDOT_TERYT
+    url = f"{BDOT_DOWNLOAD_BASE}{teryt[:2]}/{teryt}_SHP.zip"
+    print(f"  Downloading BDOT10k from GUGiK opendata...")
+    print(f"  URL: {url}")
+
+    try:
+        resp = requests.get(url, timeout=300, stream=True)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"  ERROR downloading: {e}")
+        return False
+
+    total_mb = int(resp.headers.get("content-length", 0)) / 1024 / 1024
+    print(f"  Size: {total_mb:.0f} MB")
+
+    # Download to memory then extract
+    print(f"  Downloading...", end=" ", flush=True)
+    chunks = []
+    downloaded = 0
+    for chunk in resp.iter_content(chunk_size=1024 * 1024):
+        chunks.append(chunk)
+        downloaded += len(chunk)
+        print(f"\r  Downloading... {downloaded/1024/1024:.0f}/{total_mb:.0f} MB", end="", flush=True)
+    print()
+
+    content = b"".join(chunks)
+    print(f"  Extracting to {BDOT_DIR}...")
+    os.makedirs(BDOT_DIR, exist_ok=True)
+
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        zf.extractall(BDOT_DIR)
+        print(f"  Extracted {len(zf.namelist())} files")
+
+    if os.path.exists(BDOT_SHP):
+        print(f"  OK: {BDOT_SHP}")
         return True
     else:
-        print(f"  BDOT shapefile not found: {BDOT_SHP}")
-        print(f"  Download from https://dane.gov.pl/pl/dataset/726")
-        print(f"  Extract to {os.path.dirname(BDOT_SHP)}")
+        # The zip may contain a subfolder — find the shapefile
+        for root, dirs, files in os.walk(BDOT_DIR):
+            for f in files:
+                if "BUBD_A" in f and f.endswith(".shp"):
+                    print(f"  Found: {os.path.join(root, f)}")
+                    return True
+        print(f"  WARNING: BUBD_A shapefile not found after extraction")
         return False
 
 
@@ -365,6 +413,17 @@ def extract_osm(force=False):
     return gdf
 
 
+def _find_bdot_shp():
+    """Find the BUBD_A shapefile, searching subdirectories if needed."""
+    if os.path.exists(BDOT_SHP):
+        return BDOT_SHP
+    for root, dirs, files in os.walk(BDOT_DIR):
+        for f in files:
+            if "BUBD_A" in f and f.endswith(".shp"):
+                return os.path.join(root, f)
+    return None
+
+
 def extract_bdot(force=False):
     """Extract BDOT buildings from canonical shapefile to data/."""
     out_path = os.path.join(DATA_DIR, "bdot_buildings.gpkg")
@@ -373,22 +432,24 @@ def extract_bdot(force=False):
         print(f"  Extracted BDOT buildings: {len(gdf):,} (cached)")
         return gdf
 
-    if not os.path.exists(BDOT_SHP):
+    shp_path = _find_bdot_shp()
+    if shp_path is None:
         print(f"  Source not found: {BDOT_SHP}")
         return None
 
-    print(f"  Reading {BDOT_SHP}...")
-    gdf = gpd.read_file(BDOT_SHP)
+    print(f"  Reading {shp_path}...")
+    gdf = gpd.read_file(shp_path)
     print(f"  Source: {len(gdf):,} features")
 
-    # Rename to friendly names
-    gdf = gdf.rename(columns={
+    # Rename to friendly names (handle both old and new column names)
+    rename_map = {
         "LOKALNYID": "bdot_id",
         "FUNOGBUD": "building_type",
         "FUNSZCZ": "building_subtype",
         "LKOND": "n_floors",
         "NAZWA": "name",
-    })
+    }
+    gdf = gdf.rename(columns={k: v for k, v in rename_map.items() if k in gdf.columns})
 
     keep = ["bdot_id", "building_type", "building_subtype", "n_floors", "name", "geometry"]
     gdf = gdf[[c for c in keep if c in gdf.columns]].copy()
