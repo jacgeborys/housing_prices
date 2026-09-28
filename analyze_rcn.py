@@ -7,6 +7,7 @@ Generates charts covering:
   - District-level comparisons (small vs spacious apartments)
   - Outlier detection and data quality
   - Market segmentation (primary vs secondary)
+  - Apartments vs houses
 
 Output: output/analysis/ folder with PNG charts
 """
@@ -58,6 +59,13 @@ def load_data():
         "rynekWtorny": "secondary",
     })
 
+    # Classify property type: apartment vs house
+    # Houses have nier_prawo = ownership of building, or very large area + low floor
+    res["prop_type"] = "apartment"
+    is_building = res["nier_prawo"] == "wlasnoscBudynkuWrazZPrawemZwiazanym"
+    is_ground = res["nier_prawo"] == "wlasnoscNieruchomosciGruntowej"
+    res.loc[is_building | is_ground, "prop_type"] = "house"
+
     # Assign districts via nearest address point
     addr = gpd.read_file("data/address_points.gpkg")
     print("  Assigning districts via nearest address point...")
@@ -68,6 +76,8 @@ def load_data():
 
     print(f"  Residential transactions: {len(res):,}")
     print(f"  With district: {res['district'].notna().sum():,}")
+    print(f"  Apartments: {(res['prop_type'] == 'apartment').sum():,}, "
+          f"Houses: {(res['prop_type'] == 'house').sum():,}")
     return res
 
 
@@ -136,7 +146,6 @@ def plot_rooms_and_area(df):
     # Area by room count
     ax = axes[1, 0]
     room_area = valid[valid["rooms"].between(1, 6)].copy()
-    room_area["rooms_label"] = room_area["rooms"].astype(int).astype(str) + " rooms"
     room_area.boxplot(column="area", by="rooms", ax=ax, showfliers=False,
                       patch_artist=True, boxprops=dict(facecolor="#FF9800", alpha=0.5))
     ax.set_title("Area by room count")
@@ -191,68 +200,64 @@ def plot_floors(df):
     print("  03_floors.png")
 
 
-def plot_districts(df):
-    """District-level analysis: prices, areas, density."""
-    valid = df[df["price_m2"].between(1000, 100000) & df["district"].notna()].copy()
+def _sorted_barh(ax, series, color="#4CAF50", fmt="{v:,.0f}"):
+    """Horizontal bar chart sorted by value with labels."""
+    s = series.sort_values(ascending=True)
+    bars = ax.barh(range(len(s)), s.values, color=color, edgecolor="white")
+    ax.set_yticks(range(len(s)))
+    ax.set_yticklabels(s.index)
+    offset = s.max() * 0.02
+    for i, v in enumerate(s.values):
+        ax.text(v + offset, i, fmt.format(v=v), va="center", fontsize=9)
 
-    # Sort districts by median price
-    district_order = valid.groupby("district")["price_m2"].median().sort_values(ascending=False).index
+
+def plot_districts(df):
+    """District-level analysis: prices, areas, density. Each subplot sorted independently."""
+    valid = df[df["price_m2"].between(1000, 100000) & df["district"].notna()].copy()
 
     fig, axes = plt.subplots(2, 2, figsize=(18, 14))
 
-    # Median price/m² by district
+    # Median price/m² — sorted by price
     ax = axes[0, 0]
-    med_prices = valid.groupby("district")["price_m2"].median().reindex(district_order)
-    colors = plt.cm.RdYlGn_r(np.linspace(0.15, 0.85, len(district_order)))
-    ax.barh(range(len(district_order)), med_prices.values, color=colors, edgecolor="white")
-    ax.set_yticks(range(len(district_order)))
-    ax.set_yticklabels(district_order)
-    ax.invert_yaxis()
+    med_prices = valid.groupby("district")["price_m2"].median()
+    n = len(med_prices)
+    price_sorted = med_prices.sort_values(ascending=True)
+    colors_price = plt.cm.RdYlGn_r(np.linspace(0.15, 0.85, n))
+    ax.barh(range(n), price_sorted.values, color=colors_price, edgecolor="white")
+    ax.set_yticks(range(n))
+    ax.set_yticklabels(price_sorted.index)
     ax.set_xlabel("Median price/m² (PLN)")
     ax.set_title("Median price per m² by district")
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
-    for i, v in enumerate(med_prices.values):
+    for i, v in enumerate(price_sorted.values):
         ax.text(v + 100, i, f"{v:,.0f}", va="center", fontsize=9)
 
-    # Median area by district
+    # Median area — sorted by area
     ax = axes[0, 1]
-    med_area = valid.groupby("district")["area"].median().reindex(district_order)
-    ax.barh(range(len(district_order)), med_area.values, color=colors, edgecolor="white")
-    ax.set_yticks(range(len(district_order)))
-    ax.set_yticklabels(district_order)
-    ax.invert_yaxis()
+    _sorted_barh(ax, valid.groupby("district")["area"].median(), color="#4CAF50", fmt="{v:.0f}")
     ax.set_xlabel("Median area (m²)")
     ax.set_title("Median apartment area by district")
-    for i, v in enumerate(med_area.values):
-        ax.text(v + 0.5, i, f"{v:.0f}", va="center", fontsize=9)
 
-    # Small apartments (<35m²) percentage by district
+    # Small apartments (<35m²) — sorted by %
     ax = axes[1, 0]
-    small_pct = valid.groupby("district").apply(
-        lambda g: 100 * (g["area"] < 35).mean()
-    ).reindex(district_order)
-    ax.barh(range(len(district_order)), small_pct.values, color="#E91E63", alpha=0.7, edgecolor="white")
-    ax.set_yticks(range(len(district_order)))
-    ax.set_yticklabels(district_order)
-    ax.invert_yaxis()
+    small_pct = valid.groupby("district").apply(lambda g: 100 * (g["area"] < 35).mean())
+    _sorted_barh(ax, small_pct, color="#E91E63", fmt="{v:.1f}%")
     ax.set_xlabel("% of transactions")
     ax.set_title("Small apartments (<35 m²) share by district")
-    for i, v in enumerate(small_pct.values):
-        ax.text(v + 0.3, i, f"{v:.1f}%", va="center", fontsize=9)
 
-    # Room distribution by district (stacked)
+    # Room distribution — sorted by 1-room share
     ax = axes[1, 1]
     room_dist = valid[valid["rooms"].between(1, 5)].groupby(
         ["district", "rooms"]
     ).size().unstack(fill_value=0)
     room_dist = room_dist.div(room_dist.sum(axis=1), axis=0) * 100
-    room_dist = room_dist.reindex(district_order)
+    room_order = room_dist[1.0].sort_values(ascending=True).index
+    room_dist = room_dist.reindex(room_order)
     room_colors = ["#E91E63", "#FF9800", "#4CAF50", "#2196F3", "#9C27B0"]
     room_dist.plot(kind="barh", stacked=True, ax=ax, color=room_colors, edgecolor="white", width=0.8)
     ax.set_xlabel("% of transactions")
-    ax.set_title("Room count distribution by district")
+    ax.set_title("Room count distribution by district (sorted by 1-room %)")
     ax.legend(title="Rooms", bbox_to_anchor=(1.02, 1), labels=["1", "2", "3", "4", "5"])
-    ax.invert_yaxis()
 
     plt.tight_layout()
     plt.savefig(os.path.join(OUTPUT_DIR, "04_districts.png"), dpi=150, bbox_inches="tight")
@@ -318,25 +323,33 @@ def plot_outliers(df):
 
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
 
-    # Price vs area scatter (log scale)
+    # Price vs area scatter — ALL points, outliers highlighted
     ax = axes[0, 0]
-    sample = res[res["price"].between(10000, 50_000_000) & res["area"].between(5, 500)].sample(
-        min(30000, len(res)), random_state=42
-    )
-    ax.scatter(sample["area"], sample["price"], alpha=0.05, s=3, c="#2196F3")
+    plotable = res[res["price"].between(100, 100_000_000) & res["area"].between(1, 1000)].copy()
+    plotable["outlier"] = "normal"
+    plotable.loc[plotable["price_m2"] < 1000, "outlier"] = "cheap"
+    plotable.loc[plotable["price_m2"] > 50000, "outlier"] = "expensive"
+
+    normal = plotable[plotable["outlier"] == "normal"].sample(min(30000, len(plotable)), random_state=42)
+    cheap = plotable[plotable["outlier"] == "cheap"]
+    expensive = plotable[plotable["outlier"] == "expensive"]
+
+    ax.scatter(normal["area"], normal["price"], alpha=0.03, s=3, c="#2196F3", zorder=1)
+    ax.scatter(cheap["area"], cheap["price"], c="red", s=10, alpha=0.4, zorder=2,
+               label=f"<1K PLN/m² ({len(cheap):,})")
+    ax.scatter(expensive["area"], expensive["price"], c="#FF8F00", s=10, alpha=0.4, zorder=2,
+               label=f">50K PLN/m² ({len(expensive):,})")
+    # Reference lines for 1K and 50K PLN/m²
+    xx = np.array([5, 500])
+    ax.plot(xx, xx * 1000, "r--", alpha=0.3, linewidth=1)
+    ax.plot(xx, xx * 50000, "--", color="#FF8F00", alpha=0.3, linewidth=1)
     ax.set_xlabel("Area (m²)")
     ax.set_ylabel("Total price (PLN)")
-    ax.set_title("Price vs area (30K sample)")
+    ax.set_title("Price vs area — outliers highlighted")
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
-
-    # Highlight outliers: price/m² < 1000 or > 50000
-    outliers_cheap = res[res["price_m2"].between(100, 1000)]
-    outliers_expensive = res[res["price_m2"] > 50000]
-    ax.scatter(outliers_cheap["area"], outliers_cheap["price"], c="red", s=8, alpha=0.3, label=f"<1K PLN/m² ({len(outliers_cheap):,})")
-    ax.scatter(outliers_expensive["area"], outliers_expensive["price"], c="orange", s=8, alpha=0.3, label=f">50K PLN/m² ({len(outliers_expensive):,})")
-    ax.legend(fontsize=9)
+    ax.legend(fontsize=9, loc="upper left")
 
     # Price/m² distribution with tails
     ax = axes[0, 1]
@@ -392,6 +405,7 @@ def plot_micro_apartments(df):
                 "medium (50-70)", "spacious (70-100)", "large (100+)"],
     )
 
+    # Sort by median area
     district_order = valid.groupby("district")["area"].median().sort_values().index
 
     fig, axes = plt.subplots(1, 2, figsize=(18, 8))
@@ -428,6 +442,49 @@ def plot_micro_apartments(df):
     print("  07_micro_apartments.png")
 
 
+def plot_apartments_vs_houses(df):
+    """Apartment vs house comparison."""
+    valid = df[df["price_m2"].between(1000, 100000)].copy()
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+    # Counts
+    ax = axes[0]
+    counts = valid["prop_type"].value_counts()
+    ax.bar(counts.index, counts.values, color=["#2196F3", "#4CAF50"], edgecolor="white")
+    ax.set_ylabel("Transactions")
+    ax.set_title("Transaction count")
+    for i, (k, v) in enumerate(counts.items()):
+        ax.text(i, v + 1000, f"{v:,}", ha="center", fontsize=11)
+
+    # Price/m² comparison
+    ax = axes[1]
+    for pt, color in [("apartment", "#2196F3"), ("house", "#4CAF50")]:
+        data = valid[valid["prop_type"] == pt]["price_m2"]
+        ax.hist(data, bins=80, alpha=0.5, color=color, label=pt, density=True,
+                edgecolor="white", range=(1000, 40000))
+    ax.set_xlabel("Price/m² (PLN)")
+    ax.set_ylabel("Density")
+    ax.set_title("Price/m² distribution")
+    ax.legend()
+
+    # Area comparison
+    ax = axes[2]
+    for pt, color in [("apartment", "#2196F3"), ("house", "#4CAF50")]:
+        data = valid[valid["prop_type"] == pt]["area"]
+        data = data[data.between(10, 300)]
+        ax.hist(data, bins=80, alpha=0.5, color=color, label=pt, density=True, edgecolor="white")
+    ax.set_xlabel("Area (m²)")
+    ax.set_ylabel("Density")
+    ax.set_title("Area distribution")
+    ax.legend()
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "08_apartments_vs_houses.png"), dpi=150, bbox_inches="tight")
+    plt.close()
+    print("  08_apartments_vs_houses.png")
+
+
 def print_outlier_report(df):
     """Print statistical outlier analysis."""
     valid = df[df["price_m2"].between(1000, 100000)].copy()
@@ -457,16 +514,22 @@ def print_outlier_report(df):
     print(f"  Floor > 20:        {(floors > 20).sum():>6,}")
     print(f"  Floor > 40:        {(floors > 40).sum():>6,}  (likely errors)")
 
-    # Price = 1 PLN or round numbers
+    # Suspicious prices (likely non-market)
     print(f"\nSuspicious prices (likely non-market):")
     print(f"  Price = 1 PLN:     {(all_res['price'] == 1).sum():>6,}")
     print(f"  Price < 1000 PLN:  {(all_res['price'] < 1000).sum():>6,}")
 
-    # Duplicate transactions (same location, price, date)
-    dedup_cols = ["geometry", "price", "area"]
+    # Duplicates
     n_before = len(valid)
     n_after = valid.drop_duplicates(subset=["price", "area", "rooms", "floor"]).shape[0]
     print(f"\nPotential duplicates (same price+area+rooms+floor): {n_before - n_after:,}")
+
+    # Apartments vs houses
+    print(f"\nProperty type:")
+    for pt in ["apartment", "house"]:
+        sub = valid[valid["prop_type"] == pt]
+        print(f"  {pt:>10s}: {len(sub):>7,}  median price/m²={sub['price_m2'].median():>8,.0f}  "
+              f"median area={sub['area'].median():>5.0f} m²")
 
     # IQR-based outliers per district
     print(f"\nIQR outliers by district (1.5*IQR rule):")
@@ -490,6 +553,7 @@ def main():
     plot_market_segments(df)
     plot_outliers(df)
     plot_micro_apartments(df)
+    plot_apartments_vs_houses(df)
     print_outlier_report(df)
 
     print(f"\nDone. Charts saved to {OUTPUT_DIR}/")
