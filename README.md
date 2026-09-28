@@ -18,10 +18,10 @@ fetch_rcn.py          ->  output/rcn_lokale_warszawa.gpkg
 fetch_geodata.py      ->  data/osm_buildings.gpkg
                       ->  data/bdot_buildings.gpkg
                       ->  data/address_points.gpkg
-build_viz.py          ->  output/warsaw_prices_viz.gpkg (buildings + prices)
-                      ->  output/warsaw_prices_viz_transactions.gpkg
-                      ->  output/warsaw_prices_viz_unmatched.gpkg
-                      ->  output/warsaw_prices_viz_parts.gpkg (3D building parts)
+build_viz.py          ->  output/warsaw_prices_viz.gpkg
+                            layer: buildings_prices (26K polygons + price stats)
+                            layer: transactions (297K points + match status)
+                            layer: building_parts (9K 3D parts for complex buildings)
 ```
 
 ### Two-tier data architecture

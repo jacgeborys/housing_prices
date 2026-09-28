@@ -318,9 +318,11 @@ def aggregate_to_buildings(transactions, buildings, match_map):
     return enriched
 
 
-def save_gpkg(gdf, path, layer):
-    """Save a GeoDataFrame to a GeoPackage file (overwrite)."""
-    if os.path.exists(path):
+def save_gpkg(gdf, path, layer, mode="w"):
+    """Save a GeoDataFrame to a GeoPackage file.
+    mode='w' overwrites the file, mode='a' appends a layer.
+    """
+    if mode == "w" and os.path.exists(path):
         os.remove(path)
     gdf.to_file(path, driver="GPKG", layer=layer)
 
@@ -395,32 +397,23 @@ def main():
         enriched = enriched_osm.copy()
         enriched["source"] = "osm"
 
-    # --- Save outputs ---
+    # --- Save all layers into a single GeoPackage ---
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    print(f"\nSaving...")
+    print(f"\nSaving -> {OUTPUT_PATH}")
 
-    save_gpkg(enriched, OUTPUT_PATH, "buildings_prices")
-    print(f"  buildings_prices: {len(enriched):,} polygons -> {OUTPUT_PATH}")
+    save_gpkg(enriched, OUTPUT_PATH, "buildings_prices", mode="w")
+    print(f"  buildings_prices: {len(enriched):,} polygons")
 
-    # Drop internal columns before saving transactions
     txn_out = transactions.drop(columns=["addr_norm"], errors="ignore")
-    txn_path = OUTPUT_PATH.replace(".gpkg", "_transactions.gpkg")
-    save_gpkg(txn_out, txn_path, "transactions")
-    print(f"  transactions: {len(txn_out):,} points -> {txn_path}")
+    save_gpkg(txn_out, OUTPUT_PATH, "transactions", mode="a")
+    print(f"  transactions: {len(txn_out):,} points")
 
-    unmatched = txn_out[txn_out["match"] == "unmatched"]
-    unm_path = OUTPUT_PATH.replace(".gpkg", "_unmatched.gpkg")
-    save_gpkg(unmatched, unm_path, "unmatched")
-    print(f"  unmatched: {len(unmatched):,} points -> {unm_path}")
-
-    # Save building parts separately for 3D viz
     if len(osm_parts) > 0:
-        parts_path = OUTPUT_PATH.replace(".gpkg", "_parts.gpkg")
         osm_parts_out = osm_parts.copy()
         osm_parts_out["height_m"] = osm_parts_out["height"].apply(_parse_height)
         osm_parts_out["min_height_m"] = osm_parts_out["min_height"].apply(_parse_height)
-        save_gpkg(osm_parts_out, parts_path, "building_parts")
-        print(f"  building_parts: {len(osm_parts_out):,} polygons -> {parts_path}")
+        save_gpkg(osm_parts_out, OUTPUT_PATH, "building_parts", mode="a")
+        print(f"  building_parts: {len(osm_parts_out):,} polygons")
 
     # --- Summary stats ---
     print("\n" + "=" * 60)
@@ -434,18 +427,11 @@ def main():
     print(f"Buildings with 10+ transactions: "
           f"{(enriched['n_transactions'] >= 10).sum():,}")
 
-    print(f"\n3D in QGIS:")
-    print(f"  1. Add {os.path.basename(OUTPUT_PATH)} -> buildings_prices")
-    print(f"  2. View -> 3D Map View -> New 3D Map View")
-    print(f"  3. Layer Properties -> 3D View:")
-    print(f"     - Altitude clamping: Relative to ground")
-    print(f"     - Extrusion height: field 'height_m'")
-    print(f"  4. Symbology -> Graduated -> Column: median_price_m2")
-    print(f"     - Color ramp: Spectral (inverted) or RdYlGn (inverted)")
-    if len(osm_parts) > 0:
-        parts_path = OUTPUT_PATH.replace(".gpkg", "_parts.gpkg")
-        print(f"  5. For detailed 3D (PKiN etc): add {os.path.basename(parts_path)}")
-        print(f"     - Extrusion height: height_m, base height: min_height_m")
+    out = os.path.basename(OUTPUT_PATH)
+    print(f"\nQGIS layers (all in {out}):")
+    print(f"  buildings_prices — graduated color on median_price_m2, extrude by height_m")
+    print(f"  transactions     — points colored by 'match' to see coverage holes")
+    print(f"  building_parts   — 3D parts (PKiN etc), extrude height_m from min_height_m")
 
 
 if __name__ == "__main__":
