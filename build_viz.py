@@ -119,6 +119,39 @@ def normalize_address(addr):
     return f"{street.lower()}|{num_match.group(1)}"
 
 
+def _parse_levels(val):
+    """Parse building:levels to float."""
+    if val is None or (isinstance(val, float) and np.isnan(val)):
+        return None
+    s = str(val).strip()
+    # Handle ranges like "4-5" -> take max
+    if "-" in s:
+        parts = s.split("-")
+        try:
+            return max(float(p) for p in parts)
+        except ValueError:
+            return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
+# Median levels by building type, from OSM data analysis.
+# Used as fallback when neither height nor building:levels is available.
+DEFAULT_LEVELS = {
+    "apartments": 4, "dormitory": 5, "hotel": 3, "hospital": 3,
+    "school": 3, "university": 3, "government": 4, "office": 2,
+    "house": 2, "detached": 2, "semidetached_house": 2, "terrace": 2,
+    "residential": 2, "bungalow": 1, "commercial": 2, "retail": 1,
+    "industrial": 1, "warehouse": 1, "garage": 1, "garages": 1,
+    "outbuilding": 1, "shed": 1, "farm_auxiliary": 1, "service": 1,
+    "church": 2, "civic": 1, "public": 2, "kindergarten": 2,
+    "construction": 2, "parking": 3,
+}
+DEFAULT_LEVELS_FALLBACK = 1  # for unknown types
+
+
 def load_osm_buildings():
     """Load OSM building polygons (main buildings only, not parts)."""
     print("\nLoading OSM buildings...")
@@ -134,16 +167,27 @@ def load_osm_buildings():
     print(f"  Main buildings: {len(main):,}")
     print(f"  Building parts: {len(parts):,}")
 
-    # Compute height for main buildings
+    # --- Compute height_m for ALL main buildings ---
+    # Priority 1: explicit height tag
     main["height_m"] = main["height"].apply(_parse_height)
-    # Fallback to levels * floor height
-    no_height = main["height_m"].isna()
-    levels = main.loc[no_height, "building_levels"].apply(
-        lambda x: float(x) if x and str(x).replace(".", "").isdigit() else None
-    )
-    main.loc[no_height, "height_m"] = levels * FLOOR_HEIGHT_M
-    # Default: 1 floor
-    main["height_m"] = main["height_m"].fillna(FLOOR_HEIGHT_M)
+    has_h = main["height_m"].notna()
+
+    # Priority 2: building:levels * floor height
+    no_h = ~has_h
+    main.loc[no_h, "height_m"] = main.loc[no_h, "building_levels"].apply(_parse_levels) * FLOOR_HEIGHT_M
+    has_levels = main["height_m"].notna()
+
+    # Priority 3: default levels by building type
+    still_missing = ~main["height_m"].notna()
+    main.loc[still_missing, "height_m"] = main.loc[still_missing, "building"].map(
+        DEFAULT_LEVELS
+    ).fillna(DEFAULT_LEVELS_FALLBACK) * FLOOR_HEIGHT_M
+
+    n_from_height = has_h.sum()
+    n_from_levels = (has_levels & ~has_h).sum()
+    n_from_default = still_missing.sum()
+    print(f"  height_m source: height tag={n_from_height:,}, "
+          f"levels={n_from_levels:,}, type default={n_from_default:,}")
 
     # Build address key for address-based matching
     main["osm_addr"] = main.apply(
@@ -401,7 +445,14 @@ def main():
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     print(f"\nSaving -> {OUTPUT_PATH}")
 
-    save_gpkg(enriched, OUTPUT_PATH, "buildings_prices", mode="w")
+    # All OSM buildings with height (background layer for 3D)
+    bldg_cols = ["geometry", "osm_id", "building", "height_m", "name",
+                 "addr_street", "addr_housenumber"]
+    all_bldg = osm_buildings[[c for c in bldg_cols if c in osm_buildings.columns]].copy()
+    save_gpkg(all_bldg, OUTPUT_PATH, "buildings_all", mode="w")
+    print(f"  buildings_all: {len(all_bldg):,} polygons (all with height_m)")
+
+    save_gpkg(enriched, OUTPUT_PATH, "buildings_prices", mode="a")
     print(f"  buildings_prices: {len(enriched):,} polygons")
 
     txn_out = transactions.drop(columns=["addr_norm"], errors="ignore")
@@ -411,7 +462,12 @@ def main():
     if len(osm_parts) > 0:
         osm_parts_out = osm_parts.copy()
         osm_parts_out["height_m"] = osm_parts_out["height"].apply(_parse_height)
-        osm_parts_out["min_height_m"] = osm_parts_out["min_height"].apply(_parse_height)
+        no_h = osm_parts_out["height_m"].isna()
+        osm_parts_out.loc[no_h, "height_m"] = (
+            osm_parts_out.loc[no_h, "building_levels"].apply(_parse_levels) * FLOOR_HEIGHT_M
+        )
+        osm_parts_out["height_m"] = osm_parts_out["height_m"].fillna(FLOOR_HEIGHT_M)
+        osm_parts_out["min_height_m"] = osm_parts_out["min_height"].apply(_parse_height).fillna(0)
         save_gpkg(osm_parts_out, OUTPUT_PATH, "building_parts", mode="a")
         print(f"  building_parts: {len(osm_parts_out):,} polygons")
 
@@ -429,9 +485,10 @@ def main():
 
     out = os.path.basename(OUTPUT_PATH)
     print(f"\nQGIS layers (all in {out}):")
-    print(f"  buildings_prices — graduated color on median_price_m2, extrude by height_m")
-    print(f"  transactions     — points colored by 'match' to see coverage holes")
-    print(f"  building_parts   — 3D parts (PKiN etc), extrude height_m from min_height_m")
+    print(f"  buildings_all    — {len(all_bldg):,} buildings, all with height_m (3D base layer)")
+    print(f"  buildings_prices — {len(enriched):,} with price stats, graduated on median_price_m2")
+    print(f"  transactions     — {len(txn_out):,} points, color by 'match' for coverage")
+    print(f"  building_parts   — {len(osm_parts):,} 3D parts (PKiN etc), height_m + min_height_m")
 
 
 if __name__ == "__main__":
