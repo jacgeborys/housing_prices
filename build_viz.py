@@ -459,17 +459,42 @@ def main():
     save_gpkg(txn_out, OUTPUT_PATH, "transactions", mode="a")
     print(f"  transactions: {len(txn_out):,} points")
 
-    if len(osm_parts) > 0:
-        osm_parts_out = osm_parts.copy()
-        osm_parts_out["height_m"] = osm_parts_out["height"].apply(_parse_height)
-        no_h = osm_parts_out["height_m"].isna()
-        osm_parts_out.loc[no_h, "height_m"] = (
-            osm_parts_out.loc[no_h, "building_levels"].apply(_parse_levels) * FLOOR_HEIGHT_M
-        )
-        osm_parts_out["height_m"] = osm_parts_out["height_m"].fillna(FLOOR_HEIGHT_M)
-        osm_parts_out["min_height_m"] = osm_parts_out["min_height"].apply(_parse_height).fillna(0)
-        save_gpkg(osm_parts_out, OUTPUT_PATH, "building_parts", mode="a")
-        print(f"  building_parts: {len(osm_parts_out):,} polygons")
+    # Unified 3D layer: parts for complex buildings, main outline for simple ones
+    from shapely.strtree import STRtree
+
+    parts_out = osm_parts.copy()
+    parts_out["height_m"] = parts_out["height"].apply(_parse_height)
+    no_h = parts_out["height_m"].isna()
+    parts_out.loc[no_h, "height_m"] = (
+        parts_out.loc[no_h, "building_levels"].apply(_parse_levels) * FLOOR_HEIGHT_M
+    )
+    parts_out["height_m"] = parts_out["height_m"].fillna(FLOOR_HEIGHT_M)
+    parts_out["min_height_m"] = parts_out["min_height"].apply(_parse_height).fillna(0)
+
+    # Find parent buildings that have parts (exclude them)
+    if len(parts_out) > 0:
+        parts_tree = STRtree(parts_out.geometry.values)
+        has_parts = set()
+        for idx, row in osm_buildings.iterrows():
+            if len(parts_tree.query(row.geometry)) > 0:
+                has_parts.add(idx)
+        simple = osm_buildings.drop(index=has_parts).copy()
+    else:
+        simple = osm_buildings.copy()
+
+    simple["min_height_m"] = 0.0
+
+    # Combine: simple buildings + detailed parts
+    keep_cols = ["geometry", "osm_id", "building", "building_part", "name", "height_m", "min_height_m"]
+    parts_keep = parts_out[[c for c in keep_cols if c in parts_out.columns]]
+    simple_keep = simple[[c for c in keep_cols if c in simple.columns]]
+    buildings_3d = gpd.GeoDataFrame(
+        pd.concat([simple_keep, parts_keep], ignore_index=True),
+        geometry="geometry", crs=osm_buildings.crs,
+    )
+    save_gpkg(buildings_3d, OUTPUT_PATH, "buildings_3d", mode="a")
+    print(f"  buildings_3d: {len(buildings_3d):,} polygons "
+          f"({len(simple):,} simple + {len(parts_out):,} parts)")
 
     # --- Summary stats ---
     print("\n" + "=" * 60)
@@ -488,7 +513,7 @@ def main():
     print(f"  buildings_all    — {len(all_bldg):,} buildings, all with height_m (3D base layer)")
     print(f"  buildings_prices — {len(enriched):,} with price stats, graduated on median_price_m2")
     print(f"  transactions     — {len(txn_out):,} points, color by 'match' for coverage")
-    print(f"  building_parts   — {len(osm_parts):,} 3D parts (PKiN etc), height_m + min_height_m")
+    print(f"  buildings_3d     — {len(buildings_3d):,} unified 3D (simple + parts), height_m + min_height_m")
 
 
 if __name__ == "__main__":

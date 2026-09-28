@@ -22,7 +22,7 @@ build_viz.py          ->  output/warsaw_prices_viz.gpkg
                             layer: buildings_all (320K polygons, all with height_m)
                             layer: buildings_prices (26K with median price/m² stats)
                             layer: transactions (297K points + match status)
-                            layer: building_parts (9K 3D parts for complex buildings)
+                            layer: buildings_3d (327K unified: simple + parts, for 3D)
 ```
 
 ### Two-tier data architecture
