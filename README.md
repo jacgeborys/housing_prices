@@ -21,6 +21,7 @@ fetch_geodata.py      ->  data/osm_buildings.gpkg
 build_viz.py          ->  output/warsaw_prices_viz.gpkg (buildings + prices)
                       ->  output/warsaw_prices_viz_transactions.gpkg
                       ->  output/warsaw_prices_viz_unmatched.gpkg
+                      ->  output/warsaw_prices_viz_parts.gpkg (3D building parts)
 ```
 
 ### Two-tier data architecture
@@ -56,10 +57,10 @@ python build_viz.py
 ## Status
 
 - RCN data: fetched (381K transactions, last refresh 2026-09-27)
-- OSM buildings: re-fetching with `building:part` and full 3D tags
-- BDOT buildings: auto-downloadable, but GUGiK server data is from Feb 2024
+- OSM buildings: 329K features (320K main + 9.3K building:part with full 3D tags)
+- BDOT buildings: 155K auto-downloadable (GUGiK server data from Feb 2024)
 - Address points: 127K fetched via district-partitioned WFS (fixed broken pagination)
-- Visualization: `build_viz.py` joins transactions to BDOT buildings; pending update to use OSM + address matching
+- Visualization: `build_viz.py` matches 94.9% of residential transactions to OSM buildings (spatial + buffer + address), BDOT fallback for remainder. 26.4K buildings enriched with price stats.
 
 ## Notes
 
