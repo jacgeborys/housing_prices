@@ -473,12 +473,21 @@ def main():
 
     # Find parent buildings that have parts (exclude them)
     if len(parts_out) > 0:
-        parts_tree = STRtree(parts_out.geometry.values)
+        from shapely.validation import make_valid
+        parts_geoms = [make_valid(g) for g in parts_out.geometry.values]
+        parts_tree = STRtree(parts_geoms)
         has_parts = set()
         for idx, row in osm_buildings.iterrows():
-            if len(parts_tree.query(row.geometry)) > 0:
-                has_parts.add(idx)
+            candidates = parts_tree.query(row.geometry)
+            if len(candidates) > 0:
+                try:
+                    g = make_valid(row.geometry)
+                    if any(parts_geoms[i].intersects(g) for i in candidates):
+                        has_parts.add(idx)
+                except Exception:
+                    pass
         simple = osm_buildings.drop(index=has_parts).copy()
+        print(f"  Parent buildings replaced by parts: {len(has_parts):,}")
     else:
         simple = osm_buildings.copy()
 
