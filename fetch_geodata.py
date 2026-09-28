@@ -91,7 +91,11 @@ OSM_KEEP_TAGS = [
     "height", "min_height",
     "roof:shape", "roof:colour", "roof:material",
     "name", "addr:street", "addr:housenumber", "addr:city",
+    "man_made",
 ]
+
+# Tags that indicate non-building features to exclude
+OSM_EXCLUDE_TAGS = {"man_made": {"bridge", "pier", "tower"}}
 
 
 # ---------------------------------------------------------------------------
@@ -190,6 +194,14 @@ def fetch_osm_buildings(force=False):
             if geom is None:
                 continue
             tags = el.get("tags", {})
+            # Skip non-building features (bridges, piers, etc.)
+            skip = False
+            for excl_tag, excl_vals in OSM_EXCLUDE_TAGS.items():
+                if tags.get(excl_tag) in excl_vals:
+                    skip = True
+                    break
+            if skip:
+                continue
             row = {"osm_id": el["id"], "geometry": geom}
             for tag in OSM_KEEP_TAGS:
                 row[tag.replace(":", "_")] = tags.get(tag)
@@ -472,6 +484,16 @@ def extract_osm(force=False):
     # Reproject to target CRS
     if gdf.crs and gdf.crs.to_epsg() != 2180:
         gdf = gdf.to_crs(TARGET_CRS)
+
+    # Filter out non-building features (bridges etc.)
+    if "man_made" in gdf.columns:
+        exclude_vals = set()
+        for excl_vals in OSM_EXCLUDE_TAGS.values():
+            exclude_vals |= excl_vals
+        mask = gdf["man_made"].isin(exclude_vals)
+        if mask.any():
+            print(f"  Excluding {mask.sum()} non-building features (bridges etc.)")
+            gdf = gdf[~mask].copy()
 
     # Summary of building vs building:part
     if "building_part" in gdf.columns:
