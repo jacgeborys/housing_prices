@@ -23,6 +23,14 @@ build_viz.py          ->  output/warsaw_prices_viz.gpkg
                             layer: buildings_prices (26K with median price/m² stats)
                             layer: transactions (297K points + match status)
                             layer: buildings_3d (327K unified: simple + parts, for 3D)
+analyze_rcn.py        ->  output/analysis/01-11 PNG charts
+                            price distribution, rooms/area, floors, districts,
+                            market segments, outliers, micro-apartments,
+                            apartments vs houses, price trends, value analysis,
+                            repeat sales (52K resale pairs)
+make_map.py           ->  output/analysis/map_01-06 PNG maps
+                            city overview, district choropleth, center zoom,
+                            price/density hexbin, apartment sizes, price change
 ```
 
 ### Two-tier data architecture
@@ -62,6 +70,8 @@ python build_viz.py
 - BDOT buildings: 155K auto-downloadable (GUGiK server data from Feb 2024)
 - Address points: 127K fetched via district-partitioned WFS (fixed broken pagination)
 - Visualization: `build_viz.py` matches 94.9% of residential transactions to OSM buildings (spatial + buffer + address), BDOT fallback for remainder. 26.4K buildings enriched with price stats.
+- Analysis: 11 chart sets + 6 spatial maps covering price distribution, district comparisons, market segments, outliers, micro-apartments, apartment/house split, price trends (+42% YoY spike in 2018, +93% appreciation in Żoliborz), value/efficiency analysis, and repeat sales (52K resale pairs, median +6.1%/yr return)
+- District boundaries derived from convex hull of address points (not official admin boundaries)
 
 ## Notes
 

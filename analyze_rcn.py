@@ -107,6 +107,8 @@ def plot_price_distribution(df):
     ax.set_xlabel("Year")
     ax.set_ylabel("PLN / m²")
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+    # Rotate year labels and ensure integer ticks
+    ax.tick_params(axis="x", rotation=45)
     fig.suptitle("")
 
     plt.tight_layout()
@@ -282,6 +284,7 @@ def plot_market_segments(df):
     ax.set_title("Primary vs secondary market prices")
     ax.legend()
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
     # Area distribution by market
     ax = axes[1]
@@ -435,6 +438,7 @@ def plot_micro_apartments(df):
     ax.set_ylabel("% of transactions")
     ax.set_title("Micro & small apartment share over time")
     ax.legend()
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
     plt.tight_layout()
     plt.savefig(os.path.join(OUTPUT_DIR, "07_micro_apartments.png"), dpi=150, bbox_inches="tight")
@@ -483,6 +487,270 @@ def plot_apartments_vs_houses(df):
     plt.savefig(os.path.join(OUTPUT_DIR, "08_apartments_vs_houses.png"), dpi=150, bbox_inches="tight")
     plt.close()
     print("  08_apartments_vs_houses.png")
+
+
+def plot_price_trends(df):
+    """Year-over-year price trends by district, and price appreciation analysis."""
+    valid = df[df["price_m2"].between(1000, 100000) & df["year"].between(2010, 2026)
+               & df["district"].notna()].copy()
+
+    fig, axes = plt.subplots(2, 2, figsize=(18, 14))
+
+    # Price trend by top districts
+    ax = axes[0, 0]
+    top_districts = valid.groupby("district").size().nlargest(8).index
+    for dist in top_districts:
+        d = valid[valid["district"] == dist].groupby("year")["price_m2"].median()
+        ax.plot(d.index, d.values, "o-", label=dist, markersize=3, linewidth=1.5)
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Median price/m² (PLN)")
+    ax.set_title("Price trend — top 8 districts by volume")
+    ax.legend(fontsize=8, ncol=2)
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+
+    # Year-over-year % change (city-wide)
+    ax = axes[0, 1]
+    yearly_med = valid.groupby("year")["price_m2"].median()
+    yoy = yearly_med.pct_change() * 100
+    colors = ["#4CAF50" if v >= 0 else "#F44336" for v in yoy.values]
+    ax.bar(yoy.index, yoy.values, color=colors, edgecolor="white")
+    ax.axhline(0, color="black", linewidth=0.5)
+    ax.set_xlabel("Year")
+    ax.set_ylabel("YoY change (%)")
+    ax.set_title("Year-over-year price change (city-wide)")
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+    for i, (yr, v) in enumerate(zip(yoy.index, yoy.values)):
+        if not np.isnan(v):
+            ax.text(yr, v + (1 if v >= 0 else -2), f"{v:+.1f}%", ha="center", fontsize=8)
+
+    # Price appreciation 2018 vs 2024+ by district
+    ax = axes[1, 0]
+    old_med = valid[valid["year"].between(2018, 2020)].groupby("district")["price_m2"].median()
+    new_med = valid[valid["year"].between(2024, 2026)].groupby("district")["price_m2"].median()
+    change = ((new_med - old_med) / old_med * 100).dropna().sort_values()
+    colors_ch = ["#F44336" if v < 0 else "#4CAF50" for v in change.values]
+    ax.barh(range(len(change)), change.values, color=colors_ch, edgecolor="white")
+    ax.set_yticks(range(len(change)))
+    ax.set_yticklabels(change.index)
+    ax.set_xlabel("Price change (%)")
+    ax.set_title("Price appreciation: 2018-20 → 2024-26")
+    for i, v in enumerate(change.values):
+        ax.text(v + 1, i, f"{v:+.0f}%", va="center", fontsize=9)
+
+    # Transaction volume over time
+    ax = axes[1, 1]
+    vol = valid.groupby("year").size()
+    ax.bar(vol.index, vol.values, color="#2196F3", edgecolor="white")
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Transactions")
+    ax.set_title("Transaction volume over time")
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+
+    plt.suptitle("Price Trends & Appreciation", fontsize=16, fontweight="bold")
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "09_price_trends.png"), dpi=150, bbox_inches="tight")
+    plt.close()
+    print("  09_price_trends.png")
+
+
+def plot_value_analysis(df):
+    """Value for money: total price vs area, price per room, efficiency metrics."""
+    valid = df[df["price_m2"].between(1000, 100000) & df["area"].between(10, 200)
+               & df["rooms"].between(1, 6) & df["district"].notna()].copy()
+
+    fig, axes = plt.subplots(2, 2, figsize=(18, 14))
+
+    # Area per room by district
+    ax = axes[0, 0]
+    valid["area_per_room"] = valid["area"] / valid["rooms"]
+    district_apr = valid.groupby("district")["area_per_room"].median().sort_values(ascending=True)
+    colors = plt.cm.RdYlBu(np.linspace(0.15, 0.85, len(district_apr)))
+    ax.barh(range(len(district_apr)), district_apr.values, color=colors, edgecolor="white")
+    ax.set_yticks(range(len(district_apr)))
+    ax.set_yticklabels(district_apr.index)
+    ax.set_xlabel("Median area per room (m²)")
+    ax.set_title("Space efficiency — area per room by district")
+    for i, v in enumerate(district_apr.values):
+        ax.text(v + 0.3, i, f"{v:.1f} m²", va="center", fontsize=9)
+
+    # Price per room by district
+    ax = axes[0, 1]
+    valid["price_per_room"] = valid["price"] / valid["rooms"]
+    district_ppr = valid.groupby("district")["price_per_room"].median().sort_values(ascending=True)
+    colors = plt.cm.RdYlGn_r(np.linspace(0.15, 0.85, len(district_ppr)))
+    ax.barh(range(len(district_ppr)), district_ppr.values, color=colors, edgecolor="white")
+    ax.set_yticks(range(len(district_ppr)))
+    ax.set_yticklabels(district_ppr.index)
+    ax.set_xlabel("Median price per room (PLN)")
+    ax.set_title("Cost per room by district")
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+    for i, v in enumerate(district_ppr.values):
+        ax.text(v + 5000, i, f"{v:,.0f}", va="center", fontsize=9)
+
+    # Area distribution by room count (violin-like)
+    ax = axes[1, 0]
+    room_cats = sorted(valid["rooms"].unique())
+    data_by_room = [valid[valid["rooms"] == r]["area"].values for r in room_cats]
+    parts = ax.violinplot(data_by_room, positions=room_cats, showmedians=True, showextrema=False)
+    for pc in parts["bodies"]:
+        pc.set_facecolor("#2196F3")
+        pc.set_alpha(0.6)
+    ax.set_xlabel("Number of rooms")
+    ax.set_ylabel("Area (m²)")
+    ax.set_title("Area distribution by room count")
+
+    # Scatter: area per room vs price/m² (colored by rooms)
+    ax = axes[1, 1]
+    sample = valid.sample(min(10000, len(valid)), random_state=42)
+    scatter = ax.scatter(sample["area_per_room"], sample["price_m2"],
+                        c=sample["rooms"], cmap="viridis", alpha=0.3, s=5)
+    cbar = fig.colorbar(scatter, ax=ax, shrink=0.6)
+    cbar.set_label("Rooms")
+    ax.set_xlabel("Area per room (m²)")
+    ax.set_ylabel("Price/m² (PLN)")
+    ax.set_title("Space efficiency vs price")
+    ax.set_xlim(5, 60)
+    ax.set_ylim(1000, 30000)
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+
+    plt.suptitle("Value Analysis — Space & Cost Efficiency", fontsize=16, fontweight="bold")
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "10_value_analysis.png"), dpi=150, bbox_inches="tight")
+    plt.close()
+    print("  10_value_analysis.png")
+
+
+def plot_repeat_sales(df):
+    """Repeat sales analysis: same apartment sold multiple times."""
+    valid = df[df["price_m2"].between(1000, 100000) & df["year"].notna()].copy()
+
+    # Identify units by address + area (more complete than lok_id_lokalu)
+    valid["unit_key"] = valid["lok_adres"].astype(str) + "|" + valid["area"].round(1).astype(str)
+    unit_counts = valid.groupby("unit_key").size()
+    repeat_keys = unit_counts[unit_counts > 1].index
+    repeats = valid[valid["unit_key"].isin(repeat_keys)].copy()
+    repeats = repeats.sort_values(["unit_key", "year"])
+
+    print(f"  Repeat sales: {len(repeat_keys):,} units, {len(repeats):,} transactions")
+
+    # Compute per-unit stats
+    pairs = []
+    for key, grp in repeats.groupby("unit_key"):
+        grp = grp.sort_values("year")
+        if len(grp) < 2 or len(grp) > 10:  # skip very high repeat counts (likely common address)
+            continue
+        for i in range(len(grp) - 1):
+            r1, r2 = grp.iloc[i], grp.iloc[i + 1]
+            y1, y2 = r1["year"], r2["year"]
+            if y2 <= y1:
+                continue
+            gap_years = y2 - y1
+            if gap_years < 0.5:
+                continue
+            p1, p2 = r1["price_m2"], r2["price_m2"]
+            pct_change = 100 * (p2 - p1) / p1
+            annual_return = 100 * ((p2 / p1) ** (1 / gap_years) - 1)
+            pairs.append({
+                "year_buy": y1, "year_sell": y2,
+                "gap_years": gap_years,
+                "price_m2_buy": p1, "price_m2_sell": p2,
+                "pct_change": pct_change, "annual_return": annual_return,
+                "area": r1["area"],
+                "district": r1.get("district"),
+            })
+
+    if not pairs:
+        print("  No valid repeat sale pairs found")
+        return
+
+    pdf = pd.DataFrame(pairs)
+    pdf = pdf[pdf["annual_return"].between(-50, 100)]  # trim extreme outliers
+    print(f"  Valid repeat sale pairs: {len(pdf):,}")
+
+    fig, axes = plt.subplots(2, 3, figsize=(22, 14))
+
+    # Holding period distribution
+    ax = axes[0, 0]
+    ax.hist(pdf["gap_years"], bins=np.arange(0.5, 21.5, 1), color="#2196F3",
+            edgecolor="white", alpha=0.7)
+    ax.axvline(pdf["gap_years"].median(), color="red", linestyle="--",
+               label=f'Median: {pdf["gap_years"].median():.1f} yrs')
+    ax.set_xlabel("Years between sales")
+    ax.set_ylabel("Number of pairs")
+    ax.set_title("Holding period distribution")
+    ax.legend()
+
+    # Annual return distribution
+    ax = axes[0, 1]
+    ax.hist(pdf["annual_return"], bins=80, color="#4CAF50", edgecolor="white", alpha=0.7,
+            range=(-30, 50))
+    ax.axvline(pdf["annual_return"].median(), color="red", linestyle="--",
+               label=f'Median: {pdf["annual_return"].median():+.1f}%/yr')
+    ax.axvline(0, color="black", linewidth=0.5)
+    ax.set_xlabel("Annualized return (%)")
+    ax.set_ylabel("Count")
+    ax.set_title("Annual price appreciation (repeat sales)")
+    ax.legend()
+
+    # Return by holding period
+    ax = axes[0, 2]
+    bins = [(1, 2), (2, 3), (3, 5), (5, 8), (8, 12), (12, 20)]
+    labels = ["1-2yr", "2-3yr", "3-5yr", "5-8yr", "8-12yr", "12-20yr"]
+    medians = []
+    for lo, hi in bins:
+        sub = pdf[pdf["gap_years"].between(lo, hi)]
+        medians.append(sub["annual_return"].median() if len(sub) > 10 else 0)
+    colors = ["#4CAF50" if v >= 0 else "#F44336" for v in medians]
+    ax.bar(labels, medians, color=colors, edgecolor="white")
+    ax.set_xlabel("Holding period")
+    ax.set_ylabel("Median annual return (%)")
+    ax.set_title("Return by holding period")
+    for i, v in enumerate(medians):
+        ax.text(i, v + 0.3, f"{v:+.1f}%", ha="center", fontsize=9)
+
+    # Return by buy year
+    ax = axes[1, 0]
+    by_buy = pdf.groupby("year_buy")["annual_return"].median()
+    by_buy = by_buy[by_buy.index >= 2006]
+    colors = ["#4CAF50" if v >= 0 else "#F44336" for v in by_buy.values]
+    ax.bar(by_buy.index, by_buy.values, color=colors, edgecolor="white")
+    ax.set_xlabel("Year of purchase")
+    ax.set_ylabel("Median annual return (%)")
+    ax.set_title("Return by purchase year")
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+
+    # Return by district
+    ax = axes[1, 1]
+    dist_return = pdf[pdf["district"].notna()].groupby("district")["annual_return"].median()
+    dist_return = dist_return.sort_values(ascending=True)
+    colors = ["#4CAF50" if v >= 0 else "#F44336" for v in dist_return.values]
+    ax.barh(range(len(dist_return)), dist_return.values, color=colors, edgecolor="white")
+    ax.set_yticks(range(len(dist_return)))
+    ax.set_yticklabels(dist_return.index)
+    ax.set_xlabel("Median annual return (%)")
+    ax.set_title("Return by district (repeat sales)")
+    for i, v in enumerate(dist_return.values):
+        ax.text(v + 0.2, i, f"{v:+.1f}%", va="center", fontsize=9)
+
+    # % that lost money
+    ax = axes[1, 2]
+    loss_pct = pdf.groupby("year_buy").apply(lambda g: 100 * (g["pct_change"] < 0).mean())
+    loss_pct = loss_pct[loss_pct.index >= 2006]
+    ax.bar(loss_pct.index, loss_pct.values, color="#F44336", edgecolor="white", alpha=0.7)
+    ax.set_xlabel("Year of purchase")
+    ax.set_ylabel("% sold at a loss")
+    ax.set_title("Share of loss-making resales")
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+    for i, (yr, v) in enumerate(zip(loss_pct.index, loss_pct.values)):
+        ax.text(yr, v + 1, f"{v:.0f}%", ha="center", fontsize=8)
+
+    plt.suptitle("Repeat Sales Analysis — Same Apartment Resold", fontsize=16, fontweight="bold")
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "11_repeat_sales.png"), dpi=150, bbox_inches="tight")
+    plt.close()
+    print("  11_repeat_sales.png")
 
 
 def print_outlier_report(df):
@@ -554,6 +822,9 @@ def main():
     plot_outliers(df)
     plot_micro_apartments(df)
     plot_apartments_vs_houses(df)
+    plot_price_trends(df)
+    plot_value_analysis(df)
+    plot_repeat_sales(df)
     print_outlier_report(df)
 
     print(f"\nDone. Charts saved to {OUTPUT_DIR}/")
