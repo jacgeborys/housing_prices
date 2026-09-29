@@ -385,33 +385,50 @@ def plot_price_change_hex(districts):
 
 
 def plot_3d_center(buildings_prices):
-    """3D isometric view of central Warsaw buildings, colored by height."""
+    """3D view of central Warsaw — floors colored by transaction price/m²."""
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
     print("  Loading buildings_3d for 3D rendering...")
     b3d = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="buildings_3d")
 
-    # Center on Palace of Culture (actual Srodmiescie center)
+    # Center on Palace of Culture
     cx, cy = 636953, 486968
     radius = 800
     b3d = b3d.cx[cx - radius:cx + radius, cy - radius:cy + radius].copy()
+    b3d = b3d.reset_index(drop=True)
     print(f"  Buildings in view: {len(b3d):,}")
 
-    # Simplify geometries for faster rendering
+    # Build per-building, per-floor price lookup
+    print("  Joining transactions to buildings by floor...")
+    txn = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="transactions")
+    txn = txn.cx[cx - radius:cx + radius, cy - radius:cy + radius]
+    valid_txn = txn[txn["floor"].notna() & txn["price_m2"].between(1000, 100000)].copy()
+    valid_txn["floor_int"] = valid_txn["floor"].astype(int)
+    joined = gpd.sjoin(valid_txn[["geometry", "floor_int", "price_m2"]],
+                       b3d[["geometry"]], how="inner", predicate="within")
+    # Median price per building per floor
+    floor_prices = joined.groupby(["index_right", "floor_int"])["price_m2"].median()
+    # Also get building-level median for floors without specific data
+    bldg_prices = joined.groupby("index_right")["price_m2"].median()
+    print(f"  Buildings with price data: {len(bldg_prices):,}, "
+          f"floor-level combos: {len(floor_prices):,}")
+
+    # Simplify geometries
     b3d["geometry"] = b3d.geometry.simplify(1.0)
 
-    FLOOR_H = 3.0  # meters per floor
+    FLOOR_H = 3.0
+    NEUTRAL_COLOR = (0.82, 0.82, 0.80, 0.7)  # light gray for no-data buildings
+    NEUTRAL_WALL = (0.72, 0.72, 0.70, 0.6)
 
-    # Floor color palette — high-contrast alternating bands
-    floor_colors = [
-        (0.92, 0.88, 0.78),  # warm sand
-        (0.55, 0.62, 0.72),  # cool blue-gray
-    ]
+    # Price colormap: green (cheap) -> yellow -> red (expensive)
+    price_cmap = plt.cm.RdYlGn_r
+    price_vmin, price_vmax = 5000, 20000
+    price_norm = mcolors.Normalize(vmin=price_vmin, vmax=price_vmax)
 
     # View angle
-    elev, azim = 40, -50
+    elev, azim = 35, -50
 
-    # Sort buildings back-to-front (painter's algorithm)
+    # Sort back-to-front
     angle_rad = np.radians(azim)
     b3d["_cx"] = b3d.geometry.centroid.x - cx
     b3d["_cy"] = b3d.geometry.centroid.y - cy
@@ -421,9 +438,9 @@ def plot_3d_center(buildings_prices):
     fig = plt.figure(figsize=(22, 16))
     ax = fig.add_subplot(111, projection="3d")
 
-    max_display_h = 200  # clip display height
+    max_display_h = 240
 
-    for _, row in b3d.iterrows():
+    for idx, row in b3d.iterrows():
         geom = row.geometry
         h = min(row["height_m"], max_display_h)
         min_h = row["min_height_m"]
@@ -437,6 +454,7 @@ def plot_3d_center(buildings_prices):
         else:
             continue
 
+        has_prices = idx in bldg_prices.index
         n_floors = max(1, int(round((h - min_h) / FLOOR_H)))
 
         for poly in parts:
@@ -451,65 +469,90 @@ def plot_3d_center(buildings_prices):
             building_colors = []
             edge_colors = []
 
-            # Render each floor as a separate band
             for floor_i in range(n_floors):
                 z_bot = min_h + floor_i * FLOOR_H
                 z_top = min(min_h + (floor_i + 1) * FLOOR_H, h)
+                floor_num = floor_i  # 0-based
 
-                base_color = floor_colors[floor_i % 2]
-                # No height darkening — keep floor bands clearly distinct
-                wc = base_color + (0.92,)
+                if has_prices:
+                    # Look up price for this specific floor, fallback to building median
+                    if (idx, floor_num) in floor_prices.index:
+                        price = floor_prices[(idx, floor_num)]
+                    elif (idx, floor_num + 1) in floor_prices.index:
+                        price = floor_prices[(idx, floor_num + 1)]
+                    else:
+                        price = bldg_prices[idx]
+                    rgba = price_cmap(price_norm(price))
+                    wc = rgba[:3] + (0.92,)
+                    wall_darker = tuple(c * 0.8 for c in rgba[:3]) + (0.88,)
+                else:
+                    wc = NEUTRAL_COLOR
+                    wall_darker = NEUTRAL_WALL
 
-                # Floor separator edge (thin dark line between floors)
-                floor_edge = (0.3, 0.3, 0.3, 0.4)
+                floor_edge = (0.25, 0.25, 0.25, 0.35)
 
-                # Side walls for this floor band
                 for i in range(len(xs) - 1):
                     wall = [
                         (xs[i], ys[i], z_bot), (xs[i + 1], ys[i + 1], z_bot),
                         (xs[i + 1], ys[i + 1], z_top), (xs[i], ys[i], z_top),
                     ]
                     building_polys.append(wall)
-                    building_colors.append(wc)
+                    building_colors.append(wall_darker)
                     edge_colors.append(floor_edge)
 
-            # Top face (roof) — slightly different color
-            roof_color = (0.6, 0.55, 0.50, 0.95)
+            # Roof
+            if has_prices:
+                roof_rgba = price_cmap(price_norm(bldg_prices[idx]))
+                roof_color = roof_rgba[:3] + (0.95,)
+            else:
+                roof_color = (0.75, 0.75, 0.73, 0.8)
             top = list(zip(xs, ys, [h] * len(xs)))
             building_polys.append(top)
             building_colors.append(roof_color)
-            edge_colors.append((0.3, 0.3, 0.3, 0.3))
+            edge_colors.append((0.2, 0.2, 0.2, 0.3))
 
             coll = Poly3DCollection(building_polys, facecolors=building_colors,
                                     edgecolors=edge_colors,
-                                    linewidths=0.3, zsort="min")
+                                    linewidths=0.25, zsort="min")
             ax.add_collection3d(coll)
 
-    # Set view
+    # Set view — true to scale
     ax.set_xlim(-radius, radius)
     ax.set_ylim(-radius, radius)
     ax.set_zlim(0, max_display_h)
     ax.view_init(elev=elev, azim=azim)
-    ax.set_box_aspect([1, 1, 0.5])
+    # Real scale: height / width ratio
+    z_ratio = max_display_h / (2 * radius)
+    ax.set_box_aspect([1, 1, z_ratio])
 
     ax.set_xlabel("East (m)", fontsize=10, labelpad=10)
     ax.set_ylabel("North (m)", fontsize=10, labelpad=10)
     ax.set_zlabel("Height (m)", fontsize=10, labelpad=5)
 
-    # Floor legend
-    from matplotlib.patches import Patch
+    # Colorbar for prices
+    sm = plt.cm.ScalarMappable(cmap=price_cmap, norm=price_norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax, fraction=0.025, pad=0.08, shrink=0.5)
+    cbar.set_label("Price per m² (PLN)", fontsize=12)
+    cbar.ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+
+    # Legend
     legend_elements = [
-        Patch(facecolor=floor_colors[0], edgecolor="gray", label="Odd floors"),
-        Patch(facecolor=floor_colors[1], edgecolor="gray", label="Even floors"),
-        Patch(facecolor=(0.6, 0.55, 0.50), edgecolor="gray", label="Roof"),
+        Patch(facecolor=price_cmap(price_norm(5000))[:3], edgecolor="gray",
+              label=f"Cheap (<{price_vmin:,} PLN/m²)"),
+        Patch(facecolor=price_cmap(price_norm(12000))[:3], edgecolor="gray",
+              label="Mid-range"),
+        Patch(facecolor=price_cmap(price_norm(20000))[:3], edgecolor="gray",
+              label=f"Expensive (>{price_vmax:,} PLN/m²)"),
+        Patch(facecolor=NEUTRAL_COLOR[:3], edgecolor="gray",
+              label="No price data"),
     ]
-    ax.legend(handles=legend_elements, loc="upper left", fontsize=10)
+    ax.legend(handles=legend_elements, loc="upper left", fontsize=9)
 
-    ax.set_title("Central Warsaw — 3D Building Heights with Floor Bands\n"
-                 "(centered on Palace of Culture, 800m radius)",
-                 fontsize=15, fontweight="bold", pad=20)
+    ax.set_title("Central Warsaw — Floor-Level Prices (3D)\n"
+                 "Each floor band colored by median transaction price/m²",
+                 fontsize=14, fontweight="bold", pad=20)
 
-    # Clean panes
     ax.xaxis.pane.fill = False
     ax.yaxis.pane.fill = False
     ax.zaxis.pane.fill = False
