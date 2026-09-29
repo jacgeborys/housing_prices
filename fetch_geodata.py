@@ -48,6 +48,8 @@ TARGET_CRS = "EPSG:2180"
 OSM_BUILDINGS_GPKG = os.path.join(QGIS_ROOT, "osm_basemap", "warsaw", "buildings.gpkg")
 BDOT_SHP = os.path.join(QGIS_ROOT, "bdot_basemap", "Warszawa",
                         "PL.PZGiK.330.1465__OT_BUBD_A.shp")
+BDOT_ADJA_SHP = os.path.join(QGIS_ROOT, "bdot_basemap", "Warszawa",
+                             "PL.PZGiK.330.1465__OT_ADJA_A.shp")
 ADDR_GPKG = os.path.join(QGIS_ROOT, "punkty_adresowe", "output",
                          "punkty_adresowe_warszawa.gpkg")
 
@@ -582,6 +584,33 @@ def extract_addresses(force=False):
     return gdf
 
 
+def extract_districts(force=False):
+    """Extract Warsaw district boundaries from BDOT ADJA_A shapefile."""
+    out_path = os.path.join(DATA_DIR, "districts.gpkg")
+    if os.path.exists(out_path) and not force:
+        gdf = gpd.read_file(out_path)
+        print(f"  Extracted districts: {len(gdf):,} (cached)")
+        return gdf
+
+    if not os.path.exists(BDOT_ADJA_SHP):
+        print(f"  Source not found: {BDOT_ADJA_SHP}")
+        return None
+
+    print(f"  Reading {BDOT_ADJA_SHP}...")
+    gdf = gpd.read_file(BDOT_ADJA_SHP)
+
+    # Filter to dzielnica (district) level only
+    gdf = gdf[gdf["RODZAJ"] == "dzielnica"].copy()
+    gdf = gdf.rename(columns={"NAZWA": "district", "TERYT": "teryt"})
+    gdf = gdf[["district", "teryt", "geometry"]].copy()
+    gdf = gdf.to_crs(TARGET_CRS)
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    gdf.to_file(out_path, driver="GPKG", layer="districts")
+    print(f"  -> {out_path} ({len(gdf):,} districts)")
+    return gdf
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -601,6 +630,11 @@ SOURCES = {
         "label": "Address points",
         "fetch": fetch_address_points,
         "extract": extract_addresses,
+    },
+    "districts": {
+        "label": "District boundaries",
+        "fetch": lambda force=False: None,  # no fetch needed, comes with BDOT
+        "extract": extract_districts,
     },
 }
 

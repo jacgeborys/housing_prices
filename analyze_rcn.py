@@ -66,13 +66,13 @@ def load_data():
     is_ground = res["nier_prawo"] == "wlasnoscNieruchomosciGruntowej"
     res.loc[is_building | is_ground, "prop_type"] = "house"
 
-    # Assign districts via nearest address point
-    addr = gpd.read_file("data/address_points.gpkg")
-    print("  Assigning districts via nearest address point...")
+    # Assign districts via official BDOT boundaries
+    districts = gpd.read_file("data/districts.gpkg")
+    print("  Assigning districts via BDOT boundaries...")
     res_pts = res[["geometry"]].copy()
-    nearest = gpd.sjoin_nearest(res_pts, addr[["geometry", "district"]], how="left", max_distance=500)
-    nearest = nearest[~nearest.index.duplicated(keep="first")]
-    res["district"] = nearest["district"]
+    joined = gpd.sjoin(res_pts, districts[["geometry", "district"]], how="left", predicate="within")
+    joined = joined[~joined.index.duplicated(keep="first")]
+    res["district"] = joined["district"]
 
     print(f"  Residential transactions: {len(res):,}")
     print(f"  With district: {res['district'].notna().sum():,}")

@@ -32,13 +32,10 @@ def load_data():
     print("Loading data...")
     buildings_all = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="buildings_all")
     buildings_prices = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="buildings_prices")
-    addr = gpd.read_file("data/address_points.gpkg")
 
-    # Build district polygons from address points (convex hull)
-    print("  Building district boundaries...")
-    dissolved = addr.dissolve(by="district")
-    hulls = dissolved.convex_hull
-    districts = gpd.GeoDataFrame({"district": hulls.index, "geometry": hulls.values}, crs=addr.crs)
+    # Official district boundaries from BDOT ADJA_A
+    print("  Loading district boundaries (BDOT)...")
+    districts = gpd.read_file("data/districts.gpkg")
 
     # Compute district median prices from transactions
     txn = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="transactions")
