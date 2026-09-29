@@ -72,8 +72,8 @@ def load_transactions():
 
     # Market type
     gdf["market"] = gdf["tran_rodzaj_rynku"].map({
-        "pierwotny": "primary",
-        "wtorny": "secondary",
+        "rynekPierwotny": "primary",
+        "rynekWtorny": "secondary",
     })
 
     # Normalize address for matching

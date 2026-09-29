@@ -32,24 +32,14 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 GAP_YEARS = range(2017, 2021)
 
 
-def _shade_gap(ax, ymin=None, ymax=None):
+def _shade_gap(ax):
     """Add gray shading over GAP_YEARS on a year axis."""
-    lo, hi = min(GAP_YEARS) - 0.5, max(GAP_YEARS) + 0.5
-    if ymin is None or ymax is None:
-        ymin, ymax = ax.get_ylim()
-    ax.axvspan(lo, hi, alpha=0.15, color="#888", zorder=0)
-    ax.text((lo + hi) / 2, ymax * 0.95, "incomplete\ndata",
-            ha="center", va="top", fontsize=8, color="#666", style="italic")
+    style.shade_gap(ax, min(GAP_YEARS) - 0.5, max(GAP_YEARS) + 0.5, "incomplete\ndata")
 
 
-# Style
-plt.rcParams.update({
-    "figure.facecolor": "white",
-    "axes.facecolor": "#f8f8f8",
-    "axes.grid": True,
-    "grid.alpha": 0.3,
-    "font.size": 11,
-})
+import style
+
+style.apply()
 
 
 def load_data():
@@ -233,9 +223,12 @@ def plot_districts(df):
 
     fig, axes = plt.subplots(2, 2, figsize=(18, 14))
 
-    # Median price/m² — sorted by price
+    # Median price/m² — recent sales only: pooling 2006-26 mixes eras and
+    # flatters districts that trade a lot now (see price_index.py for the
+    # fully quality-adjusted ranking)
     ax = axes[0, 0]
-    med_prices = valid.groupby("district")["price_m2"].median()
+    recent = valid[valid["year"].between(2024, 2026)]
+    med_prices = recent.groupby("district")["price_m2"].median()
     n = len(med_prices)
     price_sorted = med_prices.sort_values(ascending=True)
     colors_price = plt.cm.RdYlGn_r(np.linspace(0.15, 0.85, n))
@@ -243,7 +236,7 @@ def plot_districts(df):
     ax.set_yticks(range(n))
     ax.set_yticklabels(price_sorted.index)
     ax.set_xlabel("Median price/m² (PLN)")
-    ax.set_title("Median price per m² by district")
+    ax.set_title("Median price per m² by district, 2024–26 sales")
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
     for i, v in enumerate(price_sorted.values):
         ax.text(v + 100, i, f"{v:,.0f}", va="center", fontsize=9)
@@ -531,6 +524,10 @@ def plot_price_trends(df):
     ax = axes[0, 1]
     yearly_med = trend_valid.groupby("year")["price_m2"].median()
     yoy = yearly_med.pct_change() * 100
+    # Across the 2017-20 gap pct_change() spans several years: annualise it
+    span = pd.Series(yearly_med.index, index=yearly_med.index).diff()
+    multi = span > 1
+    yoy[multi] = 100 * ((1 + yoy[multi] / 100) ** (1 / span[multi]) - 1)
     colors = ["#4CAF50" if v >= 0 else "#F44336" for v in yoy.values]
     ax.bar(yoy.index, yoy.values, color=colors, edgecolor="white")
     ax.axhline(0, color="black", linewidth=0.5)
@@ -541,7 +538,8 @@ def plot_price_trends(df):
     ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
     for i, (yr, v) in enumerate(zip(yoy.index, yoy.values)):
         if not np.isnan(v):
-            ax.text(yr, v + (1 if v >= 0 else -2), f"{v:+.1f}%", ha="center", fontsize=8)
+            lab = f"{v:+.1f}%/yr\n{int(yr - span[yr])}→{int(yr)}" if multi[yr] else f"{v:+.1f}%"
+            ax.text(yr, v + (1 if v >= 0 else -2), lab, ha="center", fontsize=8)
 
     # Price appreciation 2014-16 vs 2024-26 by district (skip gap years entirely)
     ax = axes[1, 0]

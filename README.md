@@ -28,10 +28,41 @@ analyze_rcn.py        ->  output/analysis/01-11 PNG charts
                             market segments, outliers, micro-apartments,
                             apartments vs houses, price trends, value analysis,
                             repeat sales (52K resale pairs)
-make_map.py           ->  output/analysis/map_01-06 PNG maps
+price_index.py        ->  output/price_model.gpkg
+                            layer: transactions_adj (258K apartment sales + price in 2025 PLN)
+                            layer: building_value (20.8K buildings, hedonic "typical flat" value)
+                      ->  output/analysis/price_index_quarterly.csv, district_index_annual.csv,
+                          model_coefficients.csv
+                      ->  output/analysis/12-15 PNG charts
+                            quality-adjusted index (nominal + real), adjusted district
+                            ranking + district indices, floor premium, size & new-build effects
+make_map.py           ->  output/analysis/map_01-06, map_08 PNG maps
                             city overview, district choropleth, center zoom,
-                            price/density hexbin, apartment sizes, price change
+                            price/density hexbin, apartment sizes, growth vs city,
+                            building-level hedonic value
+make_3d.py            ->  output/analysis/map_07_3d_center.png (static, 900 m around PKiN)
+                      ->  output/web/warsaw_3d.html (interactive deck.gl, 3 km around PKiN)
+style.py                  shared chart theme, palettes, GUS CPI series
+web/warsaw_3d_template.html   HTML/JS template the 3D scene data is injected into
 ```
+
+Run order after fetching: `build_viz.py` -> `price_index.py` -> `analyze_rcn.py`, `make_map.py`, `make_3d.py`.
+`price_index.py` caches its input in `output/cache/model_input.pkl`; delete it after refreshing RCN data.
+
+### Hedonic model (`price_index.py`)
+
+`log(price/m²) = building FE + quarter FE + area bin + rooms + floor bin × height class + top floor × height class + primary × era`,
+estimated by within-building demeaning, SEs clustered by building (transactions outside a footprint use a 100 m grid cell).
+Within-R² 0.65, residual SD 0.18. Quarters with < 300 sales (the 2017–20 RCN gap) are not estimated; the index is
+interpolated across them. Building values are empirical-Bayes shrunk toward the district mean. Real prices use
+GUS annual CPI (hardcoded in `style.py`; 2025–26 values are estimates — update when GUS publishes).
+
+### 3D scenes (`make_3d.py`)
+
+RCN floor numbers start at 1 = ground floor. Every building:part inherits the floor grid of its parent footprint
+(so floors are counted from the ground), storey height = height / max(height / 3 m, highest floor sold).
+Each storey with sales is coloured by the median time-adjusted price (2025 PLN). The web scene uses no tile
+server: streets, rail, parks and the Vistula come from `D:/QGIS/osm_basemap/warsaw/*.gpkg`.
 
 ### Two-tier data architecture
 
@@ -70,8 +101,16 @@ python build_viz.py
 - BDOT buildings: 155K auto-downloadable (GUGiK server data from Feb 2024)
 - Address points: 127K fetched via district-partitioned WFS (fixed broken pagination)
 - Visualization: `build_viz.py` matches 94.9% of residential transactions to OSM buildings (spatial + buffer + address), BDOT fallback for remainder. 26.4K buildings enriched with price stats.
-- Analysis: 11 chart sets + 6 spatial maps covering price distribution, district comparisons, market segments, outliers, micro-apartments, apartment/house split, price trends (+42% YoY spike in 2018, +93% appreciation in Żoliborz), value/efficiency analysis, and repeat sales (52K resale pairs, median +6.1%/yr return)
-- District boundaries derived from convex hull of address points (not official admin boundaries)
+- Analysis: 15 chart sets + 8 maps. All charts share `style.py` (magma-based price ramp, blue↔red diverging for change).
+- Key findings (hedonic model, 2026-09-29):
+  - A constant-quality flat costs 2.2× its 2013 price nominally, but in real terms is only back to the 2008 bubble peak (~17K PLN/m² in 2025 PLN).
+  - Pooled raw medians mis-rank districts: Włochy looks #2 but is #9 once date/flat mix is controlled; Wilanów and Żoliborz rise sharply (Żoliborz #2 at ~19.5K).
+  - Within the same building: ground floors −2% vs floors 2–3; tower floors 18+ ≈ +20%; being the top floor has no measurable effect.
+  - Studios <25 m² carry +21%/m² vs 45–60 m²; developer (primary) deeds record 18–23% below resales in the same building (deed price agreed at preliminary contract for an unfinished flat).
+- 3D: static render + interactive deck.gl scene (13.6K priced storeys in ~3K buildings within 3 km of PKiN).
+- District boundaries: official BDOT ADJA_A (`data/districts.gpkg`).
+- Fixed 2026-09-29: district ranking mixed eras; "YoY +43%" was a 5-year change across the gap; map_06 change panel was a copy of panel 2; 3D floors were off by one and parts counted from their own base; `build_viz.py` market mapping never matched (`pct_primary` always 0 — re-run `build_viz.py` to refresh that column).
+- Not yet done: charts 01–11 still use their original per-chart colours inside the shared theme.
 
 ## Notes
 

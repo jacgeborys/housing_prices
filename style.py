@@ -85,7 +85,8 @@ def header(fig, title, subtitle=None, y=0.995):
     """Left-aligned figure title with a takeaway subtitle underneath."""
     fig.text(0.01, y, title, fontsize=17, fontweight="bold", color=INK, va="top", ha="left")
     if subtitle:
-        fig.text(0.01, y - 0.032, subtitle, fontsize=11.5, color=INK_2, va="top", ha="left")
+        gap = 0.36 / fig.get_figheight()      # constant ~0.36 in, whatever the figure size
+        fig.text(0.01, y - gap, subtitle, fontsize=11.5, color=INK_2, va="top", ha="left")
 
 
 def footer(fig, text=SOURCE, y=0.005):

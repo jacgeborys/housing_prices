@@ -5,6 +5,12 @@ Maps:
   1. City-wide overview: buildings colored by median price/m²
   2. District median prices choropleth
   3. Center zoom: detailed building-level prices
+  4. Price / transaction density hexbins
+  5. Apartment size hexbins
+  6. 2014-16 vs 2024-26 prices + growth relative to the city
+  8. Building-level hedonic value (needs price_index.py)
+
+The 3D renders live in make_3d.py.
 
 Output: output/analysis/map_*.png
 """
@@ -17,15 +23,16 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.ticker as mticker
 import numpy as np
-from matplotlib.patches import Patch
-from shapely.ops import unary_union
 
 warnings.filterwarnings("ignore")
 
 OUTPUT_DIR = os.path.join("output", "analysis")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-PRICE_CMAP = plt.cm.RdYlGn_r  # red=expensive, green=cheap
+import style
+
+style.apply()
+PRICE_CMAP = style.PRICE_CMAP
 
 
 def load_data():
@@ -79,7 +86,7 @@ def plot_city_overview(buildings_all, buildings_prices, districts):
             label += f"\n{med:,.0f} PLN/m²"
         ax.annotate(label, xy=(centroid.x, centroid.y), fontsize=8, fontweight="bold",
                     ha="center", va="center", color="#222",
-                    bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.75, edgecolor="none"))
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor=style.SURFACE, alpha=0.75, edgecolor="none"))
 
     # Colorbar
     sm = plt.cm.ScalarMappable(cmap=PRICE_CMAP, norm=norm)
@@ -94,7 +101,7 @@ def plot_city_overview(buildings_all, buildings_prices, districts):
 
     fig.tight_layout()
     path = os.path.join(OUTPUT_DIR, "map_01_city_overview.png")
-    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor=style.SURFACE)
     plt.close(fig)
     print(f"  {path}")
 
@@ -118,7 +125,7 @@ def plot_district_choropleth(districts):
         ax.annotate(
             f"{row['district']}\n{row['median_price']:,.0f} PLN/m²\n({row['count']:,} txn)",
             xy=(c.x, c.y), fontsize=9, fontweight="bold", ha="center", va="center",
-            bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="none"),
+            bbox=dict(boxstyle="round,pad=0.3", facecolor=style.SURFACE, alpha=0.8, edgecolor="none"),
         )
 
     sm = plt.cm.ScalarMappable(cmap=PRICE_CMAP, norm=norm)
@@ -133,7 +140,7 @@ def plot_district_choropleth(districts):
 
     fig.tight_layout()
     path = os.path.join(OUTPUT_DIR, "map_02_districts.png")
-    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor=style.SURFACE)
     plt.close(fig)
     print(f"  {path}")
 
@@ -176,7 +183,7 @@ def plot_center_zoom(buildings_all, buildings_prices, districts):
             ax.annotate(
                 row["district"], xy=(c.x, c.y), fontsize=11, fontweight="bold",
                 ha="center", va="center", color="#222",
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.7, edgecolor="none"),
+                bbox=dict(boxstyle="round,pad=0.3", facecolor=style.SURFACE, alpha=0.7, edgecolor="none"),
             )
 
     sm = plt.cm.ScalarMappable(cmap=PRICE_CMAP, norm=norm)
@@ -191,7 +198,7 @@ def plot_center_zoom(buildings_all, buildings_prices, districts):
 
     fig.tight_layout()
     path = os.path.join(OUTPUT_DIR, "map_03_center_zoom.png")
-    fig.savefig(path, dpi=200, bbox_inches="tight", facecolor="white")
+    fig.savefig(path, dpi=200, bbox_inches="tight", facecolor=style.SURFACE)
     plt.close(fig)
     print(f"  {path}")
 
@@ -204,7 +211,7 @@ def plot_price_hexbin(districts):
     fig, axes = plt.subplots(1, 2, figsize=(24, 16))
 
     for i, (col, title, cmap) in enumerate([
-        ("price_m2", "Median Price/m² (PLN)", "RdYlGn_r"),
+        ("price_m2", "Median Price/m² (PLN)", style.PRICE_CMAP),
         (None, "Transaction Density", "YlOrRd"),
     ]):
         ax = axes[i]
@@ -230,7 +237,7 @@ def plot_price_hexbin(districts):
             c_pt = row.geometry.centroid
             ax.annotate(row["district"], xy=(c_pt.x, c_pt.y), fontsize=7,
                         fontweight="bold", ha="center", va="center",
-                        bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.7, edgecolor="none"))
+                        bbox=dict(boxstyle="round,pad=0.2", facecolor=style.SURFACE, alpha=0.7, edgecolor="none"))
 
         ax.set_title(title, fontsize=14, fontweight="bold")
         ax.set_axis_off()
@@ -239,7 +246,7 @@ def plot_price_hexbin(districts):
                  fontsize=16, fontweight="bold", y=0.98)
     fig.tight_layout()
     path = os.path.join(OUTPUT_DIR, "map_04_hexbin.png")
-    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor=style.SURFACE)
     plt.close(fig)
     print(f"  {path}")
 
@@ -279,7 +286,7 @@ def plot_apartment_size_hex(districts):
             c_pt = row.geometry.centroid
             ax.annotate(row["district"], xy=(c_pt.x, c_pt.y), fontsize=7,
                         fontweight="bold", ha="center", va="center",
-                        bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.7, edgecolor="none"))
+                        bbox=dict(boxstyle="round,pad=0.2", facecolor=style.SURFACE, alpha=0.7, edgecolor="none"))
 
         ax.set_title(title, fontsize=14, fontweight="bold")
         ax.set_axis_off()
@@ -288,291 +295,123 @@ def plot_apartment_size_hex(districts):
                  fontsize=16, fontweight="bold", y=0.98)
     fig.tight_layout()
     path = os.path.join(OUTPUT_DIR, "map_05_apartment_sizes.png")
-    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor=style.SURFACE)
     plt.close(fig)
     print(f"  {path}")
+
+
+def _hex_label_districts(ax, districts, fontsize=7.5):
+    for _, row in districts.iterrows():
+        c_pt = row.geometry.representative_point()
+        ax.annotate(row["district"], xy=(c_pt.x, c_pt.y), fontsize=fontsize, color=style.INK_2,
+                    ha="center", va="center",
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor=style.SURFACE, alpha=0.75, edgecolor="none"))
 
 
 def plot_price_change_hex(districts):
-    """Hexbin map showing price appreciation: recent (2023-2026) vs older (2018-2022)."""
+    """Hexbin maps: 2014-16 vs 2024-26 medians, and where prices grew faster or
+    slower than the city as a whole."""
     txn = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="transactions")
     valid = txn[txn["price_m2"].between(1000, 100000) & txn["year"].notna()].copy()
+    valid["period"] = np.select([valid["year"].between(2014, 2016), valid["year"].between(2024, 2026)],
+                                ["old", "new"], "")
+    valid = valid[valid["period"] != ""].reset_index(drop=True)
+    old, new = valid[valid["period"] == "old"], valid[valid["period"] == "new"]
+    city_chg = 100 * (new["price_m2"].median() / old["price_m2"].median() - 1)
 
-    old = valid[valid["year"].between(2018, 2022)]
-    new = valid[valid["year"].between(2023, 2026)]
+    xmin, ymin, xmax, ymax = districts.total_bounds
+    extent = (xmin - 3000, xmax + 3000, ymin - 3000, ymax + 3000)
+    grid = 55
 
-    fig, axes = plt.subplots(1, 3, figsize=(30, 14))
+    fig, axes = plt.subplots(1, 3, figsize=(27, 11.5))
+    fig.subplots_adjust(top=0.9, bottom=0.03, left=0.01, right=0.97, wspace=0.04)
+    norm = mcolors.Normalize(vmin=4000, vmax=20000)
 
-    # Old prices
-    ax = axes[0]
-    districts.plot(ax=ax, facecolor="#f0f0f0", edgecolor="#999", linewidth=1)
-    norm = mcolors.Normalize(vmin=4000, vmax=18000)
-    hb = ax.hexbin(old.geometry.x, old.geometry.y, C=old["price_m2"].values,
-                   gridsize=60, cmap="RdYlGn_r", reduce_C_function=np.median, mincnt=3)
-    hb.set_norm(norm)
-    cbar = fig.colorbar(hb, ax=ax, fraction=0.025, pad=0.02, shrink=0.5)
-    cbar.set_label("PLN/m²", fontsize=11)
-    cbar.ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
-    ax.set_title("2018-2022 Median Price/m²", fontsize=14, fontweight="bold")
-    ax.set_axis_off()
+    for ax, sub, title in [(axes[0], old, "Median price/m², 2014–16"),
+                           (axes[1], new, "Median price/m², 2024–26")]:
+        districts.plot(ax=ax, facecolor=style.SURFACE, edgecolor=style.AXIS, linewidth=0.8)
+        hb = ax.hexbin(sub.geometry.x, sub.geometry.y, C=sub["price_m2"].values, gridsize=grid,
+                       extent=extent, cmap=style.PRICE_CMAP, norm=norm,
+                       reduce_C_function=np.median, mincnt=5, linewidths=0.2, edgecolors=style.SURFACE)
+        style.colorbar(fig, hb, ax, "PLN/m²", shrink=0.45)
+        _hex_label_districts(ax, districts)
+        ax.set_title(title, fontsize=14)
+        ax.set_axis_off()
 
-    # New prices
-    ax = axes[1]
-    districts.plot(ax=ax, facecolor="#f0f0f0", edgecolor="#999", linewidth=1)
-    hb = ax.hexbin(new.geometry.x, new.geometry.y, C=new["price_m2"].values,
-                   gridsize=60, cmap="RdYlGn_r", reduce_C_function=np.median, mincnt=3)
-    hb.set_norm(norm)
-    cbar = fig.colorbar(hb, ax=ax, fraction=0.025, pad=0.02, shrink=0.5)
-    cbar.set_label("PLN/m²", fontsize=11)
-    cbar.ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
-    ax.set_title("2023-2026 Median Price/m²", fontsize=14, fontweight="bold")
-    ax.set_axis_off()
+    # Change per hex: bin row ids, then compare the two periods inside each cell
+    period = valid["period"].values
+    price = valid["price_m2"].values
 
-    # % change map — join hex grids
+    def rel_change(ids):
+        ids = np.asarray(ids, dtype=int)
+        o, n = price[ids][period[ids] == "old"], price[ids][period[ids] == "new"]
+        if len(o) < 5 or len(n) < 5:
+            return np.nan
+        return 100 * (np.median(n) / np.median(o) - 1) - city_chg
+
     ax = axes[2]
-    districts.plot(ax=ax, facecolor="#f0f0f0", edgecolor="#999", linewidth=1)
-    # Compute change per hex cell by using both datasets on same grid
-    from matplotlib.collections import PolyCollection
-    # Use a simpler approach: compute the change per hex
-    all_x = valid.geometry.x.values
-    all_y = valid.geometry.y.values
-    all_c = valid["price_m2"].values
-    all_period = np.where(valid["year"].between(2023, 2026), "new", "old")
+    districts.plot(ax=ax, facecolor=style.SURFACE, edgecolor=style.AXIS, linewidth=0.8)
+    hb = ax.hexbin(valid.geometry.x, valid.geometry.y, C=np.arange(len(valid)), gridsize=grid,
+                   extent=extent, cmap=style.DIV_CMAP, reduce_C_function=rel_change,
+                   mincnt=10, linewidths=0.2, edgecolors=style.SURFACE)
+    hb.set_array(np.ma.masked_invalid(hb.get_array()))
+    hb.set_norm(mcolors.TwoSlopeNorm(vcenter=0, vmin=-60, vmax=60))
+    style.colorbar(fig, hb, ax, f"pp vs city (+{city_chg:.0f}%)", fmt="pct", shrink=0.45)
 
-    def pct_change(values):
-        """Compute % change between old and new prices in this hex."""
-        # This doesn't know periods, so use a different approach
-        return np.median(values)
-
-    # Plot recent price change indicator
-    hb = ax.hexbin(new.geometry.x, new.geometry.y, C=new["price_m2"].values,
-                   gridsize=60, cmap="RdYlGn_r", reduce_C_function=np.median, mincnt=3)
-    hb.set_norm(norm)
-
-    # Overlay labels
     for _, row in districts.iterrows():
-        c_pt = row.geometry.centroid
-        # Compute district-level change
-        d_old = old[old.geometry.within(row.geometry)]["price_m2"].median()
-        d_new = new[new.geometry.within(row.geometry)]["price_m2"].median()
-        if d_old and d_old > 0 and d_new and d_new > 0:
-            chg = 100 * (d_new - d_old) / d_old
-            label = f"{row['district']}\n+{chg:.0f}%" if chg > 0 else f"{row['district']}\n{chg:.0f}%"
-        else:
-            label = row["district"]
-        ax.annotate(label, xy=(c_pt.x, c_pt.y), fontsize=8,
-                    fontweight="bold", ha="center", va="center",
-                    bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8, edgecolor="none"))
-
-    ax.set_title("Price Change 2018-22 → 2023-26", fontsize=14, fontweight="bold")
+        c_pt = row.geometry.representative_point()
+        inside_old = old[old.geometry.within(row.geometry)]["price_m2"].median()
+        inside_new = new[new.geometry.within(row.geometry)]["price_m2"].median()
+        label = row["district"]
+        if inside_old > 0 and inside_new > 0:
+            label += f"\n{100 * (inside_new / inside_old - 1):+.0f}%"
+        ax.annotate(label, xy=(c_pt.x, c_pt.y), fontsize=7.5, ha="center", va="center", color=style.INK,
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor=style.SURFACE, alpha=0.8, edgecolor="none"))
+    ax.set_title("Growth vs the city average", fontsize=14)
     ax.set_axis_off()
 
-    # Also add district labels to first two panels
-    for ax_i in axes[:2]:
-        for _, row in districts.iterrows():
-            c_pt = row.geometry.centroid
-            ax_i.annotate(row["district"], xy=(c_pt.x, c_pt.y), fontsize=7,
-                          fontweight="bold", ha="center", va="center",
-                          bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.7, edgecolor="none"))
-
-    fig.suptitle("Warsaw Housing Prices — Before vs After 2023",
-                 fontsize=16, fontweight="bold", y=0.98)
-    fig.tight_layout()
+    style.header(fig, "Where did prices grow fastest?",
+                 f"City-wide the median price per m² rose {city_chg:+.0f}% between 2014–16 and 2024–26. "
+                 f"Red cells outpaced that, blue cells lagged (raw medians — the mix of flats sold also shifts).",
+                 y=0.985)
+    style.footer(fig)
     path = os.path.join(OUTPUT_DIR, "map_06_price_change.png")
-    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(path, dpi=150)
     plt.close(fig)
     print(f"  {path}")
 
 
-def plot_3d_center(buildings_prices):
-    """3D view of central Warsaw — floors colored by transaction price/m²."""
-    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
-    print("  Loading buildings_3d for 3D rendering...")
-    b3d = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="buildings_3d")
-
-    # Center on Palace of Culture
-    cx, cy = 636953, 486968
-    radius = 800
-    b3d = b3d.cx[cx - radius:cx + radius, cy - radius:cy + radius].copy()
-    b3d = b3d.reset_index(drop=True)
-    print(f"  Buildings in view: {len(b3d):,}")
-
-    # Build per-building, per-floor price lookup
-    print("  Joining transactions to buildings by floor...")
-    txn = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="transactions")
-    txn = txn.cx[cx - radius:cx + radius, cy - radius:cy + radius]
-    valid_txn = txn[txn["floor"].notna() & txn["price_m2"].between(1000, 100000)].copy()
-    valid_txn["floor_int"] = valid_txn["floor"].astype(int)
-    joined = gpd.sjoin(valid_txn[["geometry", "floor_int", "price_m2"]],
-                       b3d[["geometry"]], how="inner", predicate="within")
-    # Median price per building per floor
-    floor_prices = joined.groupby(["index_right", "floor_int"])["price_m2"].median()
-    # Also get building-level median for floors without specific data
-    bldg_prices = joined.groupby("index_right")["price_m2"].median()
-    print(f"  Buildings with price data: {len(bldg_prices):,}, "
-          f"floor-level combos: {len(floor_prices):,}")
-
-    # Simplify geometries
-    b3d["geometry"] = b3d.geometry.simplify(1.0)
-
-    FLOOR_H = 3.0
-    NEUTRAL_COLOR = (0.82, 0.82, 0.80, 0.7)  # light gray for no-data buildings
-    NEUTRAL_WALL = (0.72, 0.72, 0.70, 0.6)
-
-    # Price colormap: green (cheap) -> yellow -> red (expensive)
-    price_cmap = plt.cm.RdYlGn_r
-    price_vmin, price_vmax = 5000, 20000
-    price_norm = mcolors.Normalize(vmin=price_vmin, vmax=price_vmax)
-
-    # View angle
-    elev, azim = 35, -50
-
-    # Sort back-to-front
-    angle_rad = np.radians(azim)
-    b3d["_cx"] = b3d.geometry.centroid.x - cx
-    b3d["_cy"] = b3d.geometry.centroid.y - cy
-    b3d["_depth"] = b3d["_cx"] * np.sin(angle_rad) + b3d["_cy"] * np.cos(angle_rad)
-    b3d = b3d.sort_values("_depth", ascending=True)
-
-    fig = plt.figure(figsize=(22, 16))
-    ax = fig.add_subplot(111, projection="3d")
-
-    max_display_h = 240
-
-    for idx, row in b3d.iterrows():
-        geom = row.geometry
-        h = min(row["height_m"], max_display_h)
-        min_h = row["min_height_m"]
-        if h <= 0:
-            continue
-
-        if geom.geom_type == "MultiPolygon":
-            parts = list(geom.geoms)
-        elif geom.geom_type == "Polygon":
-            parts = [geom]
-        else:
-            continue
-
-        has_prices = idx in bldg_prices.index
-        n_floors = max(1, int(round((h - min_h) / FLOOR_H)))
-
-        for poly in parts:
-            coords = np.array(poly.exterior.coords)
-            if len(coords) < 4:
-                continue
-
-            xs = coords[:, 0] - cx
-            ys = coords[:, 1] - cy
-
-            building_polys = []
-            building_colors = []
-            edge_colors = []
-
-            for floor_i in range(n_floors):
-                z_bot = min_h + floor_i * FLOOR_H
-                z_top = min(min_h + (floor_i + 1) * FLOOR_H, h)
-                floor_num = floor_i  # 0-based
-
-                # Color only floors with actual transaction data
-                floor_price = None
-                if has_prices:
-                    if (idx, floor_num) in floor_prices.index:
-                        floor_price = floor_prices[(idx, floor_num)]
-                    elif (idx, floor_num + 1) in floor_prices.index:
-                        floor_price = floor_prices[(idx, floor_num + 1)]
-
-                if floor_price is not None:
-                    rgba = price_cmap(price_norm(floor_price))
-                    wc = rgba[:3] + (0.92,)
-                    wall_darker = tuple(c * 0.8 for c in rgba[:3]) + (0.88,)
-                else:
-                    wc = NEUTRAL_COLOR
-                    wall_darker = NEUTRAL_WALL
-
-                floor_edge = (0.25, 0.25, 0.25, 0.35)
-
-                for i in range(len(xs) - 1):
-                    wall = [
-                        (xs[i], ys[i], z_bot), (xs[i + 1], ys[i + 1], z_bot),
-                        (xs[i + 1], ys[i + 1], z_top), (xs[i], ys[i], z_top),
-                    ]
-                    building_polys.append(wall)
-                    building_colors.append(wall_darker)
-                    edge_colors.append(floor_edge)
-
-            # Roof — match the top floor's color
-            top_floor_price = None
-            if has_prices:
-                top_num = n_floors - 1
-                if (idx, top_num) in floor_prices.index:
-                    top_floor_price = floor_prices[(idx, top_num)]
-                elif (idx, top_num + 1) in floor_prices.index:
-                    top_floor_price = floor_prices[(idx, top_num + 1)]
-            if top_floor_price is not None:
-                roof_rgba = price_cmap(price_norm(top_floor_price))
-                roof_color = roof_rgba[:3] + (0.95,)
-            else:
-                roof_color = (0.75, 0.75, 0.73, 0.8)
-            top = list(zip(xs, ys, [h] * len(xs)))
-            building_polys.append(top)
-            building_colors.append(roof_color)
-            edge_colors.append((0.2, 0.2, 0.2, 0.3))
-
-            coll = Poly3DCollection(building_polys, facecolors=building_colors,
-                                    edgecolors=edge_colors,
-                                    linewidths=0.25, zsort="min")
-            ax.add_collection3d(coll)
-
-    # Set view — true to scale
-    ax.set_xlim(-radius, radius)
-    ax.set_ylim(-radius, radius)
-    ax.set_zlim(0, max_display_h)
-    ax.view_init(elev=elev, azim=azim)
-    # Real scale: height / width ratio
-    z_ratio = max_display_h / (2 * radius)
-    ax.set_box_aspect([1, 1, z_ratio])
-
-    ax.set_xlabel("East (m)", fontsize=10, labelpad=10)
-    ax.set_ylabel("North (m)", fontsize=10, labelpad=10)
-    ax.set_zlabel("Height (m)", fontsize=10, labelpad=5)
-
-    # Colorbar for prices
-    sm = plt.cm.ScalarMappable(cmap=price_cmap, norm=price_norm)
-    sm.set_array([])
-    cbar = fig.colorbar(sm, ax=ax, fraction=0.025, pad=0.08, shrink=0.5)
-    cbar.set_label("Price per m² (PLN)", fontsize=12)
-    cbar.ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
-
-    # Legend
-    legend_elements = [
-        Patch(facecolor=price_cmap(price_norm(5000))[:3], edgecolor="gray",
-              label=f"Cheap (<{price_vmin:,} PLN/m²)"),
-        Patch(facecolor=price_cmap(price_norm(12000))[:3], edgecolor="gray",
-              label="Mid-range"),
-        Patch(facecolor=price_cmap(price_norm(20000))[:3], edgecolor="gray",
-              label=f"Expensive (>{price_vmax:,} PLN/m²)"),
-        Patch(facecolor=NEUTRAL_COLOR[:3], edgecolor="gray",
-              label="No price data"),
-    ]
-    ax.legend(handles=legend_elements, loc="upper left", fontsize=9)
-
-    ax.set_title("Central Warsaw — Floor-Level Prices (3D)\n"
-                 "Each floor band colored by median transaction price/m²",
-                 fontsize=14, fontweight="bold", pad=20)
-
-    # Remove all grid, panes, axes for clean look
-    ax.xaxis.pane.fill = False
-    ax.yaxis.pane.fill = False
-    ax.zaxis.pane.fill = False
-    ax.xaxis.pane.set_edgecolor("w")
-    ax.yaxis.pane.set_edgecolor("w")
-    ax.zaxis.pane.set_edgecolor("w")
-    ax.grid(False)
+def plot_building_value(buildings_all, districts):
+    """Every building with sales, coloured by the hedonic model's value of a
+    typical flat there in 2025 — comparable across buildings and years."""
+    bv = gpd.read_file("output/price_model.gpkg", layer="building_value")
+    fig, ax = plt.subplots(figsize=(16, 18))
+    fig.subplots_adjust(top=0.95, bottom=0.02, left=0.01, right=0.93)
+    buildings_all.plot(ax=ax, color=style.CONTEXT, edgecolor="none", linewidth=0)
+    vmin, vmax = np.percentile(bv["value_2025"], [3, 97]).round(-3)
+    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+    # Buffer slightly so small blocks remain visible at city scale
+    bv = bv.sort_values("value_2025")
+    bv.assign(geometry=bv.geometry.buffer(6)).plot(
+        ax=ax, column="value_2025", cmap=style.PRICE_CMAP, norm=norm, edgecolor="none", linewidth=0)
+    districts.boundary.plot(ax=ax, color=style.INK_2, linewidth=0.8, alpha=0.6)
+    for _, row in districts.iterrows():
+        sub = bv[bv["district"] == row["district"]]
+        c = row.geometry.representative_point()
+        lab = row["district"]
+        if len(sub):
+            lab += "\n" + style.fmt_int(np.exp(np.average(np.log(sub["value_2025"]), weights=sub["n"])))
+        ax.annotate(lab, xy=(c.x, c.y), fontsize=9, ha="center", va="center", color=style.INK,
+                    bbox=dict(boxstyle="round,pad=0.25", facecolor=style.SURFACE, alpha=0.8, edgecolor="none"))
+    sm = plt.cm.ScalarMappable(cmap=style.PRICE_CMAP, norm=norm)
+    style.colorbar(fig, sm, ax, "PLN/m², typical flat, 2025", shrink=0.4)
     ax.set_axis_off()
-
-    path = os.path.join(OUTPUT_DIR, "map_07_3d_center.png")
-    fig.savefig(path, dpi=200, bbox_inches="tight", facecolor="white")
+    style.header(fig, "What a typical flat costs, building by building",
+                 "Hedonic model value in 2025 PLN/m² for a 45–60 m², 2-room, 2nd–3rd floor resale — "
+                 "so a block last sold in 2012 is directly comparable with one sold last month.", y=0.985)
+    style.footer(fig, style.SOURCE + " Values shrunk toward the district mean where a building has few sales.")
+    path = os.path.join(OUTPUT_DIR, "map_08_building_value.png")
+    fig.savefig(path, dpi=150)
     plt.close(fig)
     print(f"  {path}")
 
@@ -587,7 +426,7 @@ def main():
     plot_price_hexbin(districts)
     plot_apartment_size_hex(districts)
     plot_price_change_hex(districts)
-    plot_3d_center(buildings_prices)
+    plot_building_value(buildings_all, districts)
     print("\nDone!")
 
 
