@@ -27,6 +27,21 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 OUTPUT_DIR = os.path.join("output", "analysis")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# RCN data gap: 2017-2020 have <5% of expected transaction volume
+# due to system migration — exclude from trend calculations
+GAP_YEARS = range(2017, 2021)
+
+
+def _shade_gap(ax, ymin=None, ymax=None):
+    """Add gray shading over GAP_YEARS on a year axis."""
+    lo, hi = min(GAP_YEARS) - 0.5, max(GAP_YEARS) + 0.5
+    if ymin is None or ymax is None:
+        ymin, ymax = ax.get_ylim()
+    ax.axvspan(lo, hi, alpha=0.15, color="#888", zorder=0)
+    ax.text((lo + hi) / 2, ymax * 0.95, "incomplete\ndata",
+            ha="center", va="top", fontsize=8, color="#666", style="italic")
+
+
 # Style
 plt.rcParams.update({
     "figure.facecolor": "white",
@@ -98,16 +113,15 @@ def plot_price_distribution(df):
     ax.legend()
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
 
-    # By year box plot
+    # By year box plot (exclude gap years with <5% data)
     ax = axes[1]
-    yearly = valid[valid["year"].between(2006, 2026)]
+    yearly = valid[valid["year"].between(2006, 2026) & ~valid["year"].isin(GAP_YEARS)]
     yearly.boxplot(column="price_m2", by="year", ax=ax, showfliers=False,
                    patch_artist=True, boxprops=dict(facecolor="#2196F3", alpha=0.5))
-    ax.set_title("Price per m² by year")
+    ax.set_title("Price per m² by year (2017-20 excluded: incomplete data)")
     ax.set_xlabel("Year")
     ax.set_ylabel("PLN / m²")
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
-    # Rotate year labels and ensure integer ticks
     ax.tick_params(axis="x", rotation=45)
     fig.suptitle("")
 
@@ -273,12 +287,13 @@ def plot_market_segments(df):
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 
-    # Price/m² by market type over time
+    # Price/m² by market type over time (exclude gap years)
     ax = axes[0]
     for mkt, color in [("primary", "#2196F3"), ("secondary", "#FF9800")]:
-        yearly = valid[valid["market"] == mkt].groupby("year")["price_m2"].median()
+        yearly = valid[(valid["market"] == mkt) & ~valid["year"].isin(GAP_YEARS)].groupby("year")["price_m2"].median()
         yearly = yearly[yearly.index.to_series().between(2006, 2026)]
         ax.plot(yearly.index, yearly.values, "o-", color=color, label=mkt, markersize=4)
+    _shade_gap(ax)
     ax.set_xlabel("Year")
     ax.set_ylabel("Median price/m² (PLN)")
     ax.set_title("Primary vs secondary market prices")
@@ -425,15 +440,16 @@ def plot_micro_apartments(df):
     ax.legend(title="Size", bbox_to_anchor=(1.02, 1), fontsize=9)
     ax.invert_yaxis()
 
-    # Micro apartment trend over time
+    # Micro apartment trend over time (exclude gap years)
     ax = axes[1]
-    yearly_valid = valid[valid["year"].between(2006, 2026)]
+    yearly_valid = valid[valid["year"].between(2006, 2026) & ~valid["year"].isin(GAP_YEARS)]
     for cat, color, ls in [("micro (<25)", "#E91E63", "-"), ("small (25-35)", "#FF5722", "--"),
                             ("compact (35-50)", "#FF9800", "-.")]:
         pct = yearly_valid.groupby("year").apply(
             lambda g: 100 * (g["size_cat"] == cat).mean()
         )
         ax.plot(pct.index, pct.values, ls, color=color, label=cat, linewidth=2)
+    _shade_gap(ax)
     ax.set_xlabel("Year")
     ax.set_ylabel("% of transactions")
     ax.set_title("Micro & small apartment share over time")
@@ -496,12 +512,14 @@ def plot_price_trends(df):
 
     fig, axes = plt.subplots(2, 2, figsize=(18, 14))
 
-    # Price trend by top districts
+    # Price trend by top districts (exclude gap years)
     ax = axes[0, 0]
-    top_districts = valid.groupby("district").size().nlargest(8).index
+    trend_valid = valid[~valid["year"].isin(GAP_YEARS)]
+    top_districts = trend_valid.groupby("district").size().nlargest(8).index
     for dist in top_districts:
-        d = valid[valid["district"] == dist].groupby("year")["price_m2"].median()
+        d = trend_valid[trend_valid["district"] == dist].groupby("year")["price_m2"].median()
         ax.plot(d.index, d.values, "o-", label=dist, markersize=3, linewidth=1.5)
+    _shade_gap(ax)
     ax.set_xlabel("Year")
     ax.set_ylabel("Median price/m² (PLN)")
     ax.set_title("Price trend — top 8 districts by volume")
@@ -509,13 +527,14 @@ def plot_price_trends(df):
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
     ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
-    # Year-over-year % change (city-wide)
+    # Year-over-year % change (city-wide, exclude gap years)
     ax = axes[0, 1]
-    yearly_med = valid.groupby("year")["price_m2"].median()
+    yearly_med = trend_valid.groupby("year")["price_m2"].median()
     yoy = yearly_med.pct_change() * 100
     colors = ["#4CAF50" if v >= 0 else "#F44336" for v in yoy.values]
     ax.bar(yoy.index, yoy.values, color=colors, edgecolor="white")
     ax.axhline(0, color="black", linewidth=0.5)
+    _shade_gap(ax)
     ax.set_xlabel("Year")
     ax.set_ylabel("YoY change (%)")
     ax.set_title("Year-over-year price change (city-wide)")
@@ -524,9 +543,9 @@ def plot_price_trends(df):
         if not np.isnan(v):
             ax.text(yr, v + (1 if v >= 0 else -2), f"{v:+.1f}%", ha="center", fontsize=8)
 
-    # Price appreciation 2018 vs 2024+ by district
+    # Price appreciation 2014-16 vs 2024-26 by district (skip gap years entirely)
     ax = axes[1, 0]
-    old_med = valid[valid["year"].between(2018, 2020)].groupby("district")["price_m2"].median()
+    old_med = valid[valid["year"].between(2014, 2016)].groupby("district")["price_m2"].median()
     new_med = valid[valid["year"].between(2024, 2026)].groupby("district")["price_m2"].median()
     change = ((new_med - old_med) / old_med * 100).dropna().sort_values()
     colors_ch = ["#F44336" if v < 0 else "#4CAF50" for v in change.values]
@@ -534,17 +553,19 @@ def plot_price_trends(df):
     ax.set_yticks(range(len(change)))
     ax.set_yticklabels(change.index)
     ax.set_xlabel("Price change (%)")
-    ax.set_title("Price appreciation: 2018-20 → 2024-26")
+    ax.set_title("Price appreciation: 2014-16 → 2024-26")
     for i, v in enumerate(change.values):
         ax.text(v + 1, i, f"{v:+.0f}%", va="center", fontsize=9)
 
-    # Transaction volume over time
+    # Transaction volume over time (shows the gap clearly)
     ax = axes[1, 1]
     vol = valid.groupby("year").size()
-    ax.bar(vol.index, vol.values, color="#2196F3", edgecolor="white")
+    bar_colors = ["#ccc" if yr in GAP_YEARS else "#2196F3" for yr in vol.index]
+    ax.bar(vol.index, vol.values, color=bar_colors, edgecolor="white")
+    _shade_gap(ax)
     ax.set_xlabel("Year")
     ax.set_ylabel("Transactions")
-    ax.set_title("Transaction volume over time")
+    ax.set_title("Transaction volume (gray = incomplete data)")
     ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
 

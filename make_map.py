@@ -384,6 +384,125 @@ def plot_price_change_hex(districts):
     print(f"  {path}")
 
 
+def plot_3d_center(buildings_prices):
+    """3D isometric view of central Warsaw buildings, colored by height."""
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+    print("  Loading buildings_3d for 3D rendering...")
+    b3d = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="buildings_3d")
+
+    # Center on Srodmiescie — use a 1 km radius
+    cx, cy = 639000, 480800
+    radius = 1000
+    b3d = b3d.cx[cx - radius:cx + radius, cy - radius:cy + radius].copy()
+    print(f"  Buildings in view: {len(b3d):,}")
+
+    # Simplify geometries for faster rendering
+    b3d["geometry"] = b3d.geometry.simplify(1.5)
+
+    # Height colormap
+    max_h = min(b3d["height_m"].quantile(0.99), 160)
+    norm = mcolors.Normalize(vmin=0, vmax=max_h)
+    cmap = plt.cm.YlOrRd
+
+    # View angle
+    elev, azim = 50, -55
+
+    # Sort buildings back-to-front for the chosen view angle
+    # (painter's algorithm: render far buildings first)
+    angle_rad = np.radians(azim)
+    b3d["_cx"] = b3d.geometry.centroid.x - cx
+    b3d["_cy"] = b3d.geometry.centroid.y - cy
+    # Depth = projection onto view direction
+    b3d["_depth"] = b3d["_cx"] * np.sin(angle_rad) + b3d["_cy"] * np.cos(angle_rad)
+    b3d = b3d.sort_values("_depth", ascending=True)  # far first
+
+    fig = plt.figure(figsize=(22, 16))
+    ax = fig.add_subplot(111, projection="3d")
+
+    # Render each building as extruded polygon (back to front)
+    for _, row in b3d.iterrows():
+        geom = row.geometry
+        h = row["height_m"]
+        min_h = row["min_height_m"]
+        if h <= 0:
+            continue
+
+        if geom.geom_type == "MultiPolygon":
+            parts = list(geom.geoms)
+        elif geom.geom_type == "Polygon":
+            parts = [geom]
+        else:
+            continue
+
+        color = cmap(norm(h))
+        wall_color = tuple(c * 0.7 for c in color[:3]) + (0.9,)
+        top_color = color[:3] + (0.95,)
+        edge_color = (0.2, 0.2, 0.2, 0.2)
+
+        for poly in parts:
+            coords = np.array(poly.exterior.coords)
+            if len(coords) < 4:
+                continue
+
+            xs = coords[:, 0] - cx
+            ys = coords[:, 1] - cy
+
+            building_polys = []
+            building_colors = []
+
+            # Side walls
+            for i in range(len(xs) - 1):
+                wall = [
+                    (xs[i], ys[i], min_h), (xs[i + 1], ys[i + 1], min_h),
+                    (xs[i + 1], ys[i + 1], h), (xs[i], ys[i], h),
+                ]
+                building_polys.append(wall)
+                building_colors.append(wall_color)
+
+            # Top face (rendered last so it's on top)
+            top = list(zip(xs, ys, [h] * len(xs)))
+            building_polys.append(top)
+            building_colors.append(top_color)
+
+            coll = Poly3DCollection(building_polys, facecolors=building_colors,
+                                    edgecolors=[edge_color] * len(building_polys),
+                                    linewidths=0.3, zsort="min")
+            ax.add_collection3d(coll)
+
+    # Set view
+    ax.set_xlim(-radius, radius)
+    ax.set_ylim(-radius, radius)
+    ax.set_zlim(0, max_h * 1.1)
+    ax.view_init(elev=elev, azim=azim)
+    ax.set_box_aspect([1, 1, 0.35])
+
+    ax.set_xlabel("East (m)", fontsize=10, labelpad=10)
+    ax.set_ylabel("North (m)", fontsize=10, labelpad=10)
+    ax.set_zlabel("Height (m)", fontsize=10, labelpad=5)
+
+    # Colorbar
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax, fraction=0.025, pad=0.08, shrink=0.5)
+    cbar.set_label("Building height (m)", fontsize=12)
+
+    ax.set_title("Central Warsaw — 3D Building Heights (1 km radius)",
+                 fontsize=16, fontweight="bold", pad=20)
+
+    # Clean panes
+    ax.xaxis.pane.fill = False
+    ax.yaxis.pane.fill = False
+    ax.zaxis.pane.fill = False
+    ax.xaxis.pane.set_edgecolor("w")
+    ax.yaxis.pane.set_edgecolor("w")
+
+    path = os.path.join(OUTPUT_DIR, "map_07_3d_center.png")
+    fig.savefig(path, dpi=200, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"  {path}")
+
+
 def main():
     buildings_all, buildings_prices, districts = load_data()
 
@@ -394,6 +513,7 @@ def main():
     plot_price_hexbin(districts)
     plot_apartment_size_hex(districts)
     plot_price_change_hex(districts)
+    plot_3d_center(buildings_prices)
     print("\nDone!")
 
 
