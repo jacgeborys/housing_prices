@@ -474,15 +474,16 @@ def plot_3d_center(buildings_prices):
                 z_top = min(min_h + (floor_i + 1) * FLOOR_H, h)
                 floor_num = floor_i  # 0-based
 
+                # Color only floors with actual transaction data
+                floor_price = None
                 if has_prices:
-                    # Look up price for this specific floor, fallback to building median
                     if (idx, floor_num) in floor_prices.index:
-                        price = floor_prices[(idx, floor_num)]
+                        floor_price = floor_prices[(idx, floor_num)]
                     elif (idx, floor_num + 1) in floor_prices.index:
-                        price = floor_prices[(idx, floor_num + 1)]
-                    else:
-                        price = bldg_prices[idx]
-                    rgba = price_cmap(price_norm(price))
+                        floor_price = floor_prices[(idx, floor_num + 1)]
+
+                if floor_price is not None:
+                    rgba = price_cmap(price_norm(floor_price))
                     wc = rgba[:3] + (0.92,)
                     wall_darker = tuple(c * 0.8 for c in rgba[:3]) + (0.88,)
                 else:
@@ -500,9 +501,16 @@ def plot_3d_center(buildings_prices):
                     building_colors.append(wall_darker)
                     edge_colors.append(floor_edge)
 
-            # Roof
+            # Roof — match the top floor's color
+            top_floor_price = None
             if has_prices:
-                roof_rgba = price_cmap(price_norm(bldg_prices[idx]))
+                top_num = n_floors - 1
+                if (idx, top_num) in floor_prices.index:
+                    top_floor_price = floor_prices[(idx, top_num)]
+                elif (idx, top_num + 1) in floor_prices.index:
+                    top_floor_price = floor_prices[(idx, top_num + 1)]
+            if top_floor_price is not None:
+                roof_rgba = price_cmap(price_norm(top_floor_price))
                 roof_color = roof_rgba[:3] + (0.95,)
             else:
                 roof_color = (0.75, 0.75, 0.73, 0.8)
@@ -553,11 +561,15 @@ def plot_3d_center(buildings_prices):
                  "Each floor band colored by median transaction price/m²",
                  fontsize=14, fontweight="bold", pad=20)
 
+    # Remove all grid, panes, axes for clean look
     ax.xaxis.pane.fill = False
     ax.yaxis.pane.fill = False
     ax.zaxis.pane.fill = False
     ax.xaxis.pane.set_edgecolor("w")
     ax.yaxis.pane.set_edgecolor("w")
+    ax.zaxis.pane.set_edgecolor("w")
+    ax.grid(False)
+    ax.set_axis_off()
 
     path = os.path.join(OUTPUT_DIR, "map_07_3d_center.png")
     fig.savefig(path, dpi=200, bbox_inches="tight", facecolor="white")
