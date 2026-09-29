@@ -391,39 +391,41 @@ def plot_3d_center(buildings_prices):
     print("  Loading buildings_3d for 3D rendering...")
     b3d = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="buildings_3d")
 
-    # Center on Srodmiescie — use a 1 km radius
-    cx, cy = 639000, 480800
-    radius = 1000
+    # Center on Palace of Culture (actual Srodmiescie center)
+    cx, cy = 636953, 486968
+    radius = 800
     b3d = b3d.cx[cx - radius:cx + radius, cy - radius:cy + radius].copy()
     print(f"  Buildings in view: {len(b3d):,}")
 
     # Simplify geometries for faster rendering
-    b3d["geometry"] = b3d.geometry.simplify(1.5)
+    b3d["geometry"] = b3d.geometry.simplify(1.0)
 
-    # Height colormap
-    max_h = min(b3d["height_m"].quantile(0.99), 160)
-    norm = mcolors.Normalize(vmin=0, vmax=max_h)
-    cmap = plt.cm.YlOrRd
+    FLOOR_H = 3.0  # meters per floor
+
+    # Floor color palette — high-contrast alternating bands
+    floor_colors = [
+        (0.92, 0.88, 0.78),  # warm sand
+        (0.55, 0.62, 0.72),  # cool blue-gray
+    ]
 
     # View angle
-    elev, azim = 50, -55
+    elev, azim = 40, -50
 
-    # Sort buildings back-to-front for the chosen view angle
-    # (painter's algorithm: render far buildings first)
+    # Sort buildings back-to-front (painter's algorithm)
     angle_rad = np.radians(azim)
     b3d["_cx"] = b3d.geometry.centroid.x - cx
     b3d["_cy"] = b3d.geometry.centroid.y - cy
-    # Depth = projection onto view direction
     b3d["_depth"] = b3d["_cx"] * np.sin(angle_rad) + b3d["_cy"] * np.cos(angle_rad)
-    b3d = b3d.sort_values("_depth", ascending=True)  # far first
+    b3d = b3d.sort_values("_depth", ascending=True)
 
     fig = plt.figure(figsize=(22, 16))
     ax = fig.add_subplot(111, projection="3d")
 
-    # Render each building as extruded polygon (back to front)
+    max_display_h = 200  # clip display height
+
     for _, row in b3d.iterrows():
         geom = row.geometry
-        h = row["height_m"]
+        h = min(row["height_m"], max_display_h)
         min_h = row["min_height_m"]
         if h <= 0:
             continue
@@ -435,10 +437,7 @@ def plot_3d_center(buildings_prices):
         else:
             continue
 
-        color = cmap(norm(h))
-        wall_color = tuple(c * 0.7 for c in color[:3]) + (0.9,)
-        top_color = color[:3] + (0.95,)
-        edge_color = (0.2, 0.2, 0.2, 0.2)
+        n_floors = max(1, int(round((h - min_h) / FLOOR_H)))
 
         for poly in parts:
             coords = np.array(poly.exterior.coords)
@@ -450,45 +449,65 @@ def plot_3d_center(buildings_prices):
 
             building_polys = []
             building_colors = []
+            edge_colors = []
 
-            # Side walls
-            for i in range(len(xs) - 1):
-                wall = [
-                    (xs[i], ys[i], min_h), (xs[i + 1], ys[i + 1], min_h),
-                    (xs[i + 1], ys[i + 1], h), (xs[i], ys[i], h),
-                ]
-                building_polys.append(wall)
-                building_colors.append(wall_color)
+            # Render each floor as a separate band
+            for floor_i in range(n_floors):
+                z_bot = min_h + floor_i * FLOOR_H
+                z_top = min(min_h + (floor_i + 1) * FLOOR_H, h)
 
-            # Top face (rendered last so it's on top)
+                base_color = floor_colors[floor_i % 2]
+                # No height darkening — keep floor bands clearly distinct
+                wc = base_color + (0.92,)
+
+                # Floor separator edge (thin dark line between floors)
+                floor_edge = (0.3, 0.3, 0.3, 0.4)
+
+                # Side walls for this floor band
+                for i in range(len(xs) - 1):
+                    wall = [
+                        (xs[i], ys[i], z_bot), (xs[i + 1], ys[i + 1], z_bot),
+                        (xs[i + 1], ys[i + 1], z_top), (xs[i], ys[i], z_top),
+                    ]
+                    building_polys.append(wall)
+                    building_colors.append(wc)
+                    edge_colors.append(floor_edge)
+
+            # Top face (roof) — slightly different color
+            roof_color = (0.6, 0.55, 0.50, 0.95)
             top = list(zip(xs, ys, [h] * len(xs)))
             building_polys.append(top)
-            building_colors.append(top_color)
+            building_colors.append(roof_color)
+            edge_colors.append((0.3, 0.3, 0.3, 0.3))
 
             coll = Poly3DCollection(building_polys, facecolors=building_colors,
-                                    edgecolors=[edge_color] * len(building_polys),
+                                    edgecolors=edge_colors,
                                     linewidths=0.3, zsort="min")
             ax.add_collection3d(coll)
 
     # Set view
     ax.set_xlim(-radius, radius)
     ax.set_ylim(-radius, radius)
-    ax.set_zlim(0, max_h * 1.1)
+    ax.set_zlim(0, max_display_h)
     ax.view_init(elev=elev, azim=azim)
-    ax.set_box_aspect([1, 1, 0.35])
+    ax.set_box_aspect([1, 1, 0.5])
 
     ax.set_xlabel("East (m)", fontsize=10, labelpad=10)
     ax.set_ylabel("North (m)", fontsize=10, labelpad=10)
     ax.set_zlabel("Height (m)", fontsize=10, labelpad=5)
 
-    # Colorbar
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    cbar = fig.colorbar(sm, ax=ax, fraction=0.025, pad=0.08, shrink=0.5)
-    cbar.set_label("Building height (m)", fontsize=12)
+    # Floor legend
+    from matplotlib.patches import Patch
+    legend_elements = [
+        Patch(facecolor=floor_colors[0], edgecolor="gray", label="Odd floors"),
+        Patch(facecolor=floor_colors[1], edgecolor="gray", label="Even floors"),
+        Patch(facecolor=(0.6, 0.55, 0.50), edgecolor="gray", label="Roof"),
+    ]
+    ax.legend(handles=legend_elements, loc="upper left", fontsize=10)
 
-    ax.set_title("Central Warsaw — 3D Building Heights (1 km radius)",
-                 fontsize=16, fontweight="bold", pad=20)
+    ax.set_title("Central Warsaw — 3D Building Heights with Floor Bands\n"
+                 "(centered on Palace of Culture, 800m radius)",
+                 fontsize=15, fontweight="bold", pad=20)
 
     # Clean panes
     ax.xaxis.pane.fill = False
