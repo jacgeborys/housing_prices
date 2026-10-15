@@ -40,6 +40,9 @@ make_map.py           ->  output/analysis/map_01-06, map_08 PNG maps
                             city overview, district choropleth, center zoom,
                             price/density hexbin, apartment sizes, growth vs city,
                             building-level hedonic value
+coverage.py           ->  output/coverage.gpkg (layer building_coverage: 22.9K multi-family buildings,
+                          est. flats, recorded sales, coverage class none/thin/ok)
+                      ->  output/analysis/coverage_by_district.csv, map_09_coverage.png
 make_3d.py            ->  output/analysis/map_07_3d_center.png (static, 900 m around PKiN)
                       ->  output/web/warsaw_3d.html (interactive deck.gl, 3 km around PKiN)
 style.py                  shared chart theme, palettes, GUS CPI series
@@ -110,6 +113,19 @@ python build_viz.py
 - 3D: static render + interactive deck.gl scene (13.6K priced storeys in ~3K buildings within 3 km of PKiN).
 - District boundaries: official BDOT ADJA_A (`data/districts.gpkg`).
 - Fixed 2026-09-29: district ranking mixed eras; "YoY +43%" was a 5-year change across the gap; map_06 change panel was a copy of panel 2; 3D floors were off by one and parts counted from their own base; `build_viz.py` market mapping never matched (`pct_primary` always 0 — re-run `build_viz.py` to refresh that column).
+- Coverage audit (`coverage.py`, 2026-10-15): multi-family universe = BDOT10k "3+ flats" or OSM `apartments`
+  (or >= 3 recorded sales), inside the city boundary. Flats estimated from footprint x storeys, calibrated on
+  1,064 new builds (primary sales ~ all flats): ~127 m² GFA per flat (high: probably not every developer sale
+  reaches RCN, so absolute flat counts are low; use them relatively). Results: **19 % of flats sit in buildings with
+  no recorded sale, 14 % thin**. Why: RCN holds **no cooperative-right sales** (NIER_PRAWO has only full
+  ownership), city-owned/rental blocks rarely sell. Ursynów 23 % none + 24 % thin; Praga-Północ 38 % none;
+  Wesoła 79 % none (only 524 sales in 20 years: probably under-recording, unexplained). Matching failures inside
+  the city are negligible (86); the ~15K "unmatched" sales lie outside Warsaw (fetch bbox pulls neighbours).
+- Plan (2026-10-15): prices in 3D with the Blender pipeline of `D:/QGIS/TransitFrequency/3d`; then a building
+  feature table (transit, walk isochrones to parks/schools/metro, age, noise, OSM POIs) and a stage-2 model on
+  `value_2025` -> residual "cheaper/dearer than expected" map. Only `coverage == ok` buildings get coloured.
+  Leads: Warsaw open-data API (api.um.warszawa.pl, needs a key) had building years; city WFS has
+  `ZIELEN_DRZEWA` (tree inventory) and `OBWODY_SZKOL_PODSTAWOWYCH` (school catchments).
 - Not yet done: charts 01–11 still use their original per-chart colours inside the shared theme.
 
 ## Notes
