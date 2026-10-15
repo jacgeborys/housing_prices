@@ -43,9 +43,6 @@ make_map.py           ->  output/analysis/map_01-06, map_08 PNG maps
 coverage.py           ->  output/coverage.gpkg (layer building_coverage: 22.9K multi-family buildings,
                           est. flats, recorded sales, coverage class none/thin/ok)
                       ->  output/analysis/coverage_by_district.csv, map_09_coverage.png
-export_3d_values.py   ->  output/3d/price_m2.csv (osm_id,value: hedonic value_2025, buildings with >= 3 sales)
-                          + prints the export_scene.py command for the Blender pipeline in
-                          D:/QGIS/TransitFrequency/3d (--values/--breaks/--colors, viridis on the dark scene)
 make_3d.py            ->  output/analysis/map_07_3d_center.png (static, 900 m around PKiN)
                       ->  output/web/warsaw_3d.html (interactive deck.gl, 3 km around PKiN)
 style.py                  shared chart theme, palettes, GUS CPI series
@@ -62,6 +59,26 @@ estimated by within-building demeaning, SEs clustered by building (transactions 
 Within-R² 0.65, residual SD 0.18. Quarters with < 300 sales (the 2017–20 RCN gap) are not estimated; the index is
 interpolated across them. Building values are empirical-Bayes shrunk toward the district mean. Real prices use
 GUS annual CPI (hardcoded in `style.py`; 2025–26 values are estimates — update when GUS publishes).
+
+### 3D price renders (`3d/`, Blender)
+
+Self-contained copy of the Blender pipeline from `D:/QGIS/TransitFrequency/3d` (that project is only
+read, never edited): same heights, dark ground and cameras, so price renders pair with the transit ones.
+
+```
+python 3d/export_scene.py --name prices_wide --bounds=-7000,-15000,15000,9000 --detail-bounds=-7000,-6500,7000,9000
+blender --background --factory-startup --python 3d/build_blend.py -- --name prices_wide --view center
+blender --background 3d/scenes/prices_wide/scene.blend --python 3d/render.py -- --view mokotow --out 3d/renders/x.png
+```
+(`blender` = `C:/Program Files/Blender Foundation/Blender 5.2/blender.exe`.)
+- `export_scene.py` (standalone): OSM buildings + parts from `D:/QGIS/osm_basemap/warsaw`, ground layers from
+  `D:/QGIS/mapy_warszawy_misc/data/osm`, transit-poster colours hardcoded. Colour = `--set price_m2`:
+  hedonic `value_2025` (`price_model.gpkg` / `building_value`) for buildings with >= 3 sales, 11 classes
+  (breaks 12k..28k PLN/m²), viridis (dark blue = cheap, yellow = dear; deliberately not the transit palette).
+  No value = dark grey. Parts take the parent's value. Origin = PKiN, so `3d/views/*.json` fit.
+- `build_blend.py`: copy, plus a fix: degenerate/duplicate faces are dropped before the mesh is made
+  (`me.validate()` removed them afterwards and shifted every per-face colour: "internal error setting the array").
+- `render.py`, `save_view.py`, `views/{center,mokotow,zoliborz}.json`: copies. Scenes + renders are gitignored.
 
 ### 3D scenes (`make_3d.py`)
 
