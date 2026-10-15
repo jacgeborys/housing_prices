@@ -43,6 +43,11 @@ make_map.py           ->  output/analysis/map_01-06, map_08 PNG maps
 coverage.py           ->  output/coverage.gpkg (layer building_coverage: 22.9K multi-family buildings,
                           est. flats, recorded sales, coverage class none/thin/ok)
                       ->  output/analysis/coverage_by_district.csv, map_09_coverage.png
+price_drivers.py      ->  output/price_drivers.gpkg (layer building_drivers: features, out-of-fold prediction,
+                          resid_pct = cheaper/dearer than expected), output/analysis/price_drivers_coefficients.csv,
+                          16_price_drivers.png (stage 2: what explains value_2025 across buildings)
+fetch_pois.py         ->  data/osm_pois.gpkg (OSM food & drink, shops, schools, health, culture, leisure;
+                          via D:/QGIS/osm_basemap/overpass_polite.py, imported read-only)
 make_3d.py            ->  output/analysis/map_07_3d_center.png (static, 900 m around PKiN)
                       ->  output/web/warsaw_3d.html (interactive deck.gl, 3 km around PKiN)
 style.py                  shared chart theme, palettes, GUS CPI series
@@ -146,6 +151,15 @@ python build_viz.py
   `value_2025` -> residual "cheaper/dearer than expected" map. Only `coverage == ok` buildings get coloured.
   Leads: Warsaw open-data API (api.um.warszawa.pl, needs a key) had building years; city WFS has
   `ZIELEN_DRZEWA` (tree inventory) and `OBWODY_SZKOL_PODSTAWOWYCH` (school catchments).
+- Stage-2 feasibility (`price_drivers.py`, 2026-10-15): 13.6K buildings (>= 3 sales, transit matched by osm_id or
+  nearest footprint <= 25 m). Cheap features explain **45 % out of sample** (gradient boosting, spatial 5-fold CV
+  on 2 km blocks) vs 29 % for district alone; OLS + district 50 %. Within a district: developer-sale share
+  (new building) +33 %, -2.1 %/km from PKiN, -1.6 %/km from metro, +2.4 % per 10 ha of green within 500 m,
+  taller -1.6 %/10 m. **Transit frequency -1.1 % per doubling** (no premium beyond metro + centrality: frequent
+  bus/tram lines run along arterials and prefab estates). Building age is the biggest missing feature.
+- 3D price renders (`3d/`): quantile classes (12.5k..21k), parts matched to the parent they overlap most
+  (Cosmopolitan's podium roof went grey under a separate building=roof canopy), blocks of flats without
+  enough sales get a desaturated neighbourhood estimate (median of priced buildings within 300 m, >= 5).
 - Not yet done: charts 01–11 still use their original per-chart colours inside the shared theme.
 
 ## Notes

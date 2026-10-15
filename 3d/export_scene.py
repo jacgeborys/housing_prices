@@ -64,15 +64,17 @@ ROAD_WIDTH = {
     'footway': 2.5, 'path': 2, 'cycleway': 2.5, 'steps': 2.5, 'track': 3,
 }
 
-# value sets: (layer, column, class breaks, legend title)
+# value sets: (layer, column, number of quantile classes, rounding of the breaks, legend title)
 SETS = {
-    'price_m2': ('building_value', 'value_2025',
-                 [12000, 13000, 14000, 15000, 16000, 17500, 19000, 21000, 24000, 28000],
-                 'Typical flat, PLN/m² (2025)'),
+    'price_m2': ('building_value', 'value_2025', 11, 500, 'Typical flat, PLN/m² (2025)'),
 }
+FILL_RADIUS_M = 300   # neighbourhood estimate for blocks of flats without enough sales
+FILL_MIN_N = 5        # ... from at least this many priced buildings within the radius
+FILL_GREY = 0.55      # estimated buildings: class colour mixed this much toward the no-data grey
+FILL_GLOW = 0.4       # ... and their glow relative to the measured class
 
 
-def ramp(n, lo=0.12, hi=1.0):
+def ramp(n, lo=0.05, hi=1.0):
     """Sequential ramp for the dark scene: viridis, dark blue (low) -> yellow (high).
     Deliberately not the transit posters' blue-magenta-yellow, so the two never read alike."""
     cm = colormaps['viridis']
@@ -151,10 +153,31 @@ def ground_polys(gdf, crop, cx, cy, tile=250.0, simplify=0.3):
 
 
 def building_values(set_name):
-    layer, col, breaks, title = SETS[set_name]
-    v = gpd.read_file(ROOT / 'output' / 'price_model.gpkg', layer=layer, ignore_geometry=True)
-    v = v[v['n'] >= MIN_SALES]
-    return v.drop_duplicates('osm_id').set_index('osm_id')[col], breaks, title
+    """Measured values (buildings with >= MIN_SALES sales), quantile class breaks, and neighbourhood
+    estimates for the other blocks of flats (coverage.py universe): median of the priced buildings
+    within FILL_RADIUS_M, if there are at least FILL_MIN_N."""
+    from scipy.spatial import cKDTree
+    layer, col, n_cls, rnd, title = SETS[set_name]
+    v = gpd.read_file(ROOT / 'output' / 'price_model.gpkg', layer=layer)
+    v = v[v['n'] >= MIN_SALES].drop_duplicates('osm_id')
+    q = np.quantile(v[col], np.linspace(0, 1, n_cls + 1)[1:-1])
+    breaks = sorted({int(round(x / rnd) * rnd) for x in q})
+    measured = v.set_index('osm_id')[col]
+
+    uni = gpd.read_file(ROOT / 'output' / 'coverage.gpkg', layer='building_coverage')
+    uni = uni[~uni['osm_id'].isin(measured.index)]
+    pv = v.geometry.representative_point()
+    tree = cKDTree(np.c_[pv.x, pv.y])
+    pu = uni.geometry.representative_point()
+    vals = v[col].to_numpy()
+    est = []
+    for nb in tree.query_ball_point(np.c_[pu.x, pu.y], FILL_RADIUS_M):
+        est.append(np.median(vals[nb]) if len(nb) >= FILL_MIN_N else np.nan)
+    estimated = pd.Series(est, index=uni['osm_id'].values).dropna()
+    print(f"  values: {len(measured):,} measured, {len(estimated):,} neighbourhood estimates "
+          f"({len(uni) - len(estimated):,} blocks too far from priced buildings)")
+    print(f"  quantile breaks: {breaks}")
+    return measured, estimated, breaks, title
 
 
 def main():
@@ -192,12 +215,17 @@ def main():
     is_part = b['building_part'].notna()
     parents, parts = b[~is_part], b[is_part]
 
-    # Parent of each part (its inner point in the parent's footprint; largest parent wins)
-    pp = gpd.sjoin(gpd.GeoDataFrame({'pid': parts.index.values},
-                                    geometry=parts.geometry.representative_point().values, crs=CRS),
-                   gpd.GeoDataFrame({'parent': parents.index.values, 'parea': parents.area.values},
+    # Parent of each part: the footprint it overlaps most, roofs/carports only as a last resort
+    # (Cosmopolitan's podium roof part lies over a separate building=roof canopy and went grey)
+    pp = gpd.sjoin(gpd.GeoDataFrame({'pid': parts.index.values}, geometry=parts.geometry.values, crs=CRS),
+                   gpd.GeoDataFrame({'parent': parents.index.values,
+                                     'is_roof': parents['building'].isin(['roof', 'carport']).values},
                                     geometry=parents.geometry.values, crs=CRS),
-                   predicate='within', how='inner').sort_values('parea').drop_duplicates('pid', keep='last')
+                   predicate='intersects', how='inner')
+    pp['overlap'] = [parts.geometry.loc[a].intersection(parents.geometry.loc[c]).area
+                     for a, c in zip(pp['pid'], pp['parent'])]
+    pp = pp[pp['overlap'] > 0.5].sort_values(['is_roof', 'overlap'], ascending=[False, True]) \
+        .drop_duplicates('pid', keep='last')
     part_parent = pp.set_index('pid')['parent']
     drop = []
     for parent, pids in pp.groupby('parent')['pid']:
@@ -215,17 +243,26 @@ def main():
         b.loc[far, 'geometry'] = b.loc[far].geometry.simplify(FAR_SIMPLIFY_M)
         print(f"  far background: {far.sum():,} outlines simplified by {FAR_SIMPLIFY_M:g} m")
 
-    # Value classes
-    vals, breaks, title = building_values(args.set)
-    v = b['key'].map(vals).to_numpy(dtype=float)
-    cls = np.where(np.isnan(v), 0, np.digitize(np.nan_to_num(v), breaks) + 1)
-    palette = [list(COLOURS['uncovered'])] + ramp(len(breaks) + 1)
+    # Value classes: 1..n measured, n+1..2n estimated (desaturated), last = context
+    measured, estimated, breaks, title = building_values(args.set)
+    vm = b['key'].map(measured).to_numpy(dtype=float)
+    ve = b['key'].map(estimated).to_numpy(dtype=float)
+    n = len(breaks) + 1
+    cls = np.where(np.isfinite(vm), np.digitize(np.nan_to_num(vm), breaks) + 1,
+                   np.where(np.isfinite(ve), np.digitize(np.nan_to_num(ve), breaks) + 1 + n, 0))
+    grey = np.array(COLOURS['uncovered'], float)
+    base = ramp(n)
+    faded = [[int(round(c * (1 - FILL_GREY) + g * FILL_GREY)) for c, g in zip(rgb, grey)] for rgb in base]
+    palette = [list(COLOURS['uncovered'])] + base + faded
     context_class = len(palette)
     palette.append(list(CONTEXT_RGB))
-    labels = ['no data', f'< {breaks[0]:g}'] + [f'{a:g}-{c:g}' for a, c in zip(breaks[:-1], breaks[1:])] \
-        + [f'>= {breaks[-1]:g}', 'context']
-    print(f"  coloured: {np.isfinite(v).sum():,} of {len(v):,} polygons ({len(vals):,} buildings "
-          f"with >= {MIN_SALES} sales in the model)")
+    # glow per class (build_blend.py reads it): rises with the class, estimated ones dimmer
+    rise = [(k / max(1, n - 1)) for k in range(n)]
+    glow = [0.0] + rise + [r * FILL_GLOW for r in rise] + [0.0]
+    rng = [f'< {breaks[0]:g}'] + [f'{a:g}-{c:g}' for a, c in zip(breaks[:-1], breaks[1:])] + [f'>= {breaks[-1]:g}']
+    labels = ['no data'] + rng + [f'{r} (estimated)' for r in rng] + ['context']
+    print(f"  coloured: {np.isfinite(vm).sum():,} measured + {(~np.isfinite(vm) & np.isfinite(ve)).sum():,} "
+          f"estimated of {len(vm):,} polygons")
 
     buildings = []
     for geom, z0, z1, c in zip(b.geometry, b['z0'], b['z1'], cls):
@@ -258,7 +295,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     scene = {'city': 'warsaw', 'crs': CRS, 'center_lonlat': [lon, lat], 'center_xy': [cx, cy],
              'bbox_local': [x0, y0, x1, y1], 'set': args.set, 'title': title, 'breaks': breaks,
-             'palette': palette, 'context_class': context_class, 'class_labels': labels,
+             'palette': palette, 'glow': glow, 'context_class': context_class, 'class_labels': labels,
              'colours': COLOURS, 'buildings': buildings, 'ground': ground}
     out = out_dir / 'scene.json'
     out.write_text(json.dumps(scene, separators=(',', ':')))

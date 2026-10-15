@@ -266,6 +266,8 @@ def main():
     fl, pw = look['glow_floor'], look['glow_power']
     glows = [0.0] + [fl + (1 - fl) * (k / max(1, n_cls - 1)) ** pw for k in range(n_cls)]
     glows += [0.0] * (len(palette) - len(glows))
+    if 'glow' in scene_data:  # per-class glow from the export (price scenes: estimated classes dimmer)
+        glows = [fl + (1 - fl) * r ** pw if r > 0 else 0.0 for r in scene_data['glow']]
     a = me.color_attributes.new('col', 'FLOAT_COLOR', 'FACE')
     a.data.foreach_set('color', [v for c in fcls for v in cols[c]])
     g = me.attributes.new('glow', 'FLOAT', 'FACE')
