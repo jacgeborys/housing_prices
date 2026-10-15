@@ -46,6 +46,11 @@ coverage.py           ->  output/coverage.gpkg (layer building_coverage: 22.9K m
 price_drivers.py      ->  output/price_drivers.gpkg (layer building_drivers: features, out-of-fold prediction,
                           resid_pct = cheaper/dearer than expected), output/analysis/price_drivers_coefficients.csv,
                           16_price_drivers.png (stage 2: what explains value_2025 across buildings)
+transit_story.py      ->  output/analysis/17_transit_price.png (price by departures band: new vs older buildings,
+                          older vs their district average)
+walk_access.py        ->  output/walk_access.gpkg (network walking distance to metro, tram stop, school, park >= 2 ha;
+                          TransitFrequency's Warsaw walking graph loaded read-only, multi-source Dijkstra)
+fetch_noise.py        ->  data/noise_{road,rail,air}_lden.tif (EEA END round-4 noise contours, 10 m, EPSG:3035)
 fetch_pois.py         ->  data/osm_pois.gpkg (OSM food & drink, shops, schools, health, culture, leisure;
                           via D:/QGIS/osm_basemap/overpass_polite.py, imported read-only)
 make_3d.py            ->  output/analysis/map_07_3d_center.png (static, 900 m around PKiN)
@@ -151,14 +156,23 @@ python build_viz.py
   `value_2025` -> residual "cheaper/dearer than expected" map. Only `coverage == ok` buildings get coloured.
   Leads: Warsaw open-data API (api.um.warszawa.pl, needs a key) had building years; city WFS has
   `ZIELEN_DRZEWA` (tree inventory) and `OBWODY_SZKOL_PODSTAWOWYCH` (school catchments).
-- Stage-2 feasibility (`price_drivers.py`, 2026-10-15): 12.7K buildings (>= 3 sales, transit matched by osm_id or
-  nearest footprint <= 25 m). Features explain **46 % out of sample** (gradient boosting, spatial 5-fold CV on
-  2 km blocks) vs 29 % for district alone; OLS + district 52 %. Within a district: developer-sale share (new
-  building) +31 %, cafés/restaurants/bars within 500 m +3.8 % per doubling, -1.2 %/km from PKiN, -1.5 %/km from
-  metro, +2.9 % per 10 ha of green within 500 m, taller -1.7 %/10 m. **Transit frequency -1.3 % per doubling**
-  (no premium beyond metro + centrality: frequent bus/tram lines run along arterials and prefab estates).
-  POIs (`fetch_pois.py`, 28.5K) barely raise the out-of-sample R² (45.0 -> 45.6 %): the boosting model already
-  read them through centrality. Building age is the biggest missing feature (developer share is a crude proxy).
+- Stage-2 model (`price_drivers.py`, 2026-10-16): 12.7K buildings (>= 3 sales, transit matched by osm_id or nearest
+  footprint <= 25 m). Features: transit departures, **network walking distances** (metro, tram, park, school),
+  façade noise (EEA road/rail/air Lden, loudest band within 10 m), BDOT heritage (ZABYTEK), centrality, river,
+  green area, POIs, building form, developer-sale share. **47.5 % out of sample** (spatial 5-fold CV on 2 km
+  blocks) vs 29 % for district alone; OLS + district 52 %. Within a district: new building (developer share)
+  +32 %, cafés/bars x2 +3.5 %, -2.1 % per km walked to metro, rail noise -2.4 %/10 dB, road noise only -0.5 %,
+  green +3.4 %/10 ha, heritage ~0. `--index district` (district price indices instead of the city index) changes
+  no coefficient by more than 0.1 pt except first-sale-2015+.
+- Transit (`transit_story.py`, chart 17): no premium for bus/tram frequency in older buildings (within a district
+  the best-served streets are 3-6 % cheaper: arterials, prefab estates built around bus loops); new
+  developments rise +24 % from the least to the best served band (partly centrality). Only 18 % of priced
+  buildings have <= 150 departures/day: sparse service mostly means houses, which are outside this sample.
+- Matching: 99.97 % of in-city flat sales attach to a building (270,655 of 270,741); 26.8K fetched sales lie in
+  neighbouring towns. Cooperative-right sales (spółdzielcze własnościowe prawo) are absent from RCN altogether;
+  only flats converted to full ownership appear (the "thin" buildings of the coverage audit).
+- Building age: not openly available (BDOT, city GeoServer, KIEG have none; api.um.warszawa.pl dropped it).
+  Request to BGiK pending; API key for api.um.warszawa.pl in `.secrets/` (gitignored).
 - 3D price renders (`3d/`): quantile classes (12.5k..21k), parts matched to the parent they overlap most
   (Cosmopolitan's podium roof went grey under a separate building=roof canopy), blocks of flats without
   enough sales get a desaturated neighbourhood estimate (median of priced buildings within 300 m, >= 5).

@@ -2,3 +2,4 @@ output/3d/
 3d/scenes/
 3d/renders/
 __pycache__/
+.secrets/

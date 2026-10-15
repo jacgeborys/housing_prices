@@ -35,20 +35,31 @@ import style
 style.apply()
 
 MIN_SALES = 3
+INDEX = "city"                      # --index district: re-base the target with district price indices
 TRANSIT_SNAP_M = 25
 POIS = "data/osm_pois.gpkg"         # fetch_pois.py; POI features are used when it exists
 TRANSIT = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_gates.gpkg"   # read only
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
-PKIN = (637080.0, 486860.0)            # EPSG:2180, approx.; recomputed from lat/lon below
+WALK = "output/walk_access.gpkg"    # walk_access.py: network walking distances
+BDOT_RAW = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only (ZABYTEK)
+NOISE = {s: f"data/noise_{s}_lden.tif" for s in ("road", "rail", "air")}   # fetch_noise.py
+NOISE_DB = np.array([45, 57, 62, 67, 72, 77])   # EEA band -> dB (0 = below 55, taken as 45)
+FACADE_M = 10                                   # noise = loudest band within this distance of the footprint
 OUT_GPKG = "output/price_drivers.gpkg"
 OUT_CSV = "output/analysis/price_drivers_coefficients.csv"
 OUT_PNG = "output/analysis/16_price_drivers.png"
 
 LABELS = {
     "log2_trips": "Bus/tram/train departures (×2)",
-    "metro_km": "Distance to metro (per km)",
+    "walk_metro_km": "Walk to metro (per km)",
     "train_km": "Distance to rail station (per km)",
-    "trams_500": "Tram stops ≤ 500 m (per stop)",
+    "walk_tram_km": "Walk to tram stop (per km)",
+    "walk_park_km": "Walk to a park ≥ 2 ha (per km)",
+    "walk_school_km": "Walk to a school (per km)",
+    "noise_road_db": "Road noise at façade (per 10 dB)",
+    "noise_rail_db": "Rail noise at façade (per 10 dB)",
+    "noise_air_db": "Aircraft noise (per 10 dB)",
+    "heritage": "Listed heritage building",
     "centre_km": "Distance to PKiN (per km)",
     "river_km": "Distance to the Vistula (per km)",
     "green_ha_500": "Park/forest ≤ 500 m (per 10 ha)",
@@ -62,7 +73,7 @@ POI_LABELS = {
     "shops_500": "Shops ≤ 500 m (×2)",
     "schools_500": "Schools, kindergartens ≤ 500 m (×2)",
 }
-SCALE = {"green_ha_500": 10, "height_m": 10}     # coefficients reported per this many units
+SCALE = {"green_ha_500": 10, "height_m": 10, "noise_road_db": 10, "noise_rail_db": 10, "noise_air_db": 10}     # coefficients reported per this many units
 
 
 def pkin_xy():
@@ -82,6 +93,53 @@ def area_within(points, polys, r):
         if len(idx):
             out[i] = sum(g.intersection(buf).area for g in geoms[idx]) / 1e4
     return out
+
+
+def facade_noise(v):
+    """Loudest EEA Lden band within FACADE_M of each footprint, as dB, for road / rail / air."""
+    import rasterio
+    from rasterio.mask import mask
+    shapes = v.geometry.to_crs(3035).buffer(FACADE_M)
+    out = {}
+    for src_name, path in NOISE.items():
+        vals = np.zeros(len(v), int)
+        with rasterio.open(path) as src:
+            for i, g in enumerate(shapes):
+                try:
+                    a, _ = mask(src, [g], crop=True, filled=True, nodata=0)
+                    vals[i] = a.max()
+                except ValueError:          # outside the raster
+                    vals[i] = 0
+        out[f"noise_{src_name}_db"] = NOISE_DB[vals]
+        print(f"noise {src_name}: {(vals > 0).mean():.0%} of buildings >= 55 dB Lden")
+    return pd.DataFrame(out, index=v.index)
+
+
+def heritage(pts):
+    """1 if the BDOT10k building under the point is a listed monument (ZABYTEK = 'Tak')."""
+    b = gpd.read_file(BDOT_RAW).to_crs(2180)
+    j = gpd.sjoin(gpd.GeoDataFrame(geometry=pts.values, crs=2180), b[["ZABYTEK", "geometry"]],
+                  predicate="within", how="left")
+    z = j[~j.index.duplicated()]["ZABYTEK"].eq("Tak").astype(float).to_numpy()
+    print(f"heritage: {int(z.sum()):,} listed buildings")
+    return z
+
+
+def district_target(v):
+    """value_2025 re-based with the district's own annual index instead of the city index:
+    each sale's city deflator exp(-gamma_city(year)) is swapped for exp(-gamma_district(year)),
+    averaged (geometric mean) over the building's sales."""
+    tx = gpd.read_file("output/price_model.gpkg", layer="transactions_adj", ignore_geometry=True,
+                       columns=["osm_id", "year", "district"])
+    q = pd.read_csv("output/analysis/price_index_quarterly.csv")
+    q["year"] = q["quarter"].str[:4].astype(int)
+    city = q.groupby("year")["gamma"].mean()
+    di = pd.read_csv("output/analysis/district_index_annual.csv").set_index(["district", "year"])["gamma"]
+    g_d = pd.Series(list(zip(tx["district"], tx["year"]))).map(di).to_numpy()
+    g_c = tx["year"].map(city).to_numpy()
+    tx["lf"] = np.where(np.isfinite(g_d), g_c - g_d, 0.0)       # log factor district vs city
+    f = tx.groupby("osm_id")["lf"].mean()
+    return v["y"] + v["osm_id"].map(f).fillna(0).to_numpy()
 
 
 def build_features():
@@ -109,11 +167,15 @@ def build_features():
     v["log2_trips"] = np.log2(v["trips"] + 10)
 
     st = gpd.read_file(f"{OSM}/train_stations.gpkg").to_crs(2180)
-    metro, train = st[st["station"] == "subway"], st[st["station"] != "subway"]
-    v["metro_km"] = cKDTree(np.c_[metro.geometry.x, metro.geometry.y]).query(xy)[0] / 1000
+    train = st[st["station"] != "subway"]
     v["train_km"] = cKDTree(np.c_[train.geometry.x, train.geometry.y]).query(xy)[0] / 1000
-    tr = gpd.read_file(f"{OSM}/tram_stops.gpkg").to_crs(2180)
-    v["trams_500"] = [len(n) for n in cKDTree(np.c_[tr.geometry.x, tr.geometry.y]).query_ball_point(xy, 500)]
+    w = gpd.read_file(WALK, ignore_geometry=True).drop_duplicates("osm_id").set_index("osm_id")
+    for c in ("metro", "tram", "park", "school"):
+        v[f"walk_{c}_km"] = v["osm_id"].map(w[f"walk_{c}_m"]).to_numpy() / 1000
+    print(f"walking distances: {v['walk_metro_km'].notna().sum():,} buildings")
+
+    v = v.join(facade_noise(v))
+    v["heritage"] = heritage(pts)
 
     cx, cy = pkin_xy()
     v["centre_km"] = np.hypot(xy[:, 0] - cx, xy[:, 1] - cy) / 1000
@@ -144,6 +206,9 @@ def build_features():
     v["pct_primary"] = v["pct_primary"].fillna(0) / 100        # stored as 0-100
     v["new_build"] = ((v["first_year"] >= 2015) & (v["pct_primary"] > 0.3)).astype(float)
     v["y"] = np.log(v["value_2025"])
+    if INDEX == "district":
+        v["y"] = district_target(v)
+        print("target re-based with district indices")
     v["cell_1km"] = (xy[:, 0] // 1000).astype(int) * 10000 + (xy[:, 1] // 1000).astype(int)
     v["block_2km"] = (xy[:, 0] // 2000).astype(int) * 10000 + (xy[:, 1] // 2000).astype(int)
     return v
@@ -252,6 +317,14 @@ def plot(coef, importance, scores, v):
 
 
 def main():
+    global INDEX, OUT_GPKG, OUT_CSV, OUT_PNG
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--index", choices=["city", "district"], default="city")
+    INDEX = ap.parse_args().index
+    if INDEX == "district":      # robustness run: separate outputs
+        OUT_GPKG, OUT_CSV = OUT_GPKG.replace(".gpkg", "_district_index.gpkg"), OUT_CSV.replace(".csv", "_district_index.csv")
+        OUT_PNG = OUT_PNG.replace(".png", "_district_index.png")
     v = build_features()
     feats = list(LABELS) + [f for f in POI_LABELS if f in v]
     LABELS.update(POI_LABELS)
