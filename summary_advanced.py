@@ -227,7 +227,7 @@ SHAPES = [   # feature, title, x transform for display, x label
     ("food_500", "Cafés, restaurants, bars", lambda x: 2 ** x - 1, "venues within 500 m"),
     ("walk_metro_km", "Walk to the metro", lambda x: x, "km on foot"),
     ("green_ha_500", "Green nearby", lambda x: x, "ha of park/forest within 500 m"),
-    ("noise_rail_db", "Rail noise", lambda x: x, "Lden at the façade, dB (45 = below 55)"),
+    ("noise_rail_db", "Tram & train noise", lambda x: x, "Lden at the façade, dB (45 = below 55)"),
     ("log2_trips", "Bus & tram departures", lambda x: 2 ** x - 10, "departures/day within 5 min"),
     ("height_m", "Building height", lambda x: x, "m"),
 ]

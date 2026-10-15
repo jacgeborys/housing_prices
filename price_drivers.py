@@ -57,7 +57,7 @@ LABELS = {
     "walk_park_km": "Walk to a park ≥ 2 ha (per km)",
     "walk_school_km": "Walk to a school (per km)",
     "noise_road_db": "Road noise at façade (per 10 dB)",
-    "noise_rail_db": "Rail noise at façade (per 10 dB)",
+    "noise_rail_db": "Tram & train noise at façade (per 10 dB)",
     "noise_air_db": "Aircraft noise (per 10 dB)",
     "heritage": "Listed heritage building",
     "centre_km": "Distance to PKiN (per km)",

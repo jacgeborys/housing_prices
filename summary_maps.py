@@ -222,10 +222,11 @@ def cafes(v, d, w):
 # 9 --------------------------------------------------------------------------------------------
 def noise(v, d, w):
     fig = page("Where Warsaw is loud",
-               "EU strategic noise map: road and rail, day-evening-night level (Lden)",
-               "EEA Environmental Noise Directive data (round 4, update April 2026), 10 m grid; the louder of "
-               "road and rail shown. Bars: typical-flat price net of the district and every other feature, by rail "
-               "noise at the façade (loudest band within 10 m). Road noise has a much smaller effect (−0.5 % per 10 dB). "
+               "EU strategic noise map: road, tram and train, day-evening-night level (Lden)",
+               "EEA Environmental Noise Directive data (round 4, update April 2026), 10 m grid; the louder of road "
+               "and rail shown ('rail' includes trams: 91 % of tram stops away from railways lie in it). Bars: "
+               "typical-flat price net of the district and every other feature, by tram & train noise at the façade "
+               "(loudest band within 10 m). Road noise has a much smaller effect (−0.5 % per 10 dB). "
                + style.SOURCE)
     ax = basemap(fig, d, w)
     arrs = []
@@ -248,8 +249,8 @@ def noise(v, d, w):
     legend_patches(ax, [cmap(i) for i in range(5)], ["55–59 dB", "60–64", "65–69", "70–74", "75+"], "Lden")
     within_district_bars(fig, v, "noise_rail_db", [0, 50, 60, 65, 70, 100],
                          ["below 55 dB", "55–59", "60–64", "65–69", "70+"],
-                         "Price by rail noise at the façade, all else equal",
-                         "Rail noise (Lden) at the building", min_n=40, focus="noise_rail_db")
+                         "Price by tram & train noise at the façade, all else equal",
+                         "Tram & train noise (Lden) at the building", min_n=40, focus="noise_rail_db")
     save(fig, "09_noise.png")
 
 

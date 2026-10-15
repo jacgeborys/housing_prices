@@ -146,7 +146,7 @@ PLAIN = [  # feature, plain-language label, sign flip (effect of the "worse" dir
     ("centre_km", "Each km farther from the centre"),
     ("height_m", "Building 10 m taller"),
     ("walk_metro_km", "Each km farther to walk to the metro"),
-    ("noise_rail_db", "Rail noise 10 dB louder"),
+    ("noise_rail_db", "Tram & train noise 10 dB louder"),
     ("noise_road_db", "Road noise 10 dB louder"),
 ]
 

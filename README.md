@@ -178,7 +178,7 @@ slabs, LinkedIn post.
   façade noise (EEA road/rail/air Lden, loudest band within 10 m), BDOT heritage (ZABYTEK), centrality, river,
   green area, POIs, building form, developer-sale share. **47.5 % out of sample** (spatial 5-fold CV on 2 km
   blocks) vs 29 % for district alone; OLS + district 52 %. Within a district: new building (developer share)
-  +32 %, cafés/bars x2 +3.5 %, -2.1 % per km walked to metro, rail noise -2.4 %/10 dB, road noise only -0.5 %,
+  +32 %, cafés/bars x2 +3.5 %, -2.1 % per km walked to metro, tram & train noise -2.4 %/10 dB (EEA "rail" includes trams), road noise only -0.5 %,
   green +3.4 %/10 ha, heritage ~0. `--index district` (district price indices instead of the city index) changes
   no coefficient by more than 0.1 pt except first-sale-2015+.
 - Transit (`transit_story.py`, chart 17): no premium for bus/tram frequency in older buildings (within a district
