@@ -46,6 +46,8 @@ coverage.py           ->  output/coverage.gpkg (layer building_coverage: 22.9K m
 price_drivers.py      ->  output/price_drivers.gpkg (layer building_drivers: features, out-of-fold prediction,
                           resid_pct = cheaper/dearer than expected), output/analysis/price_drivers_coefficients.csv,
                           16_price_drivers.png (stage 2: what explains value_2025 across buildings)
+summary_charts.py     ->  output/summary/01-05 PNG (4:5 portrait, 1200x1500, carousel-ready): prices over time,
+                          districts, what drives price, transit, data blind spot (reads saved outputs only)
 transit_story.py      ->  output/analysis/17_transit_price.png (price by departures band: new vs older buildings,
                           older vs their district average)
 walk_access.py        ->  output/walk_access.gpkg (network walking distance to metro, tram stop, school, park >= 2 ha;
@@ -128,6 +130,12 @@ python build_viz.py
 ```
 
 ## Status
+
+**Paused 2026-10-16.** Wrap-up: `summary_charts.py` -> `output/summary/` (five portrait charts telling the story:
+index 2.2x since 2013 but real prices back at the 2008 peak; district ranking of a typical flat; within-district
+drivers; transit premium only for new buildings; one flat in five invisible to RCN). Building age dropped
+(not openly available). Possible next steps: residual ("cheaper than expected") map, floor-by-floor Blender
+slabs, LinkedIn post.
 
 - RCN data: fetched (381K transactions, last refresh 2026-09-27)
 - OSM buildings: 329K features (320K main + 9.3K building:part with full 3D tags)
