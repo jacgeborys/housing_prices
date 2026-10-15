@@ -45,22 +45,22 @@ OUT_CSV = "output/analysis/price_drivers_coefficients.csv"
 OUT_PNG = "output/analysis/16_price_drivers.png"
 
 LABELS = {
-    "log2_trips": "Transit departures (per doubling)",
+    "log2_trips": "Bus/tram/train departures (×2)",
     "metro_km": "Distance to metro (per km)",
     "train_km": "Distance to rail station (per km)",
-    "trams_500": "Tram stops within 500 m (per stop)",
+    "trams_500": "Tram stops ≤ 500 m (per stop)",
     "centre_km": "Distance to PKiN (per km)",
     "river_km": "Distance to the Vistula (per km)",
-    "green_ha_500": "Park/forest within 500 m (per 10 ha)",
+    "green_ha_500": "Park/forest ≤ 500 m (per 10 ha)",
     "height_m": "Building height (per 10 m)",
     "pct_primary": "Developer-sale share (0→1)",
     "new_build": "First sale 2015 or later",
-    "log_footprint": "Footprint (per doubling)",
+    "log_footprint": "Footprint (×2)",
 }
 POI_LABELS = {
-    "food_500": "Cafés, restaurants, bars within 500 m (per doubling)",
-    "shops_500": "Shops within 500 m (per doubling)",
-    "schools_500": "Schools, kindergartens within 500 m (per doubling)",
+    "food_500": "Cafés, restaurants, bars ≤ 500 m (×2)",
+    "shops_500": "Shops ≤ 500 m (×2)",
+    "schools_500": "Schools, kindergartens ≤ 500 m (×2)",
 }
 SCALE = {"green_ha_500": 10, "height_m": 10}     # coefficients reported per this many units
 
@@ -212,8 +212,9 @@ def boosted(v, feats, k=5, seed=0):
 
 def plot(coef, importance, scores, v):
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(15, 7.5), gridspec_kw={"width_ratios": [1.35, 1]})
-    fig.subplots_adjust(top=0.82, bottom=0.16, left=0.22, right=0.97, wspace=0.55)
-    c = coef.set_index("feature").loc[importance.index[::-1]]
+    fig.subplots_adjust(top=0.82, bottom=0.17, left=0.2, right=0.97, wspace=0.55)
+    c = coef.set_index("feature").loc[[f for f in importance.index[::-1] if f != "pct_primary"]]
+    dev = coef.set_index("feature").loc["pct_primary"]
     y = np.arange(len(c))
     for off, col, colr, lab in ((0.17, "pct", style.CONTEXT_DARK, "Whole city"),
                                 (-0.17, "pct_district", style.BLUE, "Within the same district")):
@@ -224,8 +225,11 @@ def plot(coef, importance, scores, v):
     a1.set_yticklabels(c["label"])
     style.pct(a1, "x")
     style.vgrid_only(a1)
-    a1.set_title("Price effect of each feature, other features held equal (95 % CI)", fontsize=11.5)
-    a1.legend(loc="lower right")
+    a1.set_title("Price effect of each feature, others held equal (95 % CI)", fontsize=11.5)
+    a1.text(0.0, -0.13, f"Not shown (off scale): building sold mostly by its developer (new) "
+            f"{dev['pct_district']:+.0f} % within the district ({dev['pct']:+.0f} % city-wide)",
+            transform=a1.transAxes, fontsize=9.5, color=style.INK_2)
+    a1.legend(loc="upper right", ncol=2, borderaxespad=0.3, handletextpad=0.3, columnspacing=1.0)
 
     imp = importance[::-1] / importance.sum() * 100
     a2.barh(np.arange(len(imp)), imp.values, color=style.BLUE, height=0.65)
@@ -236,7 +240,7 @@ def plot(coef, importance, scores, v):
     a2.set_title("Share of the model's predictive power", fontsize=11.5)
 
     style.header(fig, "What makes a Warsaw flat expensive?",
-                 f"Location and transit features explain {scores['gbm']:.0%} of the price differences "
+                 f"Location, amenity and building features explain {scores['gbm']:.0%} of the price differences "
                  f"between buildings (out of sample, {len(v):,} buildings); district alone: {scores['district']:.0%}")
     style.footer(fig, "Target: hedonic value of a typical flat in the building, 2025 PLN/m² (date, floor, size and "
                       "new-build effects removed), buildings with ≥ 3 sales. Left: OLS on log price, SEs clustered by "

@@ -151,12 +151,14 @@ python build_viz.py
   `value_2025` -> residual "cheaper/dearer than expected" map. Only `coverage == ok` buildings get coloured.
   Leads: Warsaw open-data API (api.um.warszawa.pl, needs a key) had building years; city WFS has
   `ZIELEN_DRZEWA` (tree inventory) and `OBWODY_SZKOL_PODSTAWOWYCH` (school catchments).
-- Stage-2 feasibility (`price_drivers.py`, 2026-10-15): 13.6K buildings (>= 3 sales, transit matched by osm_id or
-  nearest footprint <= 25 m). Cheap features explain **45 % out of sample** (gradient boosting, spatial 5-fold CV
-  on 2 km blocks) vs 29 % for district alone; OLS + district 50 %. Within a district: developer-sale share
-  (new building) +33 %, -2.1 %/km from PKiN, -1.6 %/km from metro, +2.4 % per 10 ha of green within 500 m,
-  taller -1.6 %/10 m. **Transit frequency -1.1 % per doubling** (no premium beyond metro + centrality: frequent
-  bus/tram lines run along arterials and prefab estates). Building age is the biggest missing feature.
+- Stage-2 feasibility (`price_drivers.py`, 2026-10-15): 12.7K buildings (>= 3 sales, transit matched by osm_id or
+  nearest footprint <= 25 m). Features explain **46 % out of sample** (gradient boosting, spatial 5-fold CV on
+  2 km blocks) vs 29 % for district alone; OLS + district 52 %. Within a district: developer-sale share (new
+  building) +31 %, cafés/restaurants/bars within 500 m +3.8 % per doubling, -1.2 %/km from PKiN, -1.5 %/km from
+  metro, +2.9 % per 10 ha of green within 500 m, taller -1.7 %/10 m. **Transit frequency -1.3 % per doubling**
+  (no premium beyond metro + centrality: frequent bus/tram lines run along arterials and prefab estates).
+  POIs (`fetch_pois.py`, 28.5K) barely raise the out-of-sample R² (45.0 -> 45.6 %): the boosting model already
+  read them through centrality. Building age is the biggest missing feature (developer share is a crude proxy).
 - 3D price renders (`3d/`): quantile classes (12.5k..21k), parts matched to the parent they overlap most
   (Cosmopolitan's podium roof went grey under a separate building=roof canopy), blocks of flats without
   enough sales get a desaturated neighbourhood estimate (median of priced buildings within 300 m, >= 5).
