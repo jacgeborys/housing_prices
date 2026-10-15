@@ -46,6 +46,12 @@ coverage.py           ->  output/coverage.gpkg (layer building_coverage: 22.9K m
 price_drivers.py      ->  output/price_drivers.gpkg (layer building_drivers: features, out-of-fold prediction,
                           resid_pct = cheaper/dearer than expected), output/analysis/price_drivers_coefficients.csv,
                           16_price_drivers.png (stage 2: what explains value_2025 across buildings)
+summary_maps.py       ->  output/summary/06, 08, 09: reputation (model residual hex map + by district), cafés
+                          (density + price by venue band), noise (EEA road/rail Lden + price by rail-noise band);
+                          bars = price net of district and all other features (OLS residual)
+summary_advanced.py   ->  output/summary/10-13: district price gap decomposed into feature groups + reputation;
+                          bivariate transit x price hex map; polar price compass around PKiN; partial dependence
+                          + ICE curves ("shape of value")
 summary_charts.py     ->  output/summary/01-05 PNG (4:5 portrait, 1200x1500, carousel-ready): prices over time,
                           districts, what drives price, transit, data blind spot (reads saved outputs only)
 transit_story.py      ->  output/analysis/17_transit_price.png (price by departures band: new vs older buildings,
@@ -133,8 +139,11 @@ python build_viz.py
 
 **Paused 2026-10-16.** Wrap-up: `summary_charts.py` -> `output/summary/` (five portrait charts telling the story:
 index 2.2x since 2013 but real prices back at the 2008 peak; district ranking of a typical flat; within-district
-drivers; transit premium only for new buildings; one flat in five invisible to RCN). Building age dropped
-(not openly available). Possible next steps: residual ("cheaper than expected") map, floor-by-floor Blender
+drivers; transit premium only for new buildings; one flat in five invisible to RCN). Maps & advanced figures
+06-13 (`summary_maps.py`, `summary_advanced.py`): reputation residual (Żoliborz +15 %, Praga-Północ -18 % vs
+the feature-based prediction), district anatomy, transit x price bivariate map, price compass (4-7 km out: south
+16.5k vs east 13.8k, -17 %), shape of value (café effect is a threshold at ~25-40 venues within 500 m; metro
+effect beyond ~2.5 km on foot). Building age dropped (not openly available). Possible next steps: residual ("cheaper than expected") map, floor-by-floor Blender
 slabs, LinkedIn post.
 
 - RCN data: fetched (381K transactions, last refresh 2026-09-27)

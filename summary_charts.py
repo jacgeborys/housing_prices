@@ -38,7 +38,7 @@ def save(fig, name):
 def page(title, subtitle, footer):
     fig = plt.figure(figsize=FIG)
     style.header(fig, title, subtitle, y=0.985)
-    style.footer(fig, wrap(footer.replace("\n", " "), 150), y=0.012)
+    style.footer(fig, wrap(footer.replace("\n", " "), 138), y=0.012)
     return fig
 
 
