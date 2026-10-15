@@ -43,6 +43,9 @@ make_map.py           ->  output/analysis/map_01-06, map_08 PNG maps
 coverage.py           ->  output/coverage.gpkg (layer building_coverage: 22.9K multi-family buildings,
                           est. flats, recorded sales, coverage class none/thin/ok)
                       ->  output/analysis/coverage_by_district.csv, map_09_coverage.png
+export_3d_values.py   ->  output/3d/price_m2.csv (osm_id,value: hedonic value_2025, buildings with >= 3 sales)
+                          + prints the export_scene.py command for the Blender pipeline in
+                          D:/QGIS/TransitFrequency/3d (--values/--breaks/--colors, viridis on the dark scene)
 make_3d.py            ->  output/analysis/map_07_3d_center.png (static, 900 m around PKiN)
                       ->  output/web/warsaw_3d.html (interactive deck.gl, 3 km around PKiN)
 style.py                  shared chart theme, palettes, GUS CPI series
