@@ -139,7 +139,8 @@ def districts():
 # 3 --------------------------------------------------------------------------------------------
 PLAIN = [  # feature, plain-language label, sign flip (effect of the "worse" direction reads naturally)
     ("pct_primary", "New building (sold by the developer)"),
-    ("food_500", "Twice as many cafés, restaurants and bars nearby"),
+    ("walk7_food_drink", "Twice as many cafés, restaurants and bars within a 7-min walk"),
+    ("walk7_zabka", "Twice as many Żabka shops within a 7-min walk"),
     ("green_ha_500", "10 ha more park or forest within 500 m"),
     ("log_footprint", "Twice the building footprint"),
     ("log2_trips", "Twice as many bus and tram departures"),

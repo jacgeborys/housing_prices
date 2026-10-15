@@ -46,6 +46,12 @@ coverage.py           ->  output/coverage.gpkg (layer building_coverage: 22.9K m
 price_drivers.py      ->  output/price_drivers.gpkg (layer building_drivers: features, out-of-fold prediction,
                           resid_pct = cheaper/dearer than expected), output/analysis/price_drivers_coefficients.csv,
                           16_price_drivers.png (stage 2: what explains value_2025 across buildings)
+walk_amenities.py     ->  output/walk_amenities.gpkg: POIs within a 7-minute walk (560 m on footpaths) per building:
+                          food & drink, Żabka, grocery, schools, health, sport & play (bounded Dijkstra per building)
+reputation_time.py    ->  output/reputation_time.gpkg + summary/14: within-building resale change 2010-14 -> 2021-25
+                          vs the city (no-primary buildings), by hexagon / MSI neighbourhood / district
+estates.py            ->  output/analysis/estates_ranking.csv + summary/15: MSI neighbourhoods ranked by mean model
+                          residual, empirical-Bayes shrunk (data/msi.gpkg = city WFS layer MSI, 143 areas)
 summary_maps.py       ->  output/summary/06, 08, 09: reputation (model residual hex map + by district), cafés
                           (density + price by venue band), noise (EEA road/rail Lden + price by rail-noise band);
                           bars = price net of district and all other features (OLS residual)
@@ -136,6 +142,15 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-16 (resumed):** walking-network amenities replace 500 m circles (cafés +3.4 %/doubling within a district,
+unchanged -> robust; Żabka no effect; more grocery shops slightly negative = dense estates). Walking searches now
+snap only to the main connected component (0.6 % of graph nodes were isolated fragments: 125 buildings reached
+nothing). Reputation over time (fig. 14): central areas pull away (Praga-Północ +9.8 %, Wola +8.3 % vs city),
+outskirts lose (Ursynów -6.8 %, Ursus -6.3 %); no general catch-up of low-reputation areas (corr +0.04), but the two
+Pragas gain most. Estates (fig. 15): Nowa Praga -22 %, Stara Praga -16 %, Muranów -11 %; Stary Żoliborz +23 %,
+Służewiec +21 %, Wyględów +20 %. EEA "rail" noise includes trams. Building age: not openly available (city WMS
+GEODEZJA_BUDYNKI / budynki return no attributes); options = BGiK EGiB request, ask gis-expert, historical orthophotos.
 
 **Paused 2026-10-16.** Wrap-up: `summary_charts.py` -> `output/summary/` (five portrait charts telling the story:
 index 2.2x since 2013 but real prices back at the 2008 peak; district ranking of a typical flat; within-district

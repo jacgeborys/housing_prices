@@ -68,7 +68,8 @@ def outlines(ax, d, labels=True):
 
 FEATURES = ["log2_trips", "walk_metro_km", "train_km", "walk_tram_km", "walk_park_km", "walk_school_km",
             "noise_road_db", "noise_rail_db", "noise_air_db", "heritage", "centre_km", "river_km", "green_ha_500",
-            "height_m", "pct_primary", "new_build", "log_footprint", "food_500", "shops_500", "schools_500"]
+            "height_m", "pct_primary", "new_build", "log_footprint", "walk7_food_drink", "walk7_grocery",
+            "walk7_zabka", "walk7_schools", "walk7_health", "walk7_sport_play"]
 
 
 def adjusted(v, focus):
@@ -200,8 +201,8 @@ def cafes(v, d, w):
     fig = page("The café effect",
                "A premium appears only where 40 or more venues are within a short walk",
                f"{len(f):,} cafés, restaurants, bars and pubs from OpenStreetMap (Oct 2026), counted per 600 m "
-               "hexagon. Bars: typical-flat price net of the district and every other feature, by venues within "
-               "500 m of the building. Regression: +3.5 % per doubling of venues. " + style.SOURCE)
+               "hexagon. Bars: typical-flat price net of the district and every other feature, by venues within a "
+               "7-minute walk (560 m on footpaths). Regression: +3.4 % per doubling of venues; Żabka shops: no effect. " + style.SOURCE)
     ax = basemap(fig, d, w)
     cmap = ListedColormap(["#fde4cf", "#f9b98a", "#f08a4b", "#d4602a", "#a33f14", "#6e2508"])
     bounds = [1, 3, 6, 12, 25, 50, 1000]
@@ -211,11 +212,11 @@ def cafes(v, d, w):
     outlines(ax, d)
     legend_patches(ax, [cmap(i) for i in range(cmap.N)], ["1–2", "3–5", "6–11", "12–24", "25–49", "50+"],
                    "Venues per hexagon")
-    n500 = 2 ** v["food_500"] - 1
+    n500 = 2 ** v["walk7_food_drink"] - 1
     within_district_bars(fig, v.assign(n=n500), "n", [-1, 0, 5, 15, 40, 100, 1e9],
                          ["none", "1–5", "6–15", "16–40", "41–100", "100+"],
                          "Price by venues nearby, all else equal",
-                         "Cafés, restaurants and bars within 500 m", focus="food_500")
+                         "Cafés, restaurants and bars within a 7-minute walk", focus="walk7_food_drink")
     save(fig, "08_cafes.png")
 
 

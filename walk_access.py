@@ -54,6 +54,22 @@ def load_graph_min():
     return m, np.c_[x, y]
 
 
+class MainTree:
+    """Nearest-node lookup restricted to the largest connected component of the walking graph, so a
+    building never snaps to an isolated courtyard path or footway fragment (which reaches nothing)."""
+
+    def __init__(self, m, xy):
+        from scipy.sparse.csgraph import connected_components
+        _, lab = connected_components(m, directed=False)
+        self.nodes = np.flatnonzero(lab == np.bincount(lab).argmax())
+        self.tree = cKDTree(xy[self.nodes])
+        print(f"  main component: {len(self.nodes):,} of {len(xy):,} nodes")
+
+    def query(self, pts):
+        d, i = self.tree.query(pts)
+        return d, self.nodes[i]
+
+
 def distances(m, src_nodes, src_offset):
     """Multi-source Dijkstra; returns per-node distance to the nearest source (+ its snap offset)."""
     # a virtual super-source is avoided: scipy's min_only=True does multi-source directly
@@ -69,7 +85,7 @@ def distances(m, src_nodes, src_offset):
 def main():
     print("loading walking graph ...", flush=True)
     m, xy = load_graph_min()
-    tree = cKDTree(xy)
+    tree = MainTree(m, xy)
     print(f"  {m.shape[0]:,} nodes, {m.nnz // 2:,} edges")
 
     b = gpd.read_file("output/price_model.gpkg", layer="building_value")
@@ -108,7 +124,7 @@ def main():
     near = gpd.GeoDataFrame(geometry=gpd.points_from_xy(xy[:, 0], xy[:, 1]), crs=2180)
     hit = gpd.sjoin(near, gpd.GeoDataFrame(geometry=big.buffer(PARK_SNAP_M).values, crs=2180),
                     predicate="within", how="inner")
-    park_nodes = np.unique(hit.index.values)
+    park_nodes = np.intersect1d(np.unique(hit.index.values), tree.nodes)
     d = distances(m, park_nodes, np.zeros(len(park_nodes)))
     b["walk_park_m"] = np.minimum(d[b_node] + b_snap, MAX_M)
     print(f"  walk_park_m: {len(big):,} parks >= {PARK_MIN_HA} ha, {len(park_nodes):,} entrance nodes, "

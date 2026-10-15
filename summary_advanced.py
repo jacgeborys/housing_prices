@@ -27,7 +27,8 @@ GROUPS = {   # feature group -> features (fixed order = fixed colour)
     "Centrality & the river": ["centre_km", "river_km"],
     "Metro & rail lines": ["walk_metro_km", "train_km"],
     "Buses & trams": ["log2_trips", "walk_tram_km"],
-    "Cafés, shops & schools": ["food_500", "shops_500", "schools_500", "walk_school_km"],
+    "Cafés, shops & schools": ["walk7_food_drink", "walk7_grocery", "walk7_zabka", "walk7_schools",
+                               "walk7_health", "walk7_sport_play", "walk_school_km"],
     "Green & quiet": ["green_ha_500", "walk_park_km", "noise_road_db", "noise_rail_db", "noise_air_db"],
     "The buildings": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage"],
 }
@@ -224,7 +225,7 @@ def price_compass(v, d):
 SHAPES = [   # feature, title, x transform for display, x label
     ("centre_km", "Distance from the centre", lambda x: x, "km from PKiN"),
     ("pct_primary", "New building share", lambda x: 100 * x, "% of sales by the developer"),
-    ("food_500", "Cafés, restaurants, bars", lambda x: 2 ** x - 1, "venues within 500 m"),
+    ("walk7_food_drink", "Cafés, restaurants, bars", lambda x: 2 ** x - 1, "venues within a 7-minute walk"),
     ("walk_metro_km", "Walk to the metro", lambda x: x, "km on foot"),
     ("green_ha_500", "Green nearby", lambda x: x, "ha of park/forest within 500 m"),
     ("noise_rail_db", "Tram & train noise", lambda x: x, "Lden at the façade, dB (45 = below 55)"),
@@ -274,7 +275,7 @@ def shape_of_value(v):
         ax.set_title(title, fontsize=11)
         ax.set_xlabel(xl, fontsize=8.5)
         ax.tick_params(labelsize=8.5)
-        if f in ("food_500", "log2_trips"):
+        if f in ("walk7_food_drink", "log2_trips"):
             ax.set_xscale("symlog", linthresh=10)
             ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:,.0f}"))
             ax.set_xlim(left=max(0, xd.min()))

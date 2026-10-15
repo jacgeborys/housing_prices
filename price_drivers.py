@@ -37,7 +37,7 @@ style.apply()
 MIN_SALES = 3
 INDEX = "city"                      # --index district: re-base the target with district price indices
 TRANSIT_SNAP_M = 25
-POIS = "data/osm_pois.gpkg"         # fetch_pois.py; POI features are used when it exists
+WALK_AMEN = "output/walk_amenities.gpkg"   # walk_amenities.py: POIs within a 7-minute walk
 TRANSIT = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_gates.gpkg"   # read only
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
 WALK = "output/walk_access.gpkg"    # walk_access.py: network walking distances
@@ -68,10 +68,13 @@ LABELS = {
     "new_build": "First sale 2015 or later",
     "log_footprint": "Footprint (×2)",
 }
-POI_LABELS = {
-    "food_500": "Cafés, restaurants, bars ≤ 500 m (×2)",
-    "shops_500": "Shops ≤ 500 m (×2)",
-    "schools_500": "Schools, kindergartens ≤ 500 m (×2)",
+AMENITY_LABELS = {   # counts within a 7-minute walk (560 m on footpaths), modelled as log2(1 + n)
+    "walk7_food_drink": "Cafés, restaurants, bars, 7-min walk (×2)",
+    "walk7_grocery": "Grocery shops, 7-min walk (×2)",
+    "walk7_zabka": "Żabka shops, 7-min walk (×2)",
+    "walk7_schools": "Schools, kindergartens, 7-min walk (×2)",
+    "walk7_health": "Pharmacies, clinics, 7-min walk (×2)",
+    "walk7_sport_play": "Playgrounds, gyms, sports, 7-min walk (×2)",
 }
 SCALE = {"green_ha_500": 10, "height_m": 10, "noise_road_db": 10, "noise_rail_db": 10, "noise_air_db": 10}     # coefficients reported per this many units
 
@@ -189,17 +192,11 @@ def build_features():
     print("green area within 500 m ...")
     v["green_ha_500"] = area_within(pts.values, green, 500)
 
-    import os
-    if os.path.exists(POIS):
-        p = gpd.read_file(POIS)
-        groups = {"food_500": p["amenity"].isin(["cafe", "restaurant", "bar", "pub"]),
-                  "shops_500": p["shop"].notna(),
-                  "schools_500": p["amenity"].isin(["school", "kindergarten"])}
-        for col, m in groups.items():
-            q = p[m]
-            n = cKDTree(np.c_[q.geometry.x, q.geometry.y]).query_ball_point(xy, 500)
-            v[col] = np.log2(1 + np.array([len(i) for i in n]))
-        print(f"POIs: {len(p):,} ({', '.join(f'{k} {int(m.sum()):,}' for k, m in groups.items())})")
+    # everyday amenities within a 7-minute walk on the footpath network (walk_amenities.py)
+    am = gpd.read_file(WALK_AMEN, ignore_geometry=True).drop_duplicates("osm_id").set_index("osm_id")
+    for c in AMENITY_LABELS:
+        v[c] = np.log2(1 + v["osm_id"].map(am[c]).fillna(0).to_numpy())
+    print(f"walking amenities: {', '.join(f'{c} median {np.median(2 ** v[c] - 1):.0f}' for c in AMENITY_LABELS)}")
 
     v["height_m"] = v["height_m"].fillna(v["floors"] * 3).fillna(12)
     v["log_footprint"] = np.log2(v["footprint_m2"].clip(lower=50))
@@ -326,8 +323,8 @@ def main():
         OUT_GPKG, OUT_CSV = OUT_GPKG.replace(".gpkg", "_district_index.gpkg"), OUT_CSV.replace(".csv", "_district_index.csv")
         OUT_PNG = OUT_PNG.replace(".png", "_district_index.png")
     v = build_features()
-    feats = list(LABELS) + [f for f in POI_LABELS if f in v]
-    LABELS.update(POI_LABELS)
+    feats = list(LABELS) + [f for f in AMENITY_LABELS if f in v]
+    LABELS.update(AMENITY_LABELS)
     print(v[feats + ["value_2025"]].describe().T[["mean", "min", "50%", "max"]].round(2).to_string())
     coef, scores = linear_models(v, feats)
     pred, r2, importance = boosted(v, feats)
