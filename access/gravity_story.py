@@ -30,7 +30,7 @@ OUT = os.path.join(HERE, "output")
 PURPOSES = {"jobs": ("All jobs", style.BLUE), "office": ("Office jobs", style.VIOLET),
             "shops": ("Shops", style.ORANGE), "leisure": ("Cafés, restaurants, culture", style.MAGENTA)}
 HALF = [5, 10, 15, 20, 30, 45]
-CORES = ["Rondo Daszyńskiego", "Centrum / ONZ", "Służewiec", "Marszałkowska"]
+CORES = ["Rondo Daszyńskiego", "ONZ", "Służewiec", "Central Station"]
 
 
 def main():

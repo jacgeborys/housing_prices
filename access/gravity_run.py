@@ -8,7 +8,7 @@ but per origin cell it keeps:
   n_<purpose>_<t>      cumulative opportunities within t = 15, 20, 30, 45 min
   t_cl<k>              minutes to the nearest cell of office cluster k (clusters found from the data:
                        neighbouring 250 m cells with >= 4000 office job equivalents, total >= 10k: Daszyńskiego,
-                       Centrum/ONZ, Służewiec, Dworzec Gdański, Al. Jerozolimskie west)
+                       ONZ, Służewiec, Central Station)
 Office jobs = commercial-office floor area / 18 m² (SimCity category "budynki biurowe", build_inputs.py).
 
 Output: access/output/gravity_am_peak.csv (per building) and access/output/office_clusters.csv
@@ -26,7 +26,7 @@ from travel_times import CELL, DATA, OUT, SCENARIOS, network  # noqa: E402  (set
 
 HALF_LIVES = [5, 10, 15, 20, 30, 45]
 THRESHOLDS = [15, 20, 30, 45]
-CLUSTER_MIN_JOBS = 4000     # splits the central continuum into Daszyńskiego vs Centrum/ONZ
+CLUSTER_MIN_JOBS = 4000     # splits the central continuum into Daszyńskiego, ONZ and Central Station
 CLUSTER_MIN_TOTAL = 10000
 CLUSTER_MIN_CELLS = 2       # a single dense cell is one office park, not a centre
 CHUNK = 500

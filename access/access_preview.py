@@ -25,10 +25,10 @@ from summary_maps import FEATURES, basemap, legend_patches, load, outlines  # no
 style.apply()
 OUT = os.path.join(HERE, "output")
 CLUSTERS = [  # gravity_run.py's detection on the SimCity office layer, BDOT June 2025 (cells >= 4000, >= 2 cells)
-    ("Rondo Daszyńskiego", 20.9846, 52.2307, 67591), ("Centrum / ONZ", 20.9998, 52.2341, 25241),
-    ("Służewiec", 20.9934, 52.1828, 21714), ("Centrum south (Marszałkowska)", 21.0024, 52.2278, 11579)]
+    ("Rondo Daszyńskiego", 20.9846, 52.2307, 67591), ("ONZ", 20.9998, 52.2341, 25241),
+    ("Służewiec", 20.9934, 52.1828, 21714), ("Central Station", 21.0024, 52.2278, 11579)]
 
-LABEL_OFF = {"Rondo Daszyńskiego": (-30, 32), "Centrum / ONZ": (22, 14), "Służewiec": (14, -6), "Centrum south (Marszałkowska)": (18, -14)}
+LABEL_OFF = {"Rondo Daszyńskiego": (-30, 32), "ONZ": (22, 14), "Służewiec": (14, -6), "Central Station": (18, -14)}
 
 
 def within_r2(v, cols):
@@ -129,7 +129,7 @@ def main():
     style.hgrid_only(ax4)
     ax4.set_title("Price model fit (R², within districts)", fontsize=10.5)
     med = v.groupby("district")["eve_ratio"].median().sort_values()
-    fig.text(0.03, 0.885, wrap(f"Offices cluster at Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k jobs), Centrum/ONZ "
+    fig.text(0.03, 0.885, wrap(f"Offices cluster at Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k jobs), ONZ "
                                f"({CLUSTERS[1][3] / 1000:.0f}k) and Służewiec ({CLUSTERS[2][3] / 1000:.0f}k). The median "
                                f"building reaches {v['jobs_30'].median() / 1000:.0f}k jobs in 30 min; doubling job access "
                                f"is worth {gain:+.1f}% within a district.", 100),

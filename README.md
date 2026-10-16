@@ -168,7 +168,7 @@ INVESTMENT location is Warsaw: 752 datasets, 37.7K rows, 9.6K distinct flats on 
 street's midpoint) -> offers/data/offers_warszawa.gpkg, 204 investments. First comparison: in 33 buildings with
 offers and >= 3 developer deeds since 2025, asking is -0.9 % vs deed (IQR -6..+7 %); deeds lag the price agreed
 at the preliminary contract by 1-2 years. Access (access/): figures 24-25 rebuilt on BDOT June 2025 + SimCity
-categories; office cores Daszyńskiego 68k, Centrum/ONZ 25k, Służewiec 22k, Marszałkowska 12k; best price
+categories; office cores Daszyńskiego 68k, ONZ 25k, Służewiec 22k, Central Station 12k; best price
 predictor = reach to cafés/restaurants/culture with a 5-min half-life (+6.9 % per doubling within a district).
 
 **2026-10-16 (night):** walk_access.py adds walking distance to rail stations (SKM/KM/WKD/PKP, replaces the
