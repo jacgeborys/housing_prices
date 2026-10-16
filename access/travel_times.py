@@ -6,7 +6,7 @@ TransitFrequency). R5 routes walk + transit (all modes) and reports, for every o
 travel time over every departure minute of the time window (waiting included).
 
 Buildings route from their 250 m cell (median position of the cell's buildings), then inherit its values.
-Per building and scenario (output/access_<scenario>.parquet):
+Per building and scenario (output/access_<scenario>.csv):
   jobs_30, jobs_45    job equivalents reachable within 30 / 45 min (data/destinations.gpkg)
   jobs_grav           gravity: sum of jobs * exp(-t / 15 min), t <= 60 min
   leisure_20          cafés, restaurants, bars, cinemas, theatres within 20 min
@@ -87,13 +87,14 @@ def run(name, net, cells, dest, orig):
         for h, hid in hub_ids.items():
             r[f"t_{h}"] = tt[tt["to_id"] == hid].set_index("from_id")["travel_time"]
         rows.append(r)
+        os.makedirs(OUT, exist_ok=True)
+        pd.concat(rows).to_csv(os.path.join(OUT, f"access_{name}_cells_partial.csv"))   # survives a crash
         print(f"  {name}: {min(c0 + CHUNK, len(cells)):,}/{len(cells):,} cells", flush=True)
     res = pd.concat(rows)
     res = res.reindex(orig["cell"].to_numpy())
     res.index = orig["osm_id"].to_numpy()
     res.index.name = "osm_id"
-    os.makedirs(OUT, exist_ok=True)
-    res.to_parquet(os.path.join(OUT, f"access_{name}.parquet"))
+    res.to_csv(os.path.join(OUT, f"access_{name}.csv"))
     print(f"Saved {name}: median jobs within 30 min {res['jobs_30'].median():,.0f}, "
           f"median minutes to Centrum {res['t_centrum'].median():.0f}")
 

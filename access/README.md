@@ -15,7 +15,7 @@ ride + transfers), instead of straight-line distance to the centre.
 | Script | Python | Output |
 |---|---|---|
 | `build_inputs.py` | main (3.8) | `data/gtfs_warsaw.zip` (repaired copy of TransitFrequency's merged GTFS: adds the 46 KM/WKD routes its routes.txt lacks), `data/destinations.gpkg` (250 m cells: job equivalents from BDOT10k floor area by function, shop floor area, leisure POIs; malls BDOT files as offices are reclassified via OSM shop=mall), `data/origins.gpkg` |
-| `travel_times.py` | access/.venv | `output/access_<scenario>.parquet` per building: jobs within 30 / 45 min, gravity jobs (exp(-t/15)), leisure within 20 min, minutes to six hubs |
+| `travel_times.py` | access/.venv | `output/access_<scenario>.csv` per building: jobs within 30 / 45 min, gravity jobs (exp(-t/15)), leisure within 20 min, minutes to six hubs |
 
 Scenarios: Wednesday 7.10.2026 07-09, 11-13, 19-21; Saturday 10.10.2026 11-13; median travel time over every
 departure minute in the window. Buildings route from their 250 m cell (median building position): 3,263 origins
