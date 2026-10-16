@@ -67,13 +67,18 @@ ROAD_WIDTH = {
 
 # value sets: file, layer, column, breaks (fixed list, or (n quantile classes, rounding)), colour ramp, title
 SETS = {
-    'price_m2': dict(file='price_model.gpkg', layer='building_value', col='value_2025', breaks=(11, 500),
-                     ramp='viridis', title='Typical flat, PLN/m² (2025)'),
+    # fixed breaks that keep going at the top (quantiles lumped everything >= 21.5K, 1.1K buildings, into one yellow)
+    'price_m2': dict(file='price_model.gpkg', layer='building_value', col='value_2025',
+                     breaks=[12000, 13000, 14000, 15000, 16000, 17000, 18000, 20000, 22000, 25000, 30000, 40000],
+                     ramp='price', title='Typical flat, PLN/m² (2025)'),
     # model residual (price_drivers.py): blue = sells below what location and building predict, red = above
     'reputation': dict(file='price_drivers.gpkg', layer='building_drivers', col='resid_pct',
                        breaks=[-15, -10, -6, -3, 3, 6, 10, 15], ramp='diverging',
                        title='Price vs model prediction, %'),
 }
+# price: cool and dark for cheap, through yellow, then "burning" amber - orange - red - crimson - hot magenta (40K+)
+PRICE_RAMP = ["#2b1a5e", "#23408f", "#1f6aa8", "#1f8f9c", "#2aa876", "#6cc24a", "#b5d334", "#f2e01f",
+              "#fbb41a", "#f7801b", "#e8452a", "#d4204a", "#f03cc8"]
 DIVERGING = ["#104281", "#2a6fc9", "#5f9ae6", "#a9c8f0", "#e8e6e1", "#f2b2aa", "#e8705f", "#c8302c", "#8f1d1d"]
 FILL_RADIUS_M = 300   # neighbourhood estimate for blocks of flats without enough sales
 FILL_MIN_N = 5        # ... from at least this many priced buildings within the radius
@@ -84,6 +89,9 @@ FILL_GLOW = 0.4       # ... and their glow relative to the measured class
 def ramp(n, lo=0.05, hi=1.0, kind='viridis'):
     """Class colours. viridis: sequential for the dark scene, dark blue (low) -> yellow (high), deliberately not the
     transit posters' blue-magenta-yellow. diverging: the summary figures' blue - neutral - red."""
+    if kind == 'price':
+        assert n == len(PRICE_RAMP), (n, len(PRICE_RAMP))
+        return [[int(PRICE_RAMP[k][i:i + 2], 16) for i in (1, 3, 5)] for k in range(n)]
     if kind == 'diverging':
         from matplotlib.colors import LinearSegmentedColormap
         cm = LinearSegmentedColormap.from_list('div', DIVERGING)

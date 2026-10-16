@@ -172,7 +172,7 @@ blender --background 3d/scenes/prices_wide/scene.blend --python 3d/render.py -- 
 - `export_scene.py` (standalone): OSM buildings + parts from `D:/QGIS/osm_basemap/warsaw`, ground layers from
   `D:/QGIS/mapy_warszawy_misc/data/osm`, transit-poster colours hardcoded. Colour = `--set price_m2`:
   hedonic `value_2025` (`price_model.gpkg` / `building_value`) for buildings with >= 3 sales, 11 classes
-  (breaks 12k..28k PLN/m²), viridis (dark blue = cheap, yellow = dear; deliberately not the transit palette).
+  (fixed breaks 12K..40K PLN/m²), `PRICE_RAMP` (indigo = cheap ... yellow ~19K ... magenta = 40K+).
   No value = light clay grey (`NODATA_RGB`). Parts take the parent's value. Origin = PKiN, so `3d/views/*.json` fit.
 - `build_blend.py`: copy, plus a fix: degenerate/duplicate faces are dropped before the mesh is made
   (`me.validate()` removed them afterwards and shifted every per-face colour: "internal error setting the array").
@@ -228,6 +228,9 @@ PNG. 3D: `export_scene.py --set reputation` (model residual, fixed breaks +-3/6/
 3d/renders/04_reputation_{center,zoliborz}.png. Dropped as the hero image: the diverging ramp's neutral middle is the brightest
 class on the dark ground. Hero = `--set price_m2` (`prices_v2`, viridis) with unpriced buildings (offices, shops)
 in light clay grey (`NODATA_RGB`, was near-ground dark) -> 3d/renders/05_prices_{center,zoliborz}.png.
+Price scale then made explicit: fixed breaks 12K..40K (quantiles had lumped every building >= 21.5K into one
+yellow) on `PRICE_RAMP` indigo - teal - green - yellow - amber - orange - red - crimson - magenta (40K+), glow off
+(`build_blend.py --glow 0`). Złota 44 and Cosmopolitan now stand out from Śródmieście's 20-25K tenements.
 
 **2026-10-17:** fig. 28 full-page map of all 305 projects on sale (offers/projects_map.py; 20 largest named in
 callout columns; projects listed under two street spellings merged); fig. 27 colours swapped (cuts red, raises
