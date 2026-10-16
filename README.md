@@ -161,6 +161,16 @@ python build_viz.py
 
 ## Status
 
+**2026-10-16 (late):** developer price lists (offers/): all 13,032 dane.gov.pl datasets fetched in 13.6 min with 8
+parallel workers (first version: one request at a time + 0.5 s pause, ~9 h). parse_price_lists.py keeps rows whose
+INVESTMENT location is Warsaw: 752 datasets, 37.7K rows, 9.6K distinct flats on offer (median 16.5K PLN/m²,
+54 m²). geocode_offers.py places 8.6K (90 %) via the city's address points (5.9K at a house number, 2.8K at the
+street's midpoint) -> offers/data/offers_warszawa.gpkg, 204 investments. First comparison: in 33 buildings with
+offers and >= 3 developer deeds since 2025, asking is -0.9 % vs deed (IQR -6..+7 %); deeds lag the price agreed
+at the preliminary contract by 1-2 years. Access (access/): figures 24-25 rebuilt on BDOT June 2025 + SimCity
+categories; office cores Daszyńskiego 68k, Centrum/ONZ 25k, Służewiec 22k, Marszałkowska 12k; best price
+predictor = reach to cafés/restaurants/culture with a 5-min half-life (+6.9 % per doubling within a district).
+
 **2026-10-16 (night):** walk_access.py adds walking distance to rail stations (SKM/KM/WKD/PKP, replaces the
 straight-line train_km) and bus stops. Fig. 04 rebuilt (transit_modes.py): the metro lifts whole neighbourhoods
 (-3.4 % per km walked, within a district) but inside a neighbourhood with a station the doorstep adds only +1.6 %
