@@ -101,7 +101,7 @@ def run(name, net, cells, dest, orig):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenario", choices=list(SCENARIOS) + ["all"], default="all")
-    args = ap.parse_args()
+    args, _ = ap.parse_known_args()      # --max-memory is for r5py
     b = gpd.read_file(os.path.join(DATA, "origins.gpkg")).to_crs(2180)
     b["cell"] = (b.geometry.x // CELL).astype(int) * 100000 + (b.geometry.y // CELL).astype(int)
     xy = b.assign(x=b.geometry.x, y=b.geometry.y).groupby("cell")[["x", "y"]].median()
