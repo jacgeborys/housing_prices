@@ -13,8 +13,8 @@ Inputs for the transit accessibility subproject (run with the main Python; routi
 Floor area = BDOT10k footprint area x storeys (LKOND). No open register of jobs by building exists in Poland,
 so floor area by function is the proxy. Building category: the user's SimCity map classification
 (D:/QGIS/functional_map/script/building_categories.py, imported read only) applied to BDOT's detailed functions
-(FUNSZCZ, camelCase of the same names; mixed-use buildings resolved by its priority rules, so a shopping centre
-filed as an office building counts as retail).
+(FSBUD of the June 2025 BDOT10k export; mixed-use buildings resolved by its priority rules, so a shopping centre
+filed as an office building counts as retail). Destroyed buildings are dropped; buildings under construction kept.
 """
 import os
 import zipfile
@@ -29,7 +29,7 @@ DATA = os.path.join(HERE, "data")
 GTFS_DIR = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04"          # read only
 GTFS_FILES = ["agency.txt", "stops.txt", "routes.txt", "trips.txt", "stop_times.txt", "calendar_dates.txt",
               "frequencies.txt", "feed_info.txt"]
-BDOT = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only
+BDOT = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.BDOT10k.1465__OT_BUBD_A.shp"   # read only; version June 2025
 FUNCTIONAL_MAP = "D:/QGIS/functional_map/script"                       # read only
 M2_PER_JOB = {   # SimCity category -> m² of floor area per job
     "budynki biurowe": 18, "budynki urzędów i administracji publicznej": 25, "budynki handlowo-usługowe": 40,
@@ -43,7 +43,8 @@ ALIASES = {   # BDOT spellings the SimCity name list doesn't have
     "osrodekOpiekiSpolecznej": "ośrodek pomocy społecznej", "internat": "internat lub bursa szkolna",
     "bursaSzkolna": "internat lub bursa szkolna", "zabytekBezFunkcjiUzytkowej":
     "zabytek niepełniący żadnej funkcji użytkowej", "zajezdniaTramwajowa": "lokomotywownia lub wagonownia",
-    "zajezdniaAutobusowa": "lokomotywownia lub wagonownia", "kuriaMetropolitarna": "kuria metropolitalna"}
+    "zajezdniaAutobusowa": "lokomotywownia lub wagonownia", "kuriaMetropolitarna": "kuria metropolitalna",
+    "zajezdnia tramwajowa": "lokomotywownia lub wagonownia", "zajezdnia autobusowa": "lokomotywownia lub wagonownia"}
 
 
 def _camel(name):
@@ -60,8 +61,9 @@ def categorise(funszcz):
     sys.dont_write_bytecode = True
     sys.path.insert(0, FUNCTIONAL_MAP)
     import building_categories as bc
-    to_pl = {_camel(k): k for k in bc.FUNCTION_TO_CATEGORY if k}
+    to_pl = {_camel(k): k for k in bc.FUNCTION_TO_CATEGORY if k}     # older camelCase BDOT exports
     to_pl.update(ALIASES)
+    to_pl.update({k: k for k in bc.FUNCTION_TO_CATEGORY if k})     # current exports use the Polish names
 
     def one(v):
         if not isinstance(v, str) or not v:
@@ -103,8 +105,9 @@ def gtfs():
 
 
 def destinations():
-    b = gpd.read_file(BDOT, columns=["FUNSZCZ", "LKOND"]).to_crs(2180)
-    b["category"] = categorise(b["FUNSZCZ"])
+    b = gpd.read_file(BDOT, columns=["FSBUD", "LICZ_KONDY", "KAT_ISTNIE"]).to_crs(2180)
+    b = b[b["KAT_ISTNIE"] != "zniszczony"].rename(columns={"LICZ_KONDY": "LKOND"})
+    b["category"] = categorise(b["FSBUD"])
     b = b[b["category"].isin(M2_PER_JOB)].copy()
     b["gfa"] = b.geometry.area * b["LKOND"].fillna(1).clip(lower=1)
     b["jobs"] = b["gfa"] / b["category"].map(M2_PER_JOB)

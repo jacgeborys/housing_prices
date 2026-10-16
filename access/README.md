@@ -22,3 +22,10 @@ departure minute in the window. Buildings route from their 250 m cell (median bu
 instead of 20,711 (about 0.7 s per origin: ~40 min per scenario).
 
 Hubs: Centrum (PKiN), Rondo Daszyńskiego, Służewiec, Warszawa Centralna, Arkadia, University of Warsaw.
+
+Destinations: BDOT10k buildings, June 2025 version (`PL.PZGiK.330.BDOT10k.1465__OT_BUBD_A.shp`, downloaded
+2026-09-27), classified with the SimCity map rules (`D:/QGIS/functional_map/script/building_categories.py`, read
+only). Office clusters (>= 4000 office jobs per 250 m cell, >= 2 cells, >= 10k): Rondo Daszyńskiego 68k,
+Centrum/ONZ 25k, Służewiec 22k, Centrum south (Marszałkowska) 12k. The main pipeline (coverage.py, heritage in
+price_drivers.py) still reads the older Feb 2024 BDOT export (`PL.PZGiK.330.1465__OT_BUBD_A.shp`), which has
+ZABYTEK but 12k fewer buildings.

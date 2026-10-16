@@ -24,11 +24,11 @@ from summary_maps import FEATURES, basemap, legend_patches, load, outlines  # no
 
 style.apply()
 OUT = os.path.join(HERE, "output")
-CLUSTERS = [  # gravity_run.py's detection on the SimCity office layer (cells >= 4000 office jobs, >= 2 cells)
-    ("Rondo Daszyńskiego", 20.9846, 52.2308, 67081), ("Centrum / ONZ", 21.0001, 52.2339, 22925),
-    ("Służewiec", 20.9934, 52.1832, 21725)]
+CLUSTERS = [  # gravity_run.py's detection on the SimCity office layer, BDOT June 2025 (cells >= 4000, >= 2 cells)
+    ("Rondo Daszyńskiego", 20.9846, 52.2307, 67591), ("Centrum / ONZ", 20.9998, 52.2341, 25241),
+    ("Służewiec", 20.9934, 52.1828, 21714), ("Centrum south (Marszałkowska)", 21.0024, 52.2278, 11579)]
 
-LABEL_OFF = {"Rondo Daszyńskiego": (-30, 32), "Centrum / ONZ": (22, 14), "Służewiec": (14, -6)}
+LABEL_OFF = {"Rondo Daszyńskiego": (-30, 32), "Centrum / ONZ": (22, 14), "Służewiec": (14, -6), "Centrum south (Marszałkowska)": (18, -14)}
 
 
 def within_r2(v, cols):
