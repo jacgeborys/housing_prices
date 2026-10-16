@@ -28,7 +28,7 @@ from summary_charts import page, save, wrap  # noqa: E402
 
 style.apply()
 START = "2025-09"
-COL = {"unchanged": "#c9c7bf", "pricier": "#c4521f", "cheaper": style.BLUE}
+COL = {"unchanged": "#c9c7bf", "pricier": style.BLUE, "cheaper": "#c4521f"}     # cuts in red (user's choice)
 MONTH_PL = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
@@ -86,7 +86,8 @@ def main():
     fig = page("Developers barely move their prices",
                "A year of developers' published price lists for new flats in Warsaw",
                f"Developers' price lists on dane.gov.pl (2025 price-transparency law), one snapshot per month, {months[0]} "
-               f"to {months[-1]}; about a third of Warsaw developers keep their history. A flat counts if it was listed "
+               f"to {months[-1]}; only datasets that keep their history (about a third, but the biggest developers: 62 % of "
+               "flats on offer today; they ask ~6 % more per m² than the rest). A flat counts if it was listed "
                "in at least 3 snapshots. 'For sale' ends when a flat disappears while its developer keeps publishing "
                "(sold or withdrawn). " + style.SOURCE)
     # 1 stacked bar
@@ -113,7 +114,7 @@ def main():
     # 2 same flats over time
     a2 = fig.add_axes([0.09, 0.40, 0.38, 0.22])
     x = np.arange(len(months))
-    a2.plot(x, idx, "-o", color="#c4521f", lw=2.4, ms=5, mec=style.SURFACE)
+    a2.plot(x, idx, "-o", color=style.INK_2, lw=2.4, ms=5, mec=style.SURFACE)
     a2.axhline(0, color=style.AXIS, lw=1)
     a2.set_ylim(-5, 5)
     a2.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:+.0f}%"))
@@ -121,7 +122,7 @@ def main():
     a2.set_xticklabels([f"{MONTH_PL[int(m[5:]) - 1]} {m[2:4]}" for m in months][::3], fontsize=9)
     style.hgrid_only(a2)
     a2.annotate(f"{idx[-1]:+.1f}%", (x[-1], idx[-1]), xytext=(6, 0), textcoords="offset points", va="center",
-                fontsize=10, fontweight="semibold", color="#c4521f")
+                fontsize=10, fontweight="semibold", color=style.INK)
     a2.set_title("Asking price of the same flats,\nvs September 2025", fontsize=10.5, loc="left")
 
     # 3 time for sale
