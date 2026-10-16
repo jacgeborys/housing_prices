@@ -29,3 +29,11 @@ only). Office clusters (>= 4000 office jobs per 250 m cell, >= 2 cells, >= 10k):
 Centrum/ONZ 25k, Służewiec 22k, Centrum south (Marszałkowska) 12k. The main pipeline (coverage.py, heritage in
 price_drivers.py) still reads the older Feb 2024 BDOT export (`PL.PZGiK.330.1465__OT_BUBD_A.shp`), which has
 ZABYTEK but 12k fewer buildings.
+
+## Results (2026-10-16)
+`gravity_run.py` (AM peak, 4 purposes x 6 half-lives) + `gravity_story.py` -> output/summary/25_what_reach_pays.png,
+access/output/gravity_scan.csv. Replacing distance to PKiN and to the metro in the price model (district FE, all
+other features kept): short half-lives win for every purpose; best = cafés/restaurants/culture with a 5-min
+half-life (R² 0.5015 vs 0.5006 with PKiN + metro, 0.4816 with neither; +6.9 % per doubling). Office-job reach adds
+least. Reading: buyers price what is a few minutes away, not the commute. `access_preview.py` (fig. 24) still uses
+travel_times.py's measures built on the earlier (Feb 2024, FUNOGBUD) destinations.
