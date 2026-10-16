@@ -59,6 +59,8 @@ frequency_story.py    ->  summary/05: TransitFrequency departures within a 5-min
                           and neighbourhood fixed effects) + raw medians new vs older; blind spot moved to summary/23
 transit_modes.py      ->  summary/04: price by walking distance to metro / rail / tram / bus, within the same MSI
                           neighbourhood (fixed effects), all else equal; metro and rail only in neighbourhoods with a station
+flat_sizes.py         ->  summary/29: median size of flats sold by year (new vs resale), rooms in new flats, price per
+                          m² by size (hedonic coefficients), map of median resold-flat size 2021-26
 infill.py             ->  output/infill.gpkg + summary/21: 2001-20 buildings among pre-1961 ones (>= 60 % of neighbours within
                           150 m) vs new estates; premium over old neighbours, model residual
 walkups.py            ->  summary/22: within-building price by floor for walk-ups (pre-war 3-5 storeys, 1961-90 4-5
@@ -160,6 +162,12 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-17:** fig. 28 full-page map of all 305 projects on sale (offers/projects_map.py; 20 largest named in
+callout columns; projects listed under two street spellings merged); fig. 27 colours swapped (cuts red, raises
+blue), coverage note (history datasets = 62 % of flats on offer, asking ~6 % more). Fig. 29 flat sizes: new flats
+sold shrank from 60 m² (2006-13) to 47 m² (2025-26), now no bigger than resales (48 m², flat for 20 years); 4+-room
+share of new flats fell from ~40 % to ~16 %; under 25 m² costs +20 % per m² vs 45-60 m² in the same building.
 
 **2026-10-16 (night, 2):** asking-price history (offers/fetch_price_history.py, parse_price_history.py,
 history_story.py -> summary/27): last snapshot per month of the 675 Warsaw datasets (3,551 files, 3 min); 313
