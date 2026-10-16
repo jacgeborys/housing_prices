@@ -25,8 +25,8 @@ style.apply()
 
 GROUPS = {   # feature group -> features (fixed order = fixed colour)
     "Centrality & the river": ["centre_km", "river_km"],
-    "Metro & rail lines": ["walk_metro_km", "train_km"],
-    "Buses & trams": ["log2_trips", "walk_tram_km"],
+    "Metro & rail lines": ["walk_metro_km", "walk_rail_km"],
+    "Buses & trams": ["log2_trips", "walk_tram_km", "walk_bus_km"],
     "Cafés, shops & schools": ["walk7_food_drink", "walk7_grocery", "walk7_zabka", "walk7_schools",
                                "walk7_health", "walk7_sport_play", "walk_school_km"],
     "Green & quiet": ["green_ha_500", "walk_park_km", "canopy_100", "noise_road_db", "noise_rail_db",

@@ -55,6 +55,8 @@ rcn_clean.py              shared RCN cleaning (build_viz.py, analyze_rcn.py -> p
 fetch_building_age.py ->  output/building_age.gpkg: construction decade per building from GIS Expert's public map
                           (mapy.gis-expert.pl/zabudowa-warszawy; tiles cached in data/raw/, not redistributed; credit them)
 building_age_story.py ->  summary/18: price by construction decade, new-vs-prefab premium by place
+transit_modes.py      ->  summary/04: price by walking distance to metro / rail / tram / bus, within the same MSI
+                          neighbourhood (fixed effects), all else equal; metro and rail only in neighbourhoods with a station
 infill.py             ->  output/infill.gpkg + summary/21: 2001-20 buildings among pre-1961 ones (>= 60 % of neighbours within
                           150 m) vs new estates; premium over old neighbours, model residual
 walkups.py            ->  summary/22: within-building price by floor for walk-ups (pre-war 3-5 storeys, 1961-90 4-5
@@ -156,6 +158,13 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-16 (night):** walk_access.py adds walking distance to rail stations (SKM/KM/WKD/PKP, replaces the
+straight-line train_km) and bus stops. Fig. 04 rebuilt (transit_modes.py): the metro lifts whole neighbourhoods
+(-3.4 % per km walked, within a district) but inside a neighbourhood with a station the doorstep adds only +1.6 %
+(<300 m vs 900-1500 m; +0.8 % at 300-600 m); within 300-600 m of a rail station -2.1 % (track noise); tram and bus
+stop distance ~0 (within +-1.5 %). Raw data shows the reverse in Ursynów (newer, quieter buildings lie deeper in the
+estates). Old fig. 04 (new vs old by departures) removed from summary_charts.py; output/analysis/17 keeps it.
 
 **2026-10-16 (evening):** district anatomy (fig. 10) splits building age from building form. New: fig. 20 trees
 (Copernicus density map; only 30 %+ tree cover within 100 m adds ~+2 %), fig. 21 infill (388 new buildings among

@@ -66,7 +66,7 @@ def outlines(ax, d, labels=True):
                     bbox=dict(boxstyle="round,pad=0.12", fc=style.SURFACE, ec="none", alpha=0.7))
 
 
-FEATURES = ["log2_trips", "walk_metro_km", "train_km", "walk_tram_km", "walk_park_km", "walk_school_km",
+FEATURES = ["log2_trips", "walk_metro_km", "walk_rail_km", "walk_tram_km", "walk_bus_km", "walk_park_km", "walk_school_km",
             "noise_road_db", "noise_rail_db", "noise_air_db", "heritage", "centre_km", "river_km", "green_ha_500",
             "height_m", "pct_primary", "new_build", "log_footprint", "walk7_food_drink", "walk7_grocery",
             "walk7_zabka", "walk7_schools", "walk7_health", "walk7_sport_play", "canopy_100",

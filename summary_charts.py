@@ -5,7 +5,7 @@ Reads saved outputs only (no model is re-run):
   01_prices_over_time.png   constant-quality price per m², nominal vs real (price_index_quarterly.csv)
   02_districts.png          typical flat in 2025 by district (building_value)
   03_what_drives_price.png  within-district effects (price_drivers_coefficients.csv)
-  04_transit.png            price by transit frequency, new vs older buildings (price_drivers.gpkg)
+  (04_transit.png is made by transit_modes.py)
   05_blind_spot.png         flats in buildings with no / few recorded sales (coverage_by_district.csv)
 
 -> output/summary/
@@ -194,58 +194,6 @@ def drivers():
     save(fig, "03_what_drives_price.png")
 
 
-# 4 --------------------------------------------------------------------------------------------
-def transit():
-    bands = [-1, 150, 300, 500, 800, 1200, 5000]
-    labels = ["≤ 150", "150–300", "300–500", "500–800", "800–1200", "1200+"]
-    v = gpd.read_file("output/price_drivers.gpkg", ignore_geometry=True)
-    v["kind"] = np.where(v["pct_primary"] > 0.3, "new", "old")
-    v["band"] = pd.cut(v["trips"], bands, labels=labels)
-    v["rel"] = np.log(v["value_2025"]) - v.groupby("district")["value_2025"].transform(lambda s: np.log(s).mean())
-
-    fig = page("Frequent buses and trams:\na premium only for new buildings",
-               "", "Departures = all bus, tram, metro and rail departures (06–22 h) within a 5-minute walk "
-                   "(TransitFrequency).\nPrice of a typical flat, buildings with ≥ 3 sales. New = mostly developer "
-                   "sales. " + style.SOURCE)
-    a1 = fig.add_axes([0.14, 0.46, 0.80, 0.30])
-    x = np.arange(len(labels))
-    for kind, lab, colr in (("new", "New buildings", style.ORANGE), ("old", "Older buildings", style.BLUE)):
-        g = v[v["kind"] == kind].groupby("band", observed=False)["value_2025"].median()
-        a1.plot(x, g.values, "-o", color=colr, lw=2.4, ms=8, mec=style.SURFACE, mew=2, label=lab)
-        a1.annotate(lab, (x[-1], g.values[-1]), xytext=(8, 0), textcoords="offset points", va="center",
-                    fontsize=10, color=style.INK_2)
-    a1.set_xticks(x)
-    a1.set_xticklabels(labels)
-    a1.set_xlim(-0.3, len(x) + 0.6)
-    style.pln(a1)
-    style.hgrid_only(a1)
-    a1.set_ylabel("Median PLN/m²")
-    a1.legend(loc="upper left")
-    a1.set_title("Price by departures per day within a 5-minute walk", fontsize=11.5)
-
-    a2 = fig.add_axes([0.14, 0.12, 0.80, 0.24])
-    o = v[v["kind"] == "old"].groupby("band", observed=False)["rel"].mean()
-    pct = 100 * (np.exp(o.values) - 1)
-    a2.bar(x, pct, width=0.62, color=[style.BLUE if p >= 0 else style.ORANGE for p in pct])
-    for xi, p in zip(x, pct):
-        a2.text(xi, p + (0.3 if p >= 0 else -0.3), f"{p:+.1f}%", ha="center", va="bottom" if p >= 0 else "top",
-                fontsize=10, color=style.INK)
-    a2.axhline(0, color=style.AXIS, lw=1)
-    a2.set_xticks(x)
-    a2.set_xticklabels(labels)
-    a2.set_xlim(-0.3, len(x) + 0.6)
-    a2.set_ylim(min(pct.min() * 1.4, -1), max(pct.max() * 2.5, 1.5))
-    style.pct(a2)
-    style.hgrid_only(a2)
-    a2.set_xlabel("Departures per day within a 5-minute walk")
-    a2.set_title("Older buildings vs the rest of their district", fontsize=11.5)
-    fig.text(0.05, 0.875, wrap("New developments with better service sell for more. In older neighbourhoods "
-                               "the busiest lines run along noisy arterials and through prefab estates, "
-                               "so the best-served streets are slightly cheaper than the quiet ones.", 88),
-             fontsize=11, color=style.INK_2, va="top")
-    save(fig, "04_transit.png")
-
-
 # 5 --------------------------------------------------------------------------------------------
 def blind_spot():
     s = pd.read_csv("output/analysis/coverage_by_district.csv").set_index("district")
@@ -289,7 +237,6 @@ def main():
     prices_over_time()
     districts()
     drivers()
-    transit()
     blind_spot()
 
 

@@ -1,6 +1,7 @@
 """
 Walking distances (metres along the OSM footpath/street graph) from every priced building to the
-nearest metro station, park (>= 2 ha), school and tram stop -> output/walk_access.gpkg.
+nearest metro station, rail station (SKM/KM/WKD/PKP), tram stop, bus stop, park (>= 2 ha) and school
+-> output/walk_access.gpkg.
 
 The graph is TransitFrequency's Warsaw walking network (D:/QGIS/TransitFrequency/network/warsaw/
 walking_network.pkl, networkx MultiDiGraph, 1.23 M nodes), loaded read-only. It is turned into a
@@ -102,12 +103,16 @@ def main():
 
     st = gpd.read_file(f"{OSM}/train_stations.gpkg").to_crs(2180)
     metro = st[st["station"] == "subway"]
+    rail = st[st["station"] != "subway"]                  # SKM, KM, WKD, PKP stations
+    bus = gpd.read_file(f"{OSM}/bus_stops.gpkg").to_crs(2180)
     trams = gpd.read_file(f"{OSM}/tram_stops.gpkg").to_crs(2180)
     pois = gpd.read_file("data/osm_pois.gpkg")
     schools = pois[pois["amenity"] == "school"]
     targets = {
         "walk_metro_m": np.c_[metro.geometry.x, metro.geometry.y],
         "walk_tram_m": np.c_[trams.geometry.x, trams.geometry.y],
+        "walk_rail_m": np.c_[rail.geometry.x, rail.geometry.y],
+        "walk_bus_m": np.c_[bus.geometry.x, bus.geometry.y],
         "walk_school_m": np.c_[schools.geometry.x, schools.geometry.y],
     }
     for name, pts in targets.items():

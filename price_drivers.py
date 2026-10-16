@@ -28,7 +28,6 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.spatial import cKDTree
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.inspection import permutation_importance
 
@@ -56,7 +55,8 @@ OUT_PNG = "output/analysis/16_price_drivers.png"
 LABELS = {
     "log2_trips": "Bus/tram/train departures (×2)",
     "walk_metro_km": "Walk to metro (per km)",
-    "train_km": "Distance to rail station (per km)",
+    "walk_rail_km": "Walk to rail station (per km)",
+    "walk_bus_km": "Walk to bus stop (per 100 m)",
     "walk_tram_km": "Walk to tram stop (per km)",
     "walk_park_km": "Walk to a park ≥ 2 ha (per km)",
     "walk_school_km": "Walk to a school (per km)",
@@ -90,7 +90,7 @@ AGE_LABELS = {   # construction period dummies; reference = 1961-1990 (prefab er
     "age_2001_10": "Built 2001–2010",
     "age_2011_20": "Built 2011–2020",
 }
-SCALE = {"canopy_100": 10, "green_ha_500": 10, "height_m": 10, "noise_road_db": 10, "noise_rail_db": 10, "noise_air_db": 10}     # coefficients reported per this many units
+SCALE = {"walk_bus_km": 0.1, "canopy_100": 10, "green_ha_500": 10, "height_m": 10, "noise_road_db": 10, "noise_rail_db": 10, "noise_air_db": 10}     # coefficients reported per this many units
 
 
 def pkin_xy():
@@ -183,11 +183,8 @@ def build_features():
     xy = np.c_[pts.x, pts.y]
     v["log2_trips"] = np.log2(v["trips"] + 10)
 
-    st = gpd.read_file(f"{OSM}/train_stations.gpkg").to_crs(2180)
-    train = st[st["station"] != "subway"]
-    v["train_km"] = cKDTree(np.c_[train.geometry.x, train.geometry.y]).query(xy)[0] / 1000
     w = gpd.read_file(WALK, ignore_geometry=True).drop_duplicates("osm_id").set_index("osm_id")
-    for c in ("metro", "tram", "park", "school"):
+    for c in ("metro", "rail", "tram", "bus", "park", "school"):
         v[f"walk_{c}_km"] = v["osm_id"].map(w[f"walk_{c}_m"]).to_numpy() / 1000
     print(f"walking distances: {v['walk_metro_km'].notna().sum():,} buildings")
 
