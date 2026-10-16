@@ -88,21 +88,40 @@ def main():
                 zorder=3)
     from pyproj import Transformer
     t = Transformer.from_crs(4326, 2180, always_xy=True)
-    for name, lon, lat, jobs in CLUSTERS:
-        x, y = t.transform(lon, lat)
-        ax1.scatter([x], [y], s=jobs / 250, facecolor="none", edgecolor=style.INK, lw=1.2, zorder=5)
-        ax1.annotate(f"{name}\n{jobs / 1000:.0f}k", (x, y), xytext=LABEL_OFF[name], textcoords="offset points", fontsize=7.5,
-                     zorder=6, arrowprops=dict(arrowstyle="-", color=style.INK_2, lw=0.6), bbox=dict(boxstyle="round,pad=0.15", fc=style.SURFACE, ec="none", alpha=0.8))
-    for name, lon, lat, jobs, off in SECOND:
-        x, y = t.transform(lon, lat)
-        ax1.scatter([x], [y], s=jobs / 250, facecolor="none", edgecolor=style.INK_2, lw=0.9, ls=(0, (2, 2)), zorder=5)
-        ax1.annotate(f"{name} {jobs / 1000:.0f}k", (x, y), xytext=off, textcoords="offset points", fontsize=6.5,
-                     color=style.INK_2, zorder=6, bbox=dict(boxstyle="round,pad=0.1", fc=style.SURFACE, ec="none",
-                                                            alpha=0.75))
+    # "sun" labels: each centre's name on a ring around PKiN at its own bearing, a ray back to the centre;
+    # bearings closer than MIN_GAP degrees are pushed apart so the labels never overlap
+    cx, cy = t.transform(21.0060, 52.2318)
+    two = {"Rondo Daszyńskiego": "Rondo\nDaszyńskiego", "ONZ / Central Station": "ONZ /\nCentral Station"}
+    items = [(two.get(n, n), *t.transform(lo, la), j, True) for n, lo, la, j in CLUSTERS] + \
+            [(n, *t.transform(lo, la), j, False) for n, lo, la, j, _ in SECOND]
+    ang = np.array([np.degrees(np.arctan2(y - cy, x - cx)) for _, x, y, _, _ in items])
+    ang = np.where((ang > 15) & (ang < 80), np.where(ang < 47, 15.0, 80.0), ang)   # keep clear of the legend
+    ang = (ang - 47) % 360                                # count from inside the legend sector: no ±180° wrap
+    order = np.argsort(ang)
+    MIN_GAP = 30
+    spread = ang[order].copy()
+    for _ in range(50):                                   # relax: push neighbours apart, keep the mean
+        for k in range(1, len(spread)):
+            if spread[k] - spread[k - 1] < MIN_GAP:
+                mid = (spread[k] + spread[k - 1]) / 2
+                spread[k - 1], spread[k] = mid - MIN_GAP / 2, mid + MIN_GAP / 2
+    R_EAST, R_WEST = 10500, 6500                         # ring radius (m from PKiN); the west edge is closer
+    for k, i in enumerate(order):
+        name, x, y, jobs, core = items[i]
+        a = np.radians(spread[k] + 47)
+        r = R_EAST if np.cos(a) >= 0 else R_WEST
+        lx, ly = cx + r * np.cos(a), cy + r * np.sin(a)
+        ax1.scatter([x], [y], s=jobs / 250, facecolor="none", edgecolor=style.INK if core else style.INK_2,
+                    lw=1.2 if core else 0.8, ls="-" if core else (0, (2, 2)), zorder=5)
+        ax1.plot([x, lx], [y, ly], color=style.INK_2 if core else style.MUTED, lw=0.6, zorder=4)
+        ax1.text(lx, ly, f"{name}\n{jobs / 1000:.0f}k" if "\n" in name else f"{name} {jobs / 1000:.0f}k", fontsize=7.5 if core else 6.8,
+                 fontweight="semibold" if core else "normal", color=style.INK if core else style.INK_2,
+                 ha="left" if np.cos(a) >= 0 else "right", va="center", zorder=6,
+                 bbox=dict(boxstyle="round,pad=0.15", fc=style.SURFACE, ec="none", alpha=0.85))
     outlines(ax1, d, labels=False)
     legend_patches(ax1, [cm1(i) for i in range(5)], ["50–500", "500–1.5k", "1.5–4k", "4–10k", "10k+"],
                    "Jobs per 250 m cell")
-    ax1.set_title("Where the jobs are (bold: office cores)", fontsize=10.5)
+    ax1.set_title("Where the jobs are (bold: office cores, dashed: smaller centres)", fontsize=9.5)
 
     # 2 jobs within 30 min
     ax2 = basemap(fig, d, w)
