@@ -92,13 +92,15 @@ def main():
     # bearings closer than MIN_GAP degrees are pushed apart so the labels never overlap
     cx, cy = t.transform(21.0060, 52.2318)
     two = {"Rondo Daszyńskiego": "Rondo\nDaszyńskiego", "ONZ / Central Station": "ONZ /\nCentral Station"}
-    items = [(two.get(n, n), *t.transform(lo, la), j, True) for n, lo, la, j in CLUSTERS] + \
-            [(n, *t.transform(lo, la), j, False) for n, lo, la, j, _ in SECOND]
+    items = [(two.get(n, n), *t.transform(lo, la), j, True) for n, lo, la, j in CLUSTERS]
+    for _, lo, la, j, _ in SECOND:                        # smaller centres: dashed circle, no label
+        x, y = t.transform(lo, la)
+        ax1.scatter([x], [y], s=j / 250, facecolor="none", edgecolor=style.INK_2, lw=0.8, ls=(0, (2, 2)), zorder=5)
     ang = np.array([np.degrees(np.arctan2(y - cy, x - cx)) for _, x, y, _, _ in items])
     ang = np.where((ang > 15) & (ang < 80), np.where(ang < 47, 15.0, 80.0), ang)   # keep clear of the legend
     ang = (ang - 47) % 360                                # count from inside the legend sector: no ±180° wrap
     order = np.argsort(ang)
-    MIN_GAP = 30
+    MIN_GAP = 40
     spread = ang[order].copy()
     for _ in range(50):                                   # relax: push neighbours apart, keep the mean
         for k in range(1, len(spread)):
