@@ -81,15 +81,16 @@ def main():
     prem = np.array([100 * (np.exp(on[k] - oo[k]) - 1) for k in both])
     hn.remove()
     ho.remove()
-    cmap = ListedColormap(["#d6e4f5", "#9fc1ef", "#5a9be6", "#2a6fc9", "#174a8c", "#0b2f63"])
-    bounds = [-100, 0, 10, 20, 30, 45, 500]
+    # breaks around the hexagons' own spread (median ~ +34 %); one hue, clearly separated lightness steps
+    cmap = ListedColormap(["#e6effa", "#b9d3f3", "#83b2ea", "#4c8bd9", "#2461b0", "#0d3670"])
+    bounds = [-100, 20, 27, 34, 42, 60, 1000]
     norm = BoundaryNorm(bounds, cmap.N)
     xy = np.array(both)
     ax.scatter(xy[:, 0], xy[:, 1], c=prem, cmap=cmap, norm=norm, marker="h", s=150, edgecolor=style.SURFACE,
                lw=0.6, zorder=3)
     outlines(ax, d)
     ax.legend(handles=[Patch(color=cmap(i), label=l) for i, l in enumerate(
-        ["< 0%", "0–10%", "10–20%", "20–30%", "30–45%", "45%+"])], title="New vs prefab", loc="lower left",
+        ["< 20%", "20–27%", "27–34%", "34–42%", "42–60%", "60%+"])], title="New vs prefab", loc="lower left",
         fontsize=8, title_fontsize=8.5, frameon=True, framealpha=0.9, edgecolor="none")
     ax.set_title("Premium of a 2011–20 building over a 1961–90 one nearby", fontsize=10.5)
 
