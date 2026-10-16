@@ -24,11 +24,16 @@ from summary_maps import FEATURES, basemap, legend_patches, load, outlines  # no
 
 style.apply()
 OUT = os.path.join(HERE, "output")
-CLUSTERS = [  # gravity_run.py's detection on the SimCity office layer, BDOT June 2025 (cells >= 4000, >= 2 cells)
-    ("Rondo Daszyńskiego", 20.9846, 52.2307, 67591), ("ONZ", 20.9998, 52.2341, 25241),
-    ("Służewiec", 20.9934, 52.1828, 21714), ("Central Station", 21.0024, 52.2278, 11579)]
+CLUSTERS = [  # gravity_run.py's detection on the SimCity office layer, BDOT June 2025; ONZ and Central Station
+    # (2 + 2 cells, 25k + 12k, ~700 m apart) merged into one core at their job-weighted centre
+    ("Rondo Daszyńskiego", 20.9846, 52.2307, 67591), ("ONZ / Central Station", 21.0007, 52.2320, 36820),
+    ("Służewiec", 20.9934, 52.1828, 21714)]
 
-LABEL_OFF = {"Rondo Daszyńskiego": (-30, 32), "ONZ": (22, 14), "Służewiec": (14, -6), "Central Station": (18, -14)}
+LABEL_OFF = {"Rondo Daszyńskiego": (-30, 32), "ONZ / Central Station": (22, 14), "Służewiec": (14, -6)}
+SECOND = [  # second tier: clusters at a looser threshold (cells >= 1500, >= 6k) that lie outside the cores
+    ("Domaniewska", 21.0081, 52.1853, 20435, (26, -16)), ("Powiśle", 21.0096, 52.2328, 19363, (14, 8)),
+    ("Al. Jerozolimskie\n(Szczęśliwice)", 20.9768, 52.2217, 15236, (-70, -22)),
+    ("Dw. Gdański", 20.9953, 52.2551, 11496, (10, 8)), ("Sielce", 21.0467, 52.2012, 9276, (12, 4))]
 
 
 def within_r2(v, cols):
@@ -69,7 +74,7 @@ def main():
                "Jobs = floor area (BDOT10k footprint x storeys) per m² per job by building category of the SimCity map "
                "(offices 18, public offices 25, retail & hospitals 40, schools 50...); 250 m cells. Travel: R5 routing on the Warsaw GTFS (ZTM, KM, WKD, timetable of Wed "
                "7.10.2026) and OSM paths, median over every departure minute 07–09 / 19–21. Office clusters: "
-               "neighbouring cells with ≥ 4,000 office job equivalents. Model test: gravity access to jobs (5-min "
+               "neighbouring cells with ≥ 4,000 office job equivalents (smaller centres: ≥ 1,500). Model test: gravity access to jobs (5-min "
                "half-life) vs distance to PKiN and the metro; figure 25 compares purposes and half-lives. "
                + style.SOURCE)
     # 1 destinations
@@ -88,10 +93,16 @@ def main():
         ax1.scatter([x], [y], s=jobs / 250, facecolor="none", edgecolor=style.INK, lw=1.2, zorder=5)
         ax1.annotate(f"{name}\n{jobs / 1000:.0f}k", (x, y), xytext=LABEL_OFF[name], textcoords="offset points", fontsize=7.5,
                      zorder=6, arrowprops=dict(arrowstyle="-", color=style.INK_2, lw=0.6), bbox=dict(boxstyle="round,pad=0.15", fc=style.SURFACE, ec="none", alpha=0.8))
+    for name, lon, lat, jobs, off in SECOND:
+        x, y = t.transform(lon, lat)
+        ax1.scatter([x], [y], s=jobs / 250, facecolor="none", edgecolor=style.INK_2, lw=0.9, ls=(0, (2, 2)), zorder=5)
+        ax1.annotate(f"{name} {jobs / 1000:.0f}k", (x, y), xytext=off, textcoords="offset points", fontsize=6.5,
+                     color=style.INK_2, zorder=6, bbox=dict(boxstyle="round,pad=0.1", fc=style.SURFACE, ec="none",
+                                                            alpha=0.75))
     outlines(ax1, d, labels=False)
     legend_patches(ax1, [cm1(i) for i in range(5)], ["50–500", "500–1.5k", "1.5–4k", "4–10k", "10k+"],
                    "Jobs per 250 m cell")
-    ax1.set_title("Where the jobs are (circles: office clusters)", fontsize=10.5)
+    ax1.set_title("Where the jobs are (bold: office cores)", fontsize=10.5)
 
     # 2 jobs within 30 min
     ax2 = basemap(fig, d, w)
@@ -129,8 +140,8 @@ def main():
     style.hgrid_only(ax4)
     ax4.set_title("Price model fit (R², within districts)", fontsize=10.5)
     med = v.groupby("district")["eve_ratio"].median().sort_values()
-    fig.text(0.03, 0.885, wrap(f"Offices cluster at Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k jobs), ONZ "
-                               f"({CLUSTERS[1][3] / 1000:.0f}k) and Służewiec ({CLUSTERS[2][3] / 1000:.0f}k). The median "
+    fig.text(0.03, 0.885, wrap(f"Offices cluster at Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k jobs), ONZ / Central "
+                               f"Station ({CLUSTERS[1][3] / 1000:.0f}k) and Służewiec ({CLUSTERS[2][3] / 1000:.0f}k). The median "
                                f"building reaches {v['jobs_30'].median() / 1000:.0f}k jobs in 30 min; doubling job access "
                                f"is worth {gain:+.1f}% within a district.", 100),
              fontsize=10.5, fontweight="semibold", va="top")

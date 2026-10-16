@@ -30,7 +30,7 @@ OUT = os.path.join(HERE, "output")
 PURPOSES = {"jobs": ("All jobs", style.BLUE), "office": ("Office jobs", style.VIOLET),
             "shops": ("Shops", style.ORANGE), "leisure": ("Cafés, restaurants, culture", style.MAGENTA)}
 HALF = [5, 10, 15, 20, 30, 45]
-CORES = ["Rondo Daszyńskiego", "ONZ", "Służewiec", "Central Station"]
+CORES = ["Rondo Daszyńskiego", "ONZ / Central Station", "Służewiec"]
 
 
 def main():
@@ -96,7 +96,8 @@ def main():
     ax.set_title(f"{PURPOSES[best['purpose']][0]}: reach, {int(best['half_life'])}-min half-life",
                  fontsize=10.5)
 
-    t = v.groupby("district")[[f"t_cl{i}" for i in range(4)]].median()
+    v["t_onz_cs"] = v[["t_cl1", "t_cl3"]].min(axis=1)        # ONZ + Central Station: one core, nearest cell
+    t = v.groupby("district")[["t_cl0", "t_onz_cs", "t_cl2"]].median()
     t.columns = CORES
     t = t.loc[t.mean(axis=1).sort_values().index]
     a3 = fig.add_axes([0.20, 0.08, 0.76, 0.28])
@@ -106,7 +107,7 @@ def main():
             x = t.iat[i, j]
             a3.text(j, i, "60+" if np.isnan(x) else f"{x:.0f}", ha="center", va="center", fontsize=8,
                     color="white" if (not np.isnan(x) and x > 42) else style.INK)
-    a3.set_xticks(range(4))
+    a3.set_xticks(range(3))
     a3.set_xticklabels(CORES, fontsize=9)
     a3.xaxis.tick_top()
     a3.set_yticks(range(len(t)))
