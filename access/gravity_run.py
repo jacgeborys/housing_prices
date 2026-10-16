@@ -9,7 +9,7 @@ but per origin cell it keeps:
   t_cl<k>              minutes to the nearest cell of office cluster k (clusters found from the data:
                        neighbouring 250 m cells with >= 4000 office job equivalents, total >= 10k: Daszyńskiego,
                        Centrum/ONZ, Służewiec, Dworzec Gdański, Al. Jerozolimskie west)
-Office jobs = office floor area / 18 m² (BDOT budynkiBiurowe), from build_inputs.py's rules.
+Office jobs = commercial-office floor area / 18 m² (SimCity category "budynki biurowe", build_inputs.py).
 
 Output: access/output/gravity_am_peak.csv (per building) and access/output/office_clusters.csv
 """
@@ -28,24 +28,13 @@ HALF_LIVES = [5, 10, 15, 20, 30, 45]
 THRESHOLDS = [15, 20, 30, 45]
 CLUSTER_MIN_JOBS = 4000     # splits the central continuum into Daszyńskiego vs Centrum/ONZ
 CLUSTER_MIN_TOTAL = 10000
+CLUSTER_MIN_CELLS = 2       # a single dense cell is one office park, not a centre
 CHUNK = 500
 
 
 def office_layer(dest):
-    """Office-only job equivalents per destination cell (BDOT budynkiBiurowe floor area / 18 m², malls excluded)."""
-    b = gpd.read_file("D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp", columns=["FUNOGBUD", "LKOND"])
-    b = b[b["FUNOGBUD"] == "budynkiBiurowe"].to_crs(2180)
-    malls = gpd.read_file(os.path.join(os.path.dirname(DATA), "..", "data", "osm_pois.gpkg"))
-    malls = malls[malls["shop"] == "mall"][["geometry"]].to_crs(2180)
-    b = b.drop(index=gpd.sjoin(b[["geometry"]], malls, predicate="contains").index.unique())
-    b["jobs"] = b.geometry.area * b["LKOND"].fillna(1).clip(lower=1) / 18
-    c = b.geometry.centroid
-    key = (c.x // 250).astype(int).astype(str) + "_" + (c.y // 250).astype(int).astype(str)
-    off = b.groupby(key)["jobs"].sum()
-    d = dest.to_crs(2180)
-    dkey = ((d.geometry.x - 125) // 250).round().astype(int).astype(str) + "_" + \
-        ((d.geometry.y - 125) // 250).round().astype(int).astype(str)
-    return pd.Series(dkey.map(off).fillna(0).to_numpy(), index=dest["id"].to_numpy())
+    """Commercial-office job equivalents per destination cell (build_inputs.py, SimCity category "budynki biurowe")."""
+    return pd.Series(dest["office"].to_numpy(), index=dest["id"].to_numpy())
 
 
 def clusters(dest, office):
@@ -73,7 +62,8 @@ def clusters(dest, office):
     cl = pd.DataFrame([(dense[c], lab) for c, lab in label.items()], columns=["id", "cluster"])
     cl["office"] = cl["id"].map(office)
     tot = cl.groupby("cluster")["office"].sum()
-    keep = tot[tot >= CLUSTER_MIN_TOTAL].sort_values(ascending=False)
+    ncell = cl.groupby("cluster").size()
+    keep = tot[(tot >= CLUSTER_MIN_TOTAL) & (ncell >= CLUSTER_MIN_CELLS)].sort_values(ascending=False)
     cl = cl[cl["cluster"].isin(keep.index)].copy()
     cl["cluster"] = cl["cluster"].map({c: i for i, c in enumerate(keep.index)})
     xy = d.set_index("id").loc[cl["id"]]

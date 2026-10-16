@@ -4,15 +4,17 @@ Inputs for the transit accessibility subproject (run with the main Python; routi
   data/gtfs_warsaw.zip     the merged Warsaw GTFS (ZTM + KM + WKD) from D:/QGIS/TransitFrequency/_data/warsaw
                            (read only, copied and zipped; shapes.txt left out, routing doesn't use it)
   data/destinations.gpkg   250 m grid cells with opportunity weights (EPSG:4326 centroids):
-                             jobs      floor area / m² per job by BDOT10k building function (office 18, retail &
-                                       services 40, hotels 60, schools & universities 50, hospitals 40,
-                                       museums & libraries 60, industry & warehouses 100)
+                             jobs      floor area / m² per job by building category (M2_PER_JOB)
+                             office    the commercial-office part of jobs (category "budynki biurowe")
                              shop_gfa  retail & services floor area (m²)
                              leisure   cafés, restaurants, bars, pubs, cinemas, theatres (OSM, data/osm_pois.gpkg)
   data/origins.gpkg        every building with a model value (output/price_model.gpkg / building_value), inner point
 
 Floor area = BDOT10k footprint area x storeys (LKOND). No open register of jobs by building exists in Poland,
-so floor area by function is the proxy.
+so floor area by function is the proxy. Building category: the user's SimCity map classification
+(D:/QGIS/functional_map/script/building_categories.py, imported read only) applied to BDOT's detailed functions
+(FUNSZCZ, camelCase of the same names; mixed-use buildings resolved by its priority rules, so a shopping centre
+filed as an office building counts as retail).
 """
 import os
 import zipfile
@@ -28,9 +30,44 @@ GTFS_DIR = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04"          # read on
 GTFS_FILES = ["agency.txt", "stops.txt", "routes.txt", "trips.txt", "stop_times.txt", "calendar_dates.txt",
               "frequencies.txt", "feed_info.txt"]
 BDOT = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only
-M2_PER_JOB = {"budynkiBiurowe": 18, "budynkiHandlowoUslugowe": 40, "budynkiHoteli": 60,
-              "budynkiSzkolIInstytucjiBadawczych": 50, "budynkiSzpitaliIZakladowOpiekiMedycznej": 40,
-              "budynkiMuzeowIBibliotek": 60, "budynkiPrzemyslowe": 100, "zbiornikSilosIBudynkiMagazynowe": 100}
+FUNCTIONAL_MAP = "D:/QGIS/functional_map/script"                       # read only
+M2_PER_JOB = {   # SimCity category -> m² of floor area per job
+    "budynki biurowe": 18, "budynki urzędów i administracji publicznej": 25, "budynki handlowo-usługowe": 40,
+    "budynki szpitali i inne budynki opieki zdrowotnej": 40, "budynki oświaty i nauki": 50,
+    "budynki transportu": 60, "budynki zabytkowe i kulturalne": 80, "budynki sportowe i rozrywkowe": 100,
+    "budynki przemysłowe i magazynowe": 100}
+ALIASES = {   # BDOT spellings the SimCity name list doesn't have
+    "pawilonHandlowoUslugowy": "obiekt handlowo-usługowy", "budynekODwochMieszkaniach": "budynek jednorodzinny",
+    "klinikaWeterenaryjna": "klinika weterynaryjna", "plywalnia": "basen kąpielowy",
+    "budynekOgroduZooLubBotanicznego": "budynek ogrodu zoologicznego lub botanicznego",
+    "osrodekOpiekiSpolecznej": "ośrodek pomocy społecznej", "internat": "internat lub bursa szkolna",
+    "bursaSzkolna": "internat lub bursa szkolna", "zabytekBezFunkcjiUzytkowej":
+    "zabytek niepełniący żadnej funkcji użytkowej", "zajezdniaTramwajowa": "lokomotywownia lub wagonownia",
+    "zajezdniaAutobusowa": "lokomotywownia lub wagonownia", "kuriaMetropolitarna": "kuria metropolitalna"}
+
+
+def _camel(name):
+    import re
+    import unicodedata
+    s = unicodedata.normalize("NFKD", name.replace("ł", "l").replace("Ł", "L")).encode("ascii", "ignore").decode()
+    w = [x for x in re.split(r"[\s,\-]+", s.strip()) if x]
+    return w[0].lower() + "".join(x[:1].upper() + x[1:] for x in w[1:]) if w else ""
+
+
+def categorise(funszcz):
+    """SimCity category for each BDOT detailed-function string ('a|b|c')."""
+    import sys
+    sys.dont_write_bytecode = True
+    sys.path.insert(0, FUNCTIONAL_MAP)
+    import building_categories as bc
+    to_pl = {_camel(k): k for k in bc.FUNCTION_TO_CATEGORY if k}
+    to_pl.update(ALIASES)
+
+    def one(v):
+        if not isinstance(v, str) or not v:
+            return "pozostałe budynki niemieszkalne"
+        return bc.get_building_category("|".join(to_pl.get(f, f) for f in v.split("|")))
+    return funszcz.map(one)
 CELL = 250
 
 
@@ -66,20 +103,18 @@ def gtfs():
 
 
 def destinations():
-    b = gpd.read_file(BDOT, columns=["FUNOGBUD", "LKOND"]).to_crs(2180)
-    b = b[b["FUNOGBUD"].isin(M2_PER_JOB)].copy()
-    # shopping centres BDOT files as offices (Arkadia...): footprints holding an OSM shop=mall point count as retail
-    malls = gpd.read_file(os.path.join(ROOT, "data", "osm_pois.gpkg"))
-    malls = malls[malls["shop"] == "mall"][["geometry"]]
-    hit = gpd.sjoin(b[["geometry"]], malls, predicate="contains", how="inner").index.unique()
-    b.loc[hit, "FUNOGBUD"] = "budynkiHandlowoUslugowe"
-    print(f"  {len(hit)} mall footprints reclassified as retail")
+    b = gpd.read_file(BDOT, columns=["FUNSZCZ", "LKOND"]).to_crs(2180)
+    b["category"] = categorise(b["FUNSZCZ"])
+    b = b[b["category"].isin(M2_PER_JOB)].copy()
     b["gfa"] = b.geometry.area * b["LKOND"].fillna(1).clip(lower=1)
-    b["jobs"] = b["gfa"] / b["FUNOGBUD"].map(M2_PER_JOB)
-    b["shop_gfa"] = np.where(b["FUNOGBUD"] == "budynkiHandlowoUslugowe", b["gfa"], 0.0)
+    b["jobs"] = b["gfa"] / b["category"].map(M2_PER_JOB)
+    b["office"] = np.where(b["category"] == "budynki biurowe", b["jobs"], 0.0)
+    b["shop_gfa"] = np.where(b["category"] == "budynki handlowo-usługowe", b["gfa"], 0.0)
+    print("  job equivalents by category:", (b.groupby("category")["jobs"].sum() / 1000).round(0).astype(int)
+          .sort_values(ascending=False).to_dict())
     c = b.geometry.centroid
     b["gx"], b["gy"] = (c.x // CELL).astype(int), (c.y // CELL).astype(int)
-    g = b.groupby(["gx", "gy"])[["jobs", "shop_gfa"]].sum()
+    g = b.groupby(["gx", "gy"])[["jobs", "office", "shop_gfa"]].sum()
     p = gpd.read_file(os.path.join(ROOT, "data", "osm_pois.gpkg"))
     p = p[p["amenity"].isin(["cafe", "restaurant", "bar", "pub", "cinema", "theatre"])]
     p["gx"], p["gy"] = (p.geometry.x // CELL).astype(int), (p.geometry.y // CELL).astype(int)
@@ -89,7 +124,7 @@ def destinations():
     pts["id"] = np.arange(len(pts))
     pts = pts.to_crs(4326)
     out = os.path.join(DATA, "destinations.gpkg")
-    pts[["id", "jobs", "shop_gfa", "leisure", "geometry"]].to_file(out, layer="destinations", driver="GPKG")
+    pts[["id", "jobs", "office", "shop_gfa", "leisure", "geometry"]].to_file(out, layer="destinations", driver="GPKG")
     print(f"Saved {out}: {len(pts):,} cells, {pts['jobs'].sum() / 1e6:.2f} M job equivalents, "
           f"{pts['leisure'].sum():,.0f} leisure venues")
     top = pts.sort_values("jobs", ascending=False).head(8).to_crs(2180)

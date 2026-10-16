@@ -24,13 +24,11 @@ from summary_maps import FEATURES, basemap, legend_patches, load, outlines  # no
 
 style.apply()
 OUT = os.path.join(HERE, "output")
-CLUSTERS = [  # from gravity_run.py's detection (office cells >= 4000 job equivalents, cluster >= 10k)
-    ("Rondo Daszyńskiego", 20.9841, 52.2310, 65762), ("Centrum / ONZ", 21.0022, 52.2317, 53167),
-    ("Służewiec", 20.9952, 52.1832, 23385), ("Dw. Gdański", 20.9803, 52.2560, 13277),
-    ("Al. Jerozolimskie W", 20.8755, 52.2038, 11821)]
+CLUSTERS = [  # gravity_run.py's detection on the SimCity office layer (cells >= 4000 office jobs, >= 2 cells)
+    ("Rondo Daszyńskiego", 20.9846, 52.2308, 67081), ("Centrum / ONZ", 21.0001, 52.2339, 22925),
+    ("Służewiec", 20.9934, 52.1832, 21725)]
 
-LABEL_OFF = {"Rondo Daszyńskiego": (-30, 32), "Centrum / ONZ": (22, 14), "Służewiec": (14, -6),
-             "Dw. Gdański": (12, 10), "Al. Jerozolimskie W": (-6, 16)}
+LABEL_OFF = {"Rondo Daszyńskiego": (-30, 32), "Centrum / ONZ": (22, 14), "Służewiec": (14, -6)}
 
 
 def within_r2(v, cols):
@@ -65,8 +63,8 @@ def main():
 
     fig = page("Where is the centre, and who can reach it?",
                "Jobs reachable by public transport, door to door: walking, waiting, riding, changing",
-               "Jobs = floor area of offices, shops, hotels, schools, hospitals etc. (BDOT10k footprint x storeys) per "
-               "m² per job; 250 m cells. Travel: R5 routing on the Warsaw GTFS (ZTM, KM, WKD, timetable of Wed "
+               "Jobs = floor area (BDOT10k footprint x storeys) per m² per job by building category of the SimCity map "
+               "(offices 18, public offices 25, retail & hospitals 40, schools 50...); 250 m cells. Travel: R5 routing on the Warsaw GTFS (ZTM, KM, WKD, timetable of Wed "
                "7.10.2026) and OSM paths, median over every departure minute 07–09 / 19–21. Office clusters: "
                "neighbouring cells with ≥ 4,000 office job equivalents. Preliminary (3 of 4 time windows). "
                + style.SOURCE)
@@ -128,7 +126,7 @@ def main():
     ax4.set_title("Price model fit (R², within districts)", fontsize=10.5)
     med = v.groupby("district")["eve_ratio"].median().sort_values()
     fig.text(0.03, 0.885, wrap(f"The centre is two office cores: Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k office "
-                               f"jobs) and Centrum/ONZ ({CLUSTERS[1][3] / 1000:.0f}k), then Służewiec. The median "
+                               f"jobs) and Centrum/ONZ ({CLUSTERS[1][3] / 1000:.0f}k), with Służewiec ({CLUSTERS[2][3] / 1000:.0f}k) as the third core. The median "
                                f"building reaches {v['jobs_30'].median() / 1000:.0f}k jobs in 30 minutes; in the evening "
                                f"{med.index[0]} keeps only {med.iloc[0]:.0%} of its morning reach. Doubling job access "
                                f"is worth {gain:+.1f}% in price within a district.", 100),
