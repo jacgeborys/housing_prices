@@ -157,7 +157,7 @@ def main():
     from matplotlib.patches import Patch
     ax.legend(handles=[Patch(color=c, label=l) for c, l in zip(
         ["#fde4cf", "#f9b98a", "#f08a4b", "#c4521f", "#7a2a08"], ["< 2", "2–4", "4–6", "6–9", "9+"])],
-        title="Flips per 100 resales", loc="lower right", fontsize=8.5, title_fontsize=9, frameon=True,
+        title="Flips per 100 resales", loc="upper right", fontsize=8.5, title_fontsize=9, frameon=True,
         framealpha=0.9, edgecolor="none")
 
     top = area.sort_values("share", ascending=False).head(10).iloc[::-1]

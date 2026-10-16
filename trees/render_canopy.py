@@ -83,7 +83,7 @@ def main():
         ax.text(p.x, p.y, r["district"], fontsize=8, ha="center", va="center", color=style.INK, zorder=6,
                 bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.7))
     ax.legend(handles=[Patch(color=c, label=l) for c, l in zip(GREENS, LABELS)], title="Tree cover",
-              loc="lower left", fontsize=9, title_fontsize=10, frameon=True, facecolor=PAPER, edgecolor="none")
+              loc="upper right", fontsize=9, title_fontsize=10, frameon=True, facecolor=PAPER, edgecolor="none")
     fig.text(0.03, 0.975, "Warsaw's trees", fontsize=22, fontweight="bold", color=style.INK, va="top")
     fig.text(0.03, 0.945, f"Tree crowns cover {share:.0%} of Warsaw; {tall:.0%} of the city lies under dense (70 %+) tree cover. "
                           "Every patch of trees is mapped, not just the parks.", fontsize=12, color=style.INK_2, va="top")
@@ -104,7 +104,7 @@ def main():
     ax.set_xlim(cx - 2500, cx + 2500)
     ax.set_ylim(cy - 2500, cy + 2500)
     ax.legend(handles=[Patch(color=c, label=l) for c, l in zip(GREENS, LABELS)], title="Tree cover",
-              loc="lower left", fontsize=9, title_fontsize=10, frameon=True, facecolor=PAPER, edgecolor="none")
+              loc="upper right", fontsize=9, title_fontsize=10, frameon=True, facecolor=PAPER, edgecolor="none")
     fig.text(0.03, 0.975, "Central Warsaw's trees", fontsize=20, fontweight="bold", color=style.INK, va="top")
     fig.text(0.03, 0.945, "5 × 5 km around the Palace of Culture, 10 m detail", fontsize=12, color=style.INK_2,
              va="top")

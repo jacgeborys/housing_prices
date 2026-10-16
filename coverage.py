@@ -180,7 +180,7 @@ def plot(osm, uni, districts, s, dcol, norm):
     labels = [f"{a:.0f}–{b:.0f}%" for a, b in zip(GRID_BINS[:-1], GRID_BINS[1:])]
     ax.legend(handles=[Patch(color=c, label=l) for c, l in zip(GRID_COL[::-1], labels[::-1])]
               + [Patch(color=style.CONTEXT, label="Buildings (context)")],
-              loc="lower left", fontsize=10, title_fontsize=10,
+              loc="upper right", fontsize=10, title_fontsize=10,
               title=f"Flats with no recorded sale\n(500 m cells, ≥ {MIN_CELL_FLATS} flats)")
 
     # Stacked share of estimated flats per district, 2 px surface gaps between segments

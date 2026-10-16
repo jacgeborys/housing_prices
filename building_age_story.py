@@ -90,7 +90,7 @@ def main():
                lw=0.6, zorder=3)
     outlines(ax, d)
     ax.legend(handles=[Patch(color=cmap(i), label=l) for i, l in enumerate(
-        ["< 20%", "20–27%", "27–34%", "34–42%", "42–60%", "60%+"])], title="New vs prefab", loc="lower left",
+        ["< 20%", "20–27%", "27–34%", "34–42%", "42–60%", "60%+"])], title="New vs prefab", loc="upper right",
         fontsize=8, title_fontsize=8.5, frameon=True, framealpha=0.9, edgecolor="none")
     ax.set_title("Premium of a 2011–20 building over a 1961–90 one nearby", fontsize=10.5)
 

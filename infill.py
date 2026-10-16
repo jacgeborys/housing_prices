@@ -92,7 +92,7 @@ def main():
         ax.scatter(p.x, p.y, s=9 if k != "infill" else 14, color=col[k], alpha=0.8, lw=0, zorder=4,
                    label=f"{k} ({(new['kind'] == k).sum():,})")
     outlines(ax, d)
-    ax.legend(loc="lower left", fontsize=8.5, markerscale=1.8, frameon=True, framealpha=0.9, edgecolor="none",
+    ax.legend(loc="upper right", fontsize=8.5, markerscale=1.8, frameon=True, framealpha=0.9, edgecolor="none",
               title="Buildings of 2001–2020", title_fontsize=9)
 
     a2 = fig.add_axes([0.72, 0.60, 0.24, 0.20])

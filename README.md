@@ -161,6 +161,13 @@ python build_viz.py
 
 ## Status
 
+**2026-10-16 (night):** offers/offers_story.py -> summary/26 new flats on offer: 8.6K flats in 336 investments,
+median 16.6K PLN/m², 50 m²; the median investment asks 3 % less per m² than a 5-15-year-old flat within 1 km
+(typical-flat value of 2011-20 buildings); Wola's median (38K) is driven by towers near Rondo Daszyńskiego
+(Grzybowska, NOHO Karolkowa, Towarowa 22, Prosta, 30-50K); supply concentrates in Białołęka, Ursus and Wola.
+Office cores: ONZ and Central Station merged (37K); five second-tier centres drawn on fig. 24. All map legends and
+colour bars moved to the upper right (the empty corner of Warsaw's outline).
+
 **2026-10-16 (late):** developer price lists (offers/): all 13,032 dane.gov.pl datasets fetched in 13.6 min with 8
 parallel workers (first version: one request at a time + 0.5 s pause, ~9 h). parse_price_lists.py keeps rows whose
 INVESTMENT location is Warsaw: 752 datasets, 37.7K rows, 9.6K distinct flats on offer (median 16.5K PLN/m²,

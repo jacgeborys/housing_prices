@@ -89,7 +89,7 @@ def main():
                    mincnt=3, cmap=style.DIV_CMAP, norm=norm, linewidths=0.3, edgecolors=style.SURFACE, zorder=3,
                    extent=(*ax.get_xlim(), *ax.get_ylim()))
     outlines(ax, d)
-    cax = fig.add_axes([0.08, 0.50, 0.022, 0.13])
+    cax = fig.add_axes([0.80, 0.69, 0.02, 0.13])
     cb = fig.colorbar(hb, cax=cax, ticks=[-20, -10, 0, 10, 20])
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8.5, length=0)

@@ -110,7 +110,7 @@ def within_district_bars(fig, v, col, bins, labels, title, xlabel, min_n=60, foc
     return ax
 
 
-def legend_patches(ax, colours, labels, title, loc="lower left"):
+def legend_patches(ax, colours, labels, title, loc="upper right"):
     ax.legend(handles=[Patch(color=c, label=l) for c, l in zip(colours, labels)], title=title, loc=loc,
               fontsize=8.5, title_fontsize=9, frameon=True, framealpha=0.9, edgecolor="none")
 
@@ -130,7 +130,7 @@ def cheaper_than_expected(v, d, w):
     hb = ax.hexbin(pts.x, pts.y, C=v["resid_pct"].clip(-40, 40), gridsize=(48, 42), reduce_C_function=np.median,
                    mincnt=5, cmap=style.DIV_CMAP, norm=norm, linewidths=0.3, edgecolors=style.SURFACE, zorder=3)
     outlines(ax, d)
-    cax = fig.add_axes([0.08, 0.40, 0.025, 0.14])
+    cax = fig.add_axes([0.80, 0.66, 0.022, 0.14])
     cb = fig.colorbar(hb, cax=cax, ticks=[-15, -10, -5, 0, 5, 10, 15])
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8.5, length=0)
