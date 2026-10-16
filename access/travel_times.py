@@ -65,9 +65,19 @@ def run(name, net, cells, dest, orig):
     for h, (lon, lat) in HUBS.items():
         p = gpd.GeoSeries.from_xy([lon], [lat], crs=4326).to_crs(2180).iloc[0]
         hub_ids[h] = int(dest["id"].iloc[np.argmin(d2180.distance(p).to_numpy())])
+    final = os.path.join(OUT, f"access_{name}.csv")
+    if os.path.exists(final):
+        print(f"  {name}: already done ({final})", flush=True)
+        return
     jobs = dest.set_index("id")["jobs"]
     leis = dest.set_index("id")["leisure"]
+    partial = os.path.join(OUT, f"access_{name}_cells_partial.csv")
     rows = []
+    if os.path.exists(partial):                       # resume: skip cells routed before a crash
+        prev = pd.read_csv(partial, index_col=0)
+        rows.append(prev)
+        cells = cells[~cells["id"].isin(prev.index)]
+        print(f"  {name}: resuming, {len(prev):,} cells from the checkpoint, {len(cells):,} to go", flush=True)
     for c0 in range(0, len(cells), CHUNK):
         o = cells.iloc[c0:c0 + CHUNK]
         tt = r5py.TravelTimeMatrix(net, origins=o, destinations=dest, departure=dep,
@@ -88,13 +98,13 @@ def run(name, net, cells, dest, orig):
             r[f"t_{h}"] = tt[tt["to_id"] == hid].set_index("from_id")["travel_time"]
         rows.append(r)
         os.makedirs(OUT, exist_ok=True)
-        pd.concat(rows).to_csv(os.path.join(OUT, f"access_{name}_cells_partial.csv"))   # survives a crash
+        pd.concat(rows).to_csv(partial)                # checkpoint: a crash loses at most one batch
         print(f"  {name}: {min(c0 + CHUNK, len(cells)):,}/{len(cells):,} cells", flush=True)
     res = pd.concat(rows)
     res = res.reindex(orig["cell"].to_numpy())
     res.index = orig["osm_id"].to_numpy()
     res.index.name = "osm_id"
-    res.to_csv(os.path.join(OUT, f"access_{name}.csv"))
+    res.to_csv(final)
     print(f"Saved {name}: median jobs within 30 min {res['jobs_30'].median():,.0f}, "
           f"median minutes to Centrum {res['t_centrum'].median():.0f}")
 
