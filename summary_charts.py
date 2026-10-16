@@ -139,6 +139,9 @@ def districts():
 # 3 --------------------------------------------------------------------------------------------
 PLAIN = [  # feature, plain-language label, sign flip (effect of the "worse" direction reads naturally)
     ("pct_primary", "New building (sold by the developer)"),
+    ("age_2001_10", "Built 2001–2010 (vs a 1961–90 prefab block)"),
+    ("age_1941_60", "Built 1941–1960 (vs a 1961–90 prefab block)"),
+    ("canopy_100", "10 points more tree cover within 100 m"),
     ("walk7_food_drink", "Twice as many cafés, restaurants and bars within a 7-min walk"),
     ("walk7_zabka", "Twice as many Żabka shops within a 7-min walk"),
     ("green_ha_500", "10 ha more park or forest within 500 m"),
@@ -157,15 +160,16 @@ def drivers():
     rows = [(lab, *c.loc[f, ["pct_district", "pct_district_lo", "pct_district_hi"]]) for f, lab in PLAIN]
     d = pd.DataFrame(rows, columns=["label", "pct", "lo", "hi"]).sort_values("pct")
     gv = gpd.read_file("output/price_drivers.gpkg", ignore_geometry=True, columns=["osm_id"])
+    r2 = pd.read_csv("output/analysis/price_drivers_scores.csv", index_col=0)["r2"]
 
     fig = page("What moves the price of a Warsaw flat",
                "Effect of each feature, comparing buildings within the same district",
                f"{len(gv):,} buildings with ≥ 3 flat sales; price of a typical flat (date, floor, size removed). "
                "Regression on log price with district\neffects, all features at once; bars = 95 % CI, SEs "
-               "clustered by 1 km cell. Features also explain 47 % of price differences\nout of sample "
+               f"clustered by 1 km cell. Features also explain {r2['gbm']:.0%} of price differences\nout of sample "
                "(gradient boosting, spatial cross-validation). Noise: EEA Lden. Transit: TransitFrequency. "
                + style.SOURCE)
-    ax = fig.add_axes([0.47, 0.10, 0.46, 0.77])
+    ax = fig.add_axes([0.47, 0.13, 0.46, 0.74])
     lim = 8.0
     y = np.arange(len(d))
     for yi, (_, r) in zip(y, d.iterrows()):

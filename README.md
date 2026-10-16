@@ -50,6 +50,13 @@ walk_amenities.py     ->  output/walk_amenities.gpkg: POIs within a 7-minute wal
                           food & drink, Żabka, grocery, schools, health, sport & play (bounded Dijkstra per building)
 reputation_time.py    ->  output/reputation_time.gpkg + summary/14: within-building resale change 2010-14 -> 2021-25
                           vs the city (no-primary buildings), by hexagon / MSI neighbourhood / district
+rcn_clean.py              shared RCN cleaning (build_viz.py, analyze_rcn.py -> price_index.py): drops sales of a share of a
+                          flat (nier_udzial 1/2 ...) and flats carrying a multi-flat deed's total price (7.7K records)
+fetch_building_age.py ->  output/building_age.gpkg: construction decade per building from GIS Expert's public map
+                          (mapy.gis-expert.pl/zabudowa-warszawy; tiles cached in data/raw/, not redistributed; credit them)
+building_age_story.py ->  summary/18: price by construction decade, new-vs-prefab premium by place
+market_rhythms.py     ->  summary/19: seasonality, district momentum, company buyers
+trees/                    tree cover density (Copernicus 2018) map + per-building features, see trees/README.md
 flips.py              ->  output/flips.gpkg + summary/16: flats resold within 14-365 days. Flat = land-register id
                           LOK_ID_LOKALU (attached from raw RCN; 99 % of sales since 2018), before 2018 address+floor+area
                           with resale->resale pairs only (identical new-build flats share that key: false flips)
@@ -145,6 +152,18 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-16 (later):** data cleaning + building age + trees. Shared cleaning removes 2,377 partial-share sales and
+5,367 multi-flat deed totals; price_index.py now trims sales > 4 SD from their building's prediction (2,377, 0.9 %)
+and refits: within-R² 0.647 -> 0.786. Building age (GIS Expert decades, 92 % of priced buildings) in the model:
+out-of-sample R² 0.48 -> 0.58. Within a district vs 1961-90 prefab: 1991-2000 +11 %, 2001-10 +17 %, 2011-20 +17 %,
+1941-60 -2 %, pre-war +1 % (n.s.); metro -3.4 %/km walked; bus/tram frequency ~0 once age is in; tree cover within
+100 m ~0 beyond parks. Reputation survives age: Żoliborz +15 %, Praga-Północ -19 %. Fig. 18: U-shape by decade
+(pre-war +5 %, prefab -7..-11 %, 2011-20 +14 % vs district median); new-vs-prefab premium largest in the centre
+(Śródmieście +97 %) and smallest on the edges (+17 %). Fig. 19: seasonality within +-1 %; district leads partly
+reverse next year; companies buy ~3 % of flats. Flips: flipped flats that sell again keep the markup (+4.7 % vs the
+flipper's price, net of market, 538 flats). Repeat-sales index dropped: since 2021 the same-flat resales are mostly
+flips (median gap 248 days), which measures renovation, not the market. Meta canopy height rejected (see trees/).
 
 **2026-10-16 (resumed):** walking-network amenities replace 500 m circles (cafés +3.4 %/doubling within a district,
 unchanged -> robust; Żabka no effect; more grocery shops slightly negative = dense estates). Walking searches now

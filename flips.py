@@ -81,6 +81,14 @@ def main():
     first = f["market"].value_counts().to_dict()
     print(f"first leg bought: {first}")
 
+    # do flips hold their value? the flat's next sale after the flip (>= 6 months later), net of the market
+    nxt = p[["unit", "date", "markup_net", "days"]].rename(
+        columns={"date": "date2", "markup_net": "after_net", "days": "days_after"})
+    held = f.merge(nxt, on=["unit", "date2"], how="inner")
+    held = held[(held["days_after"] >= 180) & held["after_net"].between(-60, 150)]
+    print(f"{len(held):,} flipped flats sold again >= 6 months later: flipper's markup net "
+          f"{held['markup_net'].median():+.1f}%, next sale vs flipper's price net {held['after_net'].median():+.1f}%")
+
     sec = t[t["market"] == "secondary"]
     by_year = pd.DataFrame({"flips": f.groupby("year2").size(),
                             "resales": sec.groupby(sec["date"].dt.year).size(),
@@ -125,7 +133,9 @@ def main():
                "600 m hexagons with ≥ 40 resales. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"2021–25: {n_r:,} flips, {100 * n_r / len(recent_s):.1f} per 100 resales. "
                                f"Median markup {med:+.0f}% ({med_net:+.0f}% beyond what the market did), "
-                               f"median holding {recent_f['days'].median():.0f} days. Flipping is busiest where "
+                               f"median holding {recent_f['days'].median():.0f} days. The markup sticks: flipped flats that sold again "
+                               f"later went for {held['after_net'].median():+.0f}% vs the flipper's price, net of the "
+                               f"market ({len(held)} flats). Flipping is busiest where "
                                f"prices gained most on the city since 2010–14 (correlation {r:+.2f} across "
                                f"{len(both)} neighbourhoods).", 95),
              fontsize=10.5, fontweight="semibold", va="top")

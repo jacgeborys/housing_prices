@@ -204,6 +204,22 @@ def fit(df):
             "quarters": quarters, "ref_q": ref_q, "smear": smear, "sample": est}
 
 
+TRIM_SD = 4.0      # second pass drops sales this many residual SDs from their building's prediction
+
+
+def trim_outliers(df, model):
+    """Drop sales far from what their building, quarter, floor, size and market predict (family deals at
+    symbolic prices, data-entry slips that pass the fixed bounds), so the refit isn't pulled by them."""
+    est = model["sample"]
+    X = design(est, model["quarters"], model["ref_q"])[model["cols"]]
+    r = est["logp"] - X.values @ model["beta"] - est["grp"].map(model["fe"]).values
+    sd = r[est["grp"].map(model["n_g"]).values >= 2].std()
+    bad = est.index[np.abs(r) > TRIM_SD * sd]
+    print(f"  Trim: {len(bad):,} sales beyond {TRIM_SD:g} SD ({TRIM_SD * sd:.2f} log points, "
+          f"x{np.exp(TRIM_SD * sd):.1f}) dropped ({len(bad) / len(est):.2%})")
+    return df.drop(index=bad)
+
+
 def quarter_index(model, df):
     """Quarterly log-index γ_q (ref quarter = 0), interpolated across thin quarters."""
     coef = model["coef"]["beta"]
@@ -638,6 +654,9 @@ def main():
     print(f"  Apartments: {len(df):,}")
 
     print("\nFitting hedonic model...")
+    model = fit(df)
+    df = trim_outliers(df, model)
+    print("  Refit without outliers...")
     model = fit(df)
     qidx = quarter_index(model, df)
     print("  District indices...")

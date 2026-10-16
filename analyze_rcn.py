@@ -39,6 +39,8 @@ def _shade_gap(ax):
 
 import style
 
+from rcn_clean import residential_clean
+
 style.apply()
 
 
@@ -50,7 +52,7 @@ def load_data():
     for col in ["lok_cena_brutto", "lok_pow_uzyt", "lok_nr_kond", "lok_liczba_izb"]:
         rcn[col] = pd.to_numeric(rcn[col], errors="coerce")
 
-    res = rcn[rcn["lok_funkcja"] == "mieszkalna"].copy()
+    res = residential_clean(rcn)       # flats only, no share sales / multi-flat deed totals
     res["price_m2"] = res["lok_cena_brutto"] / res["lok_pow_uzyt"]
     res["year"] = res["dok_data"].str[:4].apply(
         lambda x: int(x) if x and x.isdigit() and int(x) > 2000 else None

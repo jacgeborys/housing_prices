@@ -25,6 +25,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
+from rcn_clean import residential_clean
+
 # --- Paths ---
 RCN_PATH = os.path.join("output", "rcn_lokale_warszawa.gpkg")
 OSM_PATH = os.path.join("data", "osm_buildings.gpkg")
@@ -49,9 +51,8 @@ def load_transactions():
         if col in gdf.columns:
             gdf[col] = pd.to_numeric(gdf[col], errors="coerce")
 
-    # Residential only
-    gdf = gdf[gdf["lok_funkcja"] == "mieszkalna"].copy()
-    print(f"  Residential: {len(gdf):,}")
+    # Residential only, without share sales and multi-flat deed totals (rcn_clean.py)
+    gdf = residential_clean(gdf)
 
     # Compute price per m²
     gdf["price_m2"] = gdf["lok_cena_brutto"] / gdf["lok_pow_uzyt"]

@@ -22,6 +22,8 @@ Outputs:
   output/analysis/16_price_drivers.png
 """
 
+import os
+
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,6 +40,8 @@ MIN_SALES = 3
 INDEX = "city"                      # --index district: re-base the target with district price indices
 TRANSIT_SNAP_M = 25
 WALK_AMEN = "output/walk_amenities.gpkg"   # walk_amenities.py: POIs within a 7-minute walk
+TREES = "trees/output/tree_features.gpkg"   # trees/tree_features.py: canopy around each building
+AGE = "output/building_age.gpkg"           # fetch_building_age.py (GIS Expert decades); used when present
 TRANSIT = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_gates.gpkg"   # read only
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
 WALK = "output/walk_access.gpkg"    # walk_access.py: network walking distances
@@ -76,7 +80,17 @@ AMENITY_LABELS = {   # counts within a 7-minute walk (560 m on footpaths), model
     "walk7_health": "Pharmacies, clinics, 7-min walk (×2)",
     "walk7_sport_play": "Playgrounds, gyms, sports, 7-min walk (×2)",
 }
-SCALE = {"green_ha_500": 10, "height_m": 10, "noise_road_db": 10, "noise_rail_db": 10, "noise_air_db": 10}     # coefficients reported per this many units
+TREE_LABELS = {
+    "canopy_100": "Tree cover within 100 m (per 10 pp)",
+}
+AGE_LABELS = {   # construction period dummies; reference = 1961-1990 (prefab era)
+    "age_prewar": "Built before 1941",
+    "age_1941_60": "Built 1941–1960 (post-war, socialist realism)",
+    "age_1991_00": "Built 1991–2000",
+    "age_2001_10": "Built 2001–2010",
+    "age_2011_20": "Built 2011–2020",
+}
+SCALE = {"canopy_100": 10, "green_ha_500": 10, "height_m": 10, "noise_road_db": 10, "noise_rail_db": 10, "noise_air_db": 10}     # coefficients reported per this many units
 
 
 def pkin_xy():
@@ -197,6 +211,21 @@ def build_features():
     for c in AMENITY_LABELS:
         v[c] = np.log2(1 + v["osm_id"].map(am[c]).fillna(0).to_numpy())
     print(f"walking amenities: {', '.join(f'{c} median {np.median(2 ** v[c] - 1):.0f}' for c in AMENITY_LABELS)}")
+
+    if os.path.exists(TREES):
+        tf = gpd.read_file(TREES, ignore_geometry=True).drop_duplicates("osm_id").set_index("osm_id")
+        v["canopy_100"] = 100 * v["osm_id"].map(tf["canopy_100"]).fillna(0).to_numpy()
+        print(f"trees: median tree cover within 100 m {np.median(v['canopy_100']):.0f}%")
+    if os.path.exists(AGE):
+        a = gpd.read_file(AGE, ignore_geometry=True).drop_duplicates("osm_id").set_index("osm_id")["decade_end"]
+        de = v["osm_id"].map(a)
+        v["decade_end"] = de
+        bins = {"age_prewar": (0, 1940), "age_1941_60": (1941, 1960), "age_1991_00": (1991, 2000),
+                "age_2001_10": (2001, 2010), "age_2011_20": (2011, 2020)}
+        for c, (lo, hi) in bins.items():
+            v[c] = de.between(lo, hi).astype(float)
+        print(f"building age: {de.gt(0).mean():.0%} of buildings dated "
+              f"({', '.join(f'{c} {int(v[c].sum()):,}' for c in bins)})")
 
     v["height_m"] = v["height_m"].fillna(v["floors"] * 3).fillna(12)
     v["log_footprint"] = np.log2(v["footprint_m2"].clip(lower=50))
@@ -323,8 +352,10 @@ def main():
         OUT_GPKG, OUT_CSV = OUT_GPKG.replace(".gpkg", "_district_index.gpkg"), OUT_CSV.replace(".csv", "_district_index.csv")
         OUT_PNG = OUT_PNG.replace(".png", "_district_index.png")
     v = build_features()
-    feats = list(LABELS) + [f for f in AMENITY_LABELS if f in v]
+    feats = list(LABELS) + [f for f in AMENITY_LABELS if f in v] + [f for f in AGE_LABELS if f in v]         + [f for f in TREE_LABELS if f in v]
     LABELS.update(AMENITY_LABELS)
+    LABELS.update(TREE_LABELS)
+    LABELS.update(AGE_LABELS)
     print(v[feats + ["value_2025"]].describe().T[["mean", "min", "50%", "max"]].round(2).to_string())
     coef, scores = linear_models(v, feats)
     pred, r2, importance = boosted(v, feats)
@@ -332,10 +363,11 @@ def main():
     v["pred_2025"] = np.exp(pred)
     v["resid_pct"] = 100 * (np.exp(v["y"] - pred) - 1)
     coef.round(2).to_csv(OUT_CSV, index=False)
+    pd.Series(scores).round(4).to_csv(OUT_CSV.replace("coefficients", "scores"), header=["r2"])
     print(coef.round(1).to_string(index=False))
     print("Importance:\n" + (importance / importance.sum()).round(3).to_string())
     keep = ["osm_id", "name", "addr_street", "addr_housenumber", "district", "n", "value_2025", "pred_2025",
-            "resid_pct", "trips"] + feats + ["geometry"]
+            "resid_pct", "trips"] + (["decade_end"] if "decade_end" in v else []) + feats + ["geometry"]
     v[keep].to_file(OUT_GPKG, layer="building_drivers", driver="GPKG")
     print(f"Saved {OUT_GPKG}, {OUT_CSV}")
     plot(coef, importance, scores, v)

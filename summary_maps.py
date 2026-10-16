@@ -69,7 +69,8 @@ def outlines(ax, d, labels=True):
 FEATURES = ["log2_trips", "walk_metro_km", "train_km", "walk_tram_km", "walk_park_km", "walk_school_km",
             "noise_road_db", "noise_rail_db", "noise_air_db", "heritage", "centre_km", "river_km", "green_ha_500",
             "height_m", "pct_primary", "new_build", "log_footprint", "walk7_food_drink", "walk7_grocery",
-            "walk7_zabka", "walk7_schools", "walk7_health", "walk7_sport_play"]
+            "walk7_zabka", "walk7_schools", "walk7_health", "walk7_sport_play", "canopy_100",
+            "age_prewar", "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20"]
 
 
 def adjusted(v, focus):

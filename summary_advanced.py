@@ -29,8 +29,10 @@ GROUPS = {   # feature group -> features (fixed order = fixed colour)
     "Buses & trams": ["log2_trips", "walk_tram_km"],
     "Cafés, shops & schools": ["walk7_food_drink", "walk7_grocery", "walk7_zabka", "walk7_schools",
                                "walk7_health", "walk7_sport_play", "walk_school_km"],
-    "Green & quiet": ["green_ha_500", "walk_park_km", "noise_road_db", "noise_rail_db", "noise_air_db"],
-    "The buildings": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage"],
+    "Green & quiet": ["green_ha_500", "walk_park_km", "canopy_100", "noise_road_db", "noise_rail_db",
+                      "noise_air_db"],
+    "The buildings": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage", "age_prewar",
+                      "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20"],
 }
 REPUTATION = "Unexplained (reputation)"
 

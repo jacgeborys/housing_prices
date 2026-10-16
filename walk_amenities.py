@@ -74,7 +74,8 @@ def main():
         counts[c] = np.bincount(sel["node"], minlength=len(xy))
         print(f"  {c}: {len(sel):,} POIs")
 
-    b = gpd.read_file("output/price_drivers.gpkg")[["osm_id", "geometry"]]
+    b = gpd.read_file("output/price_model.gpkg", layer="building_value")[["osm_id", "geometry"]]
+    b = b.drop_duplicates("osm_id").reset_index(drop=True)
     bp = b.geometry.representative_point()
     snap, bnode = tree.query(np.c_[bp.x, bp.y])
     out = {c: np.zeros(len(b), int) for c in CATS}
