@@ -115,10 +115,10 @@ def main():
     a3.grid(False)
     a3.set_title("Median minutes to each office core, morning peak", fontsize=10.5, pad=22)
     fig.text(0.03, 0.885, wrap(f"Reach to cafés, restaurants and culture that fades fast (half-life "
-                               f"{int(best['half_life'])} min) explains prices better than distance to PKiN and the metro "
-                               f"(R² {best['r2']:.4f} vs {r_base:.4f}); doubling it is worth {best['pct_per_doubling']:+.1f}% "
-                               "within a district. Reach to office jobs adds least: buyers price the neighbourhood, "
-                               "not the commute.", 100), fontsize=10.5, fontweight="semibold", va="top")
+                               f"{int(best['half_life'])} min) explains prices about as well as distance to PKiN and the "
+                               f"metro together; doubling it is worth {best['pct_per_doubling']:+.1f}% within a district "
+                               "(95 % range +4 to +9 %, block bootstrap). Reach to office jobs adds least: buyers price "
+                               "the neighbourhood, not the commute.", 100), fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "25_what_reach_pays.png")
 
 
