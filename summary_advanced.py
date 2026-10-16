@@ -31,8 +31,8 @@ GROUPS = {   # feature group -> features (fixed order = fixed colour)
                                "walk7_health", "walk7_sport_play", "walk_school_km"],
     "Green & quiet": ["green_ha_500", "walk_park_km", "canopy_100", "noise_road_db", "noise_rail_db",
                       "noise_air_db"],
-    "The buildings": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage", "age_prewar",
-                      "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20"],
+    "Building age": ["age_prewar", "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20"],
+    "Building form": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage"],
 }
 REPUTATION = "Unexplained (reputation)"
 
@@ -54,14 +54,16 @@ def district_anatomy(v):
     c = c.loc[total.sort_values().index]
     tot = total.loc[c.index] * 100
 
-    cols = style.CAT[:6] + ["#9a9890"]
+    cols = style.CAT[:7] + ["#9a9890"]
     fig = page("Why a district is expensive",
                "Each district's price gap to the city average, split into its causes",
                "Linear regression of log price on all features (no district variable), 12.7K buildings with "
-               "≥ 3 sales. A group's bar = its coefficients × how far the district's buildings are from the city "
+               "≥ 3 sales. Building age = construction decade (GIS Expert) vs 1961–90; building form = height, footprint, "
+               "heritage listing, share of developer sales. A group's bar = its coefficients × how far the district's "
+               "buildings are from the city "
                "average on those features; 'unexplained' = the district's mean residual. Values are log points "
                "(≈ %), so bars add up to the dot. " + style.SOURCE)
-    ax = fig.add_axes([0.24, 0.17, 0.72, 0.70])
+    ax = fig.add_axes([0.24, 0.20, 0.72, 0.67])
     yy = np.arange(len(c))
     left_pos, left_neg = np.zeros(len(c)), np.zeros(len(c))
     for g, colr in zip(c.columns, cols):
@@ -83,7 +85,7 @@ def district_anatomy(v):
     style.pct(ax, "x")
     style.vgrid_only(ax)
     ax.set_xlabel("Contribution to the price gap vs the city average (≈ %)")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.36, -0.07), ncol=3, fontsize=8.8, columnspacing=1.0,
+    ax.legend(loc="upper center", bbox_to_anchor=(0.36, -0.07), ncol=3, fontsize=8.6, columnspacing=0.9,
               handlelength=1.4)
     save(fig, "10_district_anatomy.png")
     return c

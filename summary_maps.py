@@ -256,6 +256,35 @@ def noise(v, d, w):
     save(fig, "09_noise.png")
 
 
+def trees(v, d, w):
+    """Tree cover density map (Copernicus 2018, trees/) + price by tree cover within 100 m, all else equal."""
+    from rasterio.features import geometry_mask
+    greens = ["#dcedc8", "#aed581", "#7cb342", "#4f8f2f", "#2e6b1f", "#16461a"]
+    fig = page("Trees: lovely, barely priced",
+               "Only the leafiest surroundings (30 %+ tree cover) add about 2 %; parks nearby matter more",
+               "Tree Cover Density 2018: Copernicus Land Monitoring Service (EEA), 10 m, summer Sentinel-2; shown from "
+               "10 %. Bars: typical-flat price net of the district and every other feature (incl. parks and forest "
+               "within 500 m), by mean tree cover within 100 m of the building. Regression: +0.3 % per 10 points, not "
+               "significant; 10 ha of park within 500 m: +2.7 %. " + style.SOURCE)
+    ax = basemap(fig, d, w)
+    with rasterio.open("trees/data/tree_density_warsaw_10m.tif") as src:
+        a = src.read(1).astype(float)
+        tr = src.transform
+    a[(a > 100) | (a < 10) | geometry_mask([d.unary_union], out_shape=a.shape, transform=tr)] = np.nan
+    extent = (tr.c, tr.c + tr.a * a.shape[1], tr.f + tr.e * a.shape[0], tr.f)
+    cmap = ListedColormap(greens)
+    ax.imshow(a, extent=extent, cmap=cmap, norm=BoundaryNorm([10, 25, 40, 55, 70, 85, 101], cmap.N),
+              interpolation="nearest", zorder=3)
+    outlines(ax, d)
+    legend_patches(ax, greens, ["10–25 %", "25–40", "40–55", "55–70", "70–85", "85–100 %"], "Tree cover")
+    bx = within_district_bars(fig, v, "canopy_100", [-1, 5, 10, 15, 20, 30, 101],
+                              ["< 5 %", "5–10", "10–15", "15–20", "20–30", "30 %+"],
+                              "Price by tree cover within 100 m, all else equal",
+                              "Mean tree cover within 100 m of the building", focus="canopy_100")
+    bx.set_position([0.14, 0.13, 0.80, 0.17])
+    save(fig, "20_trees.png")
+
+
 def main():
     v, d, w = load()
     ctx = gpd.read_file("output/coverage.gpkg", layer="building_coverage", columns=["geometry"])
@@ -263,6 +292,7 @@ def main():
     # metro_walk(v, d, w, ctx)   # dropped: duplicates the TransitFrequency metro-access maps
     cafes(v, d, w)
     noise(v, d, w)
+    trees(v, d, w)
 
 
 if __name__ == "__main__":

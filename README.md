@@ -55,6 +55,10 @@ rcn_clean.py              shared RCN cleaning (build_viz.py, analyze_rcn.py -> p
 fetch_building_age.py ->  output/building_age.gpkg: construction decade per building from GIS Expert's public map
                           (mapy.gis-expert.pl/zabudowa-warszawy; tiles cached in data/raw/, not redistributed; credit them)
 building_age_story.py ->  summary/18: price by construction decade, new-vs-prefab premium by place
+infill.py             ->  output/infill.gpkg + summary/21: 2001-20 buildings among pre-1961 ones (>= 60 % of neighbours within
+                          150 m) vs new estates; premium over old neighbours, model residual
+walkups.py            ->  summary/22: within-building price by floor for walk-ups (pre-war 3-5 storeys, 1961-90 4-5
+                          storeys) vs modern buildings with lifts (2001-20, 4-8 storeys); resales only
 market_rhythms.py     ->  summary/19: seasonality, district momentum, company buyers
 trees/                    tree cover density (Copernicus 2018) map + per-building features, see trees/README.md
 flips.py              ->  output/flips.gpkg + summary/16: flats resold within 14-365 days. Flat = land-register id
@@ -152,6 +156,12 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-16 (evening):** district anatomy (fig. 10) splits building age from building form. New: fig. 20 trees
+(Copernicus density map; only 30 %+ tree cover within 100 m adds ~+2 %), fig. 21 infill (388 new buildings among
+pre-1961 ones sell +32 % over the old buildings next door, model residual +1.6 % vs -0.8 % for new estates; smallest
+premium in Praga-Północ +17 %, largest Mokotów/Śródmieście +45 %), fig. 22 walk-ups (top floor of a 4-5-storey block
+without a lift -3 % vs the 1st floor, +2.4 % with a lift; ground floors -3 % in old blocks, 0 in new ones).
 
 **2026-10-16 (later):** data cleaning + building age + trees. Shared cleaning removes 2,377 partial-share sales and
 5,367 multi-flat deed totals; price_index.py now trims sales > 4 SD from their building's prediction (2,377, 0.9 %)
