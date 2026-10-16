@@ -27,6 +27,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import requests
 from shapely.geometry import Point, Polygon, MultiPolygon
@@ -509,8 +510,22 @@ def extract_osm(force=False):
     return gdf
 
 
+BDOT_GPKG = os.path.join(QGIS_ROOT, "bdot_basemap", "Warszawa", "PL.PZGiK.330.BDOT10k.1465__OT_BUBD_A.gpkg")
+# 2025 export (Polish function names) -> the camelCase codes of the 2024 export the pipeline was built on
+TYPE_2025 = {"budynki mieszkalne": "budynkiMieszkalneJednorodzinne", "budynki biurowe": "budynkiBiurowe",
+             "budynki handlowo-usługowe": "budynkiHandlowoUslugowe", "budynki przemysłowe": "budynkiPrzemyslowe",
+             "zbiorniki, silosy i budynki magazynowe": "zbiornikSilosIBudynkiMagazynowe",
+             "budynki szpitali i inne budynki opieki zdrowotnej": "budynkiSzpitaliIZakladowOpiekiMedycznej",
+             "budynki oświaty, nauki i kultury oraz budynki sportowe": "budynkiSzkolIInstytucjiBadawczych",
+             "budynki transportu i łączności": "budynkiTransportuILacznosci",
+             "budynki produkcyjne, usługowe i gospodarcze dla rolnictwa": "budynekGospodarstwaRolnego",
+             "pozostałe budynki niemieszkalne": "pozostaleBudynkiNiemieszkalne"}
+
+
 def _find_bdot_shp():
-    """Find the BUBD_A shapefile, searching subdirectories if needed."""
+    """The BUBD_A source: the June 2025 GeoPackage export if present, else the 2024 shapefile."""
+    if os.path.exists(BDOT_GPKG):
+        return BDOT_GPKG
     if os.path.exists(BDOT_SHP):
         return BDOT_SHP
     for root, dirs, files in os.walk(BDOT_DIR):
@@ -521,7 +536,7 @@ def _find_bdot_shp():
 
 
 def extract_bdot(force=False):
-    """Extract BDOT buildings from canonical shapefile to data/."""
+    """Extract BDOT buildings from the canonical source to data/."""
     out_path = os.path.join(DATA_DIR, "bdot_buildings.gpkg")
     if os.path.exists(out_path) and not force:
         gdf = gpd.read_file(out_path)
@@ -530,22 +545,30 @@ def extract_bdot(force=False):
 
     shp_path = _find_bdot_shp()
     if shp_path is None:
-        print(f"  Source not found: {BDOT_SHP}")
+        print(f"  Source not found: {BDOT_GPKG} / {BDOT_SHP}")
         return None
 
     print(f"  Reading {shp_path}...")
     gdf = gpd.read_file(shp_path)
     print(f"  Source: {len(gdf):,} features")
 
-    # Rename to friendly names (handle both old and new column names)
-    rename_map = {
-        "LOKALNYID": "bdot_id",
-        "FUNOGBUD": "building_type",
-        "FUNSZCZ": "building_subtype",
-        "LKOND": "n_floors",
-        "NAZWA": "name",
-    }
-    gdf = gdf.rename(columns={k: v for k, v in rename_map.items() if k in gdf.columns})
+    if "FSBUD" in gdf.columns and "FUNKCJAOGOLNABUDYNKU" in gdf.columns:      # 2025 export
+        gdf = gdf[gdf["KATEGORIAISTNIENIA"].fillna("") != "zniszczony"].copy()
+        typ = gdf["FUNKCJAOGOLNABUDYNKU"].map(TYPE_2025).fillna("pozostaleBudynkiNiemieszkalne")
+        multi = gdf["FSBUD"].fillna("").str.contains("budynek wielorodzinny")
+        two = gdf["FSBUD"].fillna("").str.contains("o dwóch mieszkaniach")
+        typ = np.where(multi, "budynkiOTrzechIWiecejMieszkaniach", np.where(two, "budynkiODwochMieszkaniach", typ))
+        gdf = gdf.assign(building_type=typ).rename(columns={"LOKALNYID": "bdot_id", "FSBUD": "building_subtype",
+                                                           "LICZBAKONDYGNACJI": "n_floors", "NAZWA": "name"})
+    else:                                                                       # 2024 shapefile
+        rename_map = {
+            "LOKALNYID": "bdot_id",
+            "FUNOGBUD": "building_type",
+            "FUNSZCZ": "building_subtype",
+            "LKOND": "n_floors",
+            "NAZWA": "name",
+        }
+        gdf = gdf.rename(columns={k: v for k, v in rename_map.items() if k in gdf.columns})
 
     keep = ["bdot_id", "building_type", "building_subtype", "n_floors", "name", "geometry"]
     gdf = gdf[[c for c in keep if c in gdf.columns]].copy()

@@ -44,7 +44,7 @@ AGE = "output/building_age.gpkg"           # fetch_building_age.py (GIS Expert d
 TRANSIT = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_gates.gpkg"   # read only
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
 WALK = "output/walk_access.gpkg"    # walk_access.py: network walking distances
-BDOT_RAW = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only (ZABYTEK)
+BDOT_RAW = "D:/QGIS/mapy_warszawy_misc/BDOT10k/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only: Feb 2024 export, the only one with ZABYTEK
 NOISE = {s: f"data/noise_{s}_lden.tif" for s in ("road", "rail", "air")}   # fetch_noise.py
 NOISE_DB = np.array([45, 57, 62, 67, 72, 77])   # EEA band -> dB (0 = below 55, taken as 45)
 FACADE_M = 10                                   # noise = loudest band within this distance of the footprint

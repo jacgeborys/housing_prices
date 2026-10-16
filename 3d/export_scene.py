@@ -64,19 +64,29 @@ ROAD_WIDTH = {
     'footway': 2.5, 'path': 2, 'cycleway': 2.5, 'steps': 2.5, 'track': 3,
 }
 
-# value sets: (layer, column, number of quantile classes, rounding of the breaks, legend title)
+# value sets: file, layer, column, breaks (fixed list, or (n quantile classes, rounding)), colour ramp, title
 SETS = {
-    'price_m2': ('building_value', 'value_2025', 11, 500, 'Typical flat, PLN/m² (2025)'),
+    'price_m2': dict(file='price_model.gpkg', layer='building_value', col='value_2025', breaks=(11, 500),
+                     ramp='viridis', title='Typical flat, PLN/m² (2025)'),
+    # model residual (price_drivers.py): blue = sells below what location and building predict, red = above
+    'reputation': dict(file='price_drivers.gpkg', layer='building_drivers', col='resid_pct',
+                       breaks=[-15, -10, -6, -3, 3, 6, 10, 15], ramp='diverging',
+                       title='Price vs model prediction, %'),
 }
+DIVERGING = ["#104281", "#2a6fc9", "#5f9ae6", "#a9c8f0", "#e8e6e1", "#f2b2aa", "#e8705f", "#c8302c", "#8f1d1d"]
 FILL_RADIUS_M = 300   # neighbourhood estimate for blocks of flats without enough sales
 FILL_MIN_N = 5        # ... from at least this many priced buildings within the radius
 FILL_GREY = 0.55      # estimated buildings: class colour mixed this much toward the no-data grey
 FILL_GLOW = 0.4       # ... and their glow relative to the measured class
 
 
-def ramp(n, lo=0.05, hi=1.0):
-    """Sequential ramp for the dark scene: viridis, dark blue (low) -> yellow (high).
-    Deliberately not the transit posters' blue-magenta-yellow, so the two never read alike."""
+def ramp(n, lo=0.05, hi=1.0, kind='viridis'):
+    """Class colours. viridis: sequential for the dark scene, dark blue (low) -> yellow (high), deliberately not the
+    transit posters' blue-magenta-yellow. diverging: the summary figures' blue - neutral - red."""
+    if kind == 'diverging':
+        from matplotlib.colors import LinearSegmentedColormap
+        cm = LinearSegmentedColormap.from_list('div', DIVERGING)
+        return [[int(round(c * 255)) for c in cm(x)[:3]] for x in np.linspace(0, 1, n)]
     cm = colormaps['viridis']
     return [[int(round(c * 255)) for c in cm(x)[:3]] for x in np.linspace(lo, hi, n)]
 
@@ -157,11 +167,16 @@ def building_values(set_name):
     estimates for the other blocks of flats (coverage.py universe): median of the priced buildings
     within FILL_RADIUS_M, if there are at least FILL_MIN_N."""
     from scipy.spatial import cKDTree
-    layer, col, n_cls, rnd, title = SETS[set_name]
-    v = gpd.read_file(ROOT / 'output' / 'price_model.gpkg', layer=layer)
+    cfg = SETS[set_name]
+    col, title = cfg['col'], cfg['title']
+    v = gpd.read_file(ROOT / 'output' / cfg['file'], layer=cfg['layer'])
     v = v[v['n'] >= MIN_SALES].drop_duplicates('osm_id')
-    q = np.quantile(v[col], np.linspace(0, 1, n_cls + 1)[1:-1])
-    breaks = sorted({int(round(x / rnd) * rnd) for x in q})
+    if isinstance(cfg['breaks'], tuple):
+        n_cls, rnd = cfg['breaks']
+        q = np.quantile(v[col], np.linspace(0, 1, n_cls + 1)[1:-1])
+        breaks = sorted({int(round(x / rnd) * rnd) for x in q})
+    else:
+        breaks = list(cfg['breaks'])
     measured = v.set_index('osm_id')[col]
 
     uni = gpd.read_file(ROOT / 'output' / 'coverage.gpkg', layer='building_coverage')
@@ -251,7 +266,7 @@ def main():
     cls = np.where(np.isfinite(vm), np.digitize(np.nan_to_num(vm), breaks) + 1,
                    np.where(np.isfinite(ve), np.digitize(np.nan_to_num(ve), breaks) + 1 + n, 0))
     grey = np.array(COLOURS['uncovered'], float)
-    base = ramp(n)
+    base = ramp(n, kind=SETS[args.set]['ramp'])
     faded = [[int(round(c * (1 - FILL_GREY) + g * FILL_GREY)) for c, g in zip(rgb, grey)] for rgb in base]
     palette = [list(COLOURS['uncovered'])] + base + faded
     context_class = len(palette)

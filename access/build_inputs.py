@@ -29,7 +29,7 @@ DATA = os.path.join(HERE, "data")
 GTFS_DIR = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04"          # read only
 GTFS_FILES = ["agency.txt", "stops.txt", "routes.txt", "trips.txt", "stop_times.txt", "calendar_dates.txt",
               "frequencies.txt", "feed_info.txt"]
-BDOT = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.BDOT10k.1465__OT_BUBD_A.shp"   # read only; version June 2025
+BDOT = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.BDOT10k.1465__OT_BUBD_A.gpkg"   # read only; version June 2025
 FUNCTIONAL_MAP = "D:/QGIS/functional_map/script"                       # read only
 M2_PER_JOB = {   # SimCity category -> m² of floor area per job
     "budynki biurowe": 18, "budynki urzędów i administracji publicznej": 25, "budynki handlowo-usługowe": 40,
@@ -105,8 +105,8 @@ def gtfs():
 
 
 def destinations():
-    b = gpd.read_file(BDOT, columns=["FSBUD", "LICZ_KONDY", "KAT_ISTNIE"]).to_crs(2180)
-    b = b[b["KAT_ISTNIE"] != "zniszczony"].rename(columns={"LICZ_KONDY": "LKOND"})
+    b = gpd.read_file(BDOT, columns=["FSBUD", "LICZBAKONDYGNACJI", "KATEGORIAISTNIENIA"]).to_crs(2180)
+    b = b[b["KATEGORIAISTNIENIA"] != "zniszczony"].rename(columns={"LICZBAKONDYGNACJI": "LKOND"})
     b["category"] = categorise(b["FSBUD"])
     b = b[b["category"].isin(M2_PER_JOB)].copy()
     b["gfa"] = b.geometry.area * b["LKOND"].fillna(1).clip(lower=1)

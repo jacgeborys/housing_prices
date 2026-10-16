@@ -2,13 +2,67 @@
 
 Spatial analysis of residential real estate transactions in Warsaw, combining official transaction records with building footprints, address points, and OpenStreetMap data.
 
+## Overview (2026-10-17)
+
+Twenty years of Warsaw flat sales (RCN, ~270K in-city flat deeds) attached to buildings, turned into a
+constant-quality price per building (`price_index.py`), then explained by location and building features
+(`price_drivers.py`). What is left over, the price a place earns beyond what its features predict, is read as
+**reputation**. Developer price lists (`offers/`) add what is on sale now; `access/` adds door-to-door transit
+travel times (r5py). All findings are associations within a district, not causal effects; ranges come from a
+2 km spatial block bootstrap where given.
+
+**Headline findings**
+- A constant-quality flat costs 2.2x its 2013 price, but in real terms is only back at the 2008 peak (fig. 01).
+- Building age matters most: 1991-2020 buildings +11..+17 % over 1961-90 prefab within the same district (fig. 18);
+  infill among pre-1961 blocks sells +32 % over its old neighbours (fig. 21).
+- Location: -2..-5 % per km walked to the metro; reach to cafés, restaurants and culture +4..+9 % per doubling,
+  about as informative as distance to PKiN + metro (fig. 04, 08, 25). Bus/tram frequency adds ~nothing once age
+  is known (fig. 05); tram and train noise costs ~2 % per 10 dB, road noise much less (fig. 09).
+- Reputation: Żoliborz about +15 %, Praga-Północ about -19 % vs the prediction (fig. 06); central areas are pulling
+  away, the two Pragas gain most (fig. 14); estate-level extremes in fig. 15.
+- Market behaviour: flips are ~6 per 100 resales since 2021 with a +25 % net markup (fig. 16); new flats on offer ask
+  about what a 5-15-year-old flat nearby sells for (fig. 26); 68 % of flats on offer never change price in a year,
+  half are still listed after 12 months (fig. 27); new flats shrank from 60 to 47 m² (fig. 29).
+- Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
+  does not record (fig. 23).
+
+**Figures** (`output/summary/`, contact sheet in `00_contact_sheet.png`, built by `contact_sheet.py`)
+
+| # | Figure | Script |
+|---|--------|--------|
+| 01-03 | prices over time, districts, what drives price | `summary_charts.py` |
+| 04 | metro / rail / tram / bus walking distance | `transit_modes.py` |
+| 05 | transit frequency | `frequency_story.py` |
+| 06, 08, 09, 20 | reputation map, cafés, noise, trees | `summary_maps.py` |
+| 10-13 | district anatomy, transit x price, price compass, shape of value | `summary_advanced.py` |
+| 14 | reputation over time | `reputation_time.py` |
+| 15 | estates | `estates.py` |
+| 16 | flippers | `flips.py` |
+| 18 | building age | `building_age_story.py` |
+| 19 | market rhythms | `market_rhythms.py` |
+| 21 | infill | `infill.py` |
+| 22 | walk-ups and lifts | `walkups.py` |
+| 23 | blind spot (coverage) | `summary_charts.py` |
+| 24-25 | transit access, what reach pays | `access/access_preview.py`, `access/gravity_story.py` |
+| 26-28 | new flats on offer, asking prices over time, projects map | `offers/offers_story.py`, `offers/history_story.py`, `offers/projects_map.py` |
+| 29 | flat sizes and rooms | `flat_sizes.py` |
+
+Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
+`price_drivers.py` -> figure scripts -> `contact_sheet.py`. Subprojects have their own READMEs or headers:
+`access/` (Python 3.12 venv, r5py, portable JDK), `offers/` (dane.gov.pl price lists), `trees/`, `3d/` (Blender).
+
+**Data sources added since the first version:** BDOT10k June 2025 buildings
+(`D:/QGIS/bdot_basemap/Warszawa/*OT_BUBD_A.gpkg`; heritage flag ZABYTEK only exists in the Feb 2024 shapefile at
+`D:/QGIS/mapy_warszawy_misc/BDOT10k/`), GIS Expert building decades, EEA noise (Lden), Copernicus tree cover,
+Geofabrik mazowieckie + WTP/KM/WKD GTFS, dane.gov.pl developer price lists.
+
 ## Data Sources
 
 | Source | Records | Auto-fetch | Description |
 |--------|---------|------------|-------------|
 | **RCN transactions** | ~381K | `fetch_rcn.py` | Closed residential transactions from GUGiK WFS (Rejestr Cen Nieruchomości) |
 | **OSM buildings** | ~320K+ | `fetch_geodata.py` | Building footprints + `building:part` with 3D tags (height, levels, roof) via Overpass API |
-| **BDOT buildings** | 155K | `fetch_geodata.py` | Official GUGiK BDOT10k building footprints (auto-downloaded from opendata.geoportal.gov.pl) |
+| **BDOT buildings** | 167K | `fetch_geodata.py` | GUGiK BDOT10k building footprints, June 2025 gpkg from `D:/QGIS/bdot_basemap` (falls back to the opendata download) |
 | **Address points** | 127K | `fetch_geodata.py` | Warsaw city WFS address points, partitioned by district |
 
 ## Pipeline
@@ -122,6 +176,8 @@ blender --background 3d/scenes/prices_wide/scene.blend --python 3d/render.py -- 
   No value = dark grey. Parts take the parent's value. Origin = PKiN, so `3d/views/*.json` fit.
 - `build_blend.py`: copy, plus a fix: degenerate/duplicate faces are dropped before the mesh is made
   (`me.validate()` removed them afterwards and shifted every per-face colour: "internal error setting the array").
+- `--set reputation`: `resid_pct` from `price_drivers.gpkg` (price vs model prediction), fixed breaks, diverging ramp:
+  `python 3d/export_scene.py --name reputation_wide --set reputation --bounds=... --detail-bounds=...` (same bounds).
 - `render.py`, `save_view.py`, `views/{center,mokotow,zoliborz}.json`: copies. Scenes + renders are gitignored.
 
 ### 3D scenes (`make_3d.py`)
@@ -140,7 +196,7 @@ server: streets, rail, parks and the Vistula come from `D:/QGIS/osm_basemap/wars
 | Dataset | Canonical location | Source |
 |---------|-------------------|--------|
 | OSM buildings | `D:/QGIS/osm_basemap/warsaw/buildings.gpkg` | Overpass API |
-| BDOT buildings | `D:/QGIS/bdot_basemap/Warszawa/*.shp` | GUGiK opendata ZIP |
+| BDOT buildings | `D:/QGIS/bdot_basemap/Warszawa/*OT_BUBD_A.gpkg` (June 2025) | GUGiK opendata ZIP |
 | Address points | `D:/QGIS/punkty_adresowe/output/punkty_adresowe_warszawa.gpkg` | Warsaw city WFS |
 
 ## Usage
@@ -162,6 +218,14 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-17 (tidy-up):** main pipeline on BDOT10k June 2025 (`fetch_geodata.py` reads the gpkg, maps the 2025
+function names to the old codes, drops destroyed buildings: 166.7K; heritage/ZABYTEK still from the Feb 2024
+shapefile in `D:/QGIS/mapy_warszawy_misc/BDOT10k/`). Model unchanged in substance: out-of-sample R² 0.571 (was 0.58),
+within a district metro -3.4 %/km, cafés x2 +2.8 %, 2011-20 buildings +16.5 % vs prefab. Overview + figure index at the
+top of this README; `contact_sheet.py` -> summary/00_contact_sheet.png; shared `save()` retries while a viewer locks the
+PNG. 3D: `export_scene.py --set reputation` (model residual, fixed breaks +-3/6/10/15 %, blue-neutral-red) ->
+3d/renders/04_reputation_{center,zoliborz}.png.
 
 **2026-10-17:** fig. 28 full-page map of all 305 projects on sale (offers/projects_map.py; 20 largest named in
 callout columns; projects listed under two street spellings merged); fig. 27 colours swapped (cuts red, raises
@@ -242,7 +306,7 @@ slabs, LinkedIn post.
 
 - RCN data: fetched (381K transactions, last refresh 2026-09-27)
 - OSM buildings: 329K features (320K main + 9.3K building:part with full 3D tags)
-- BDOT buildings: 155K auto-downloadable (GUGiK server data from Feb 2024)
+- BDOT buildings: 166.7K (June 2025 gpkg; destroyed buildings dropped; heritage still from the Feb 2024 shapefile)
 - Address points: 127K fetched via district-partitioned WFS (fixed broken pagination)
 - Visualization: `build_viz.py` matches 94.9% of residential transactions to OSM buildings (spatial + buffer + address), BDOT fallback for remainder. 26.4K buildings enriched with price stats.
 - Analysis: 15 chart sets + 8 maps. All charts share `style.py` (magma-based price ramp, blue↔red diverging for change).

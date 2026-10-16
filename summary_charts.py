@@ -11,6 +11,7 @@ Reads saved outputs only (no model is re-run):
 -> output/summary/
 """
 import os
+import time
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -30,7 +31,14 @@ REF_YEAR = 2025
 def save(fig, name):
     os.makedirs(OUT, exist_ok=True)
     path = f"{OUT}/{name}"
-    fig.savefig(path, dpi=DPI)
+    for attempt in range(6):            # Windows: an image viewer holding the file makes the write fail briefly
+        try:
+            fig.savefig(path, dpi=DPI)
+            break
+        except OSError:
+            if attempt == 5:
+                raise
+            time.sleep(3)
     plt.close(fig)
     print(f"Saved {path}")
 
