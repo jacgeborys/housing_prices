@@ -50,6 +50,9 @@ walk_amenities.py     ->  output/walk_amenities.gpkg: POIs within a 7-minute wal
                           food & drink, Żabka, grocery, schools, health, sport & play (bounded Dijkstra per building)
 reputation_time.py    ->  output/reputation_time.gpkg + summary/14: within-building resale change 2010-14 -> 2021-25
                           vs the city (no-primary buildings), by hexagon / MSI neighbourhood / district
+flips.py              ->  output/flips.gpkg + summary/16: flats resold within 14-365 days. Flat = land-register id
+                          LOK_ID_LOKALU (attached from raw RCN; 99 % of sales since 2018), before 2018 address+floor+area
+                          with resale->resale pairs only (identical new-build flats share that key: false flips)
 estates.py            ->  output/analysis/estates_ranking.csv + summary/15: MSI neighbourhoods ranked by mean model
                           residual, empirical-Bayes shrunk (data/msi.gpkg = city WFS layer MSI, 143 areas)
 summary_maps.py       ->  output/summary/06, 08, 09: reputation (model residual hex map + by district), cafés
@@ -149,7 +152,9 @@ snap only to the main connected component (0.6 % of graph nodes were isolated fr
 nothing). Reputation over time (fig. 14): central areas pull away (Praga-Północ +9.8 %, Wola +8.3 % vs city),
 outskirts lose (Ursynów -6.8 %, Ursus -6.3 %); no general catch-up of low-reputation areas (corr +0.04), but the two
 Pragas gain most. Estates (fig. 15): Nowa Praga -22 %, Stara Praga -16 %, Muranów -11 %; Stary Żoliborz +23 %,
-Służewiec +21 %, Wyględów +20 %. EEA "rail" noise includes trams. Building age: not openly available (city WMS
+Służewiec +21 %, Wyględów +20 %. EEA "rail" noise includes trams.
+Flippers (fig. 16): 2021-25 about 5.8 flips per 100 resales (2-3 a decade earlier), median markup +30 % (+25 % net of
+the market) after ~150 days; flip share correlates +0.57 with a neighbourhood's gain on the city (fig. 14). Building age: not openly available (city WMS
 GEODEZJA_BUDYNKI / budynki return no attributes); options = BGiK EGiB request, ask gis-expert, historical orthophotos.
 
 **Paused 2026-10-16.** Wrap-up: `summary_charts.py` -> `output/summary/` (five portrait charts telling the story:
