@@ -161,6 +161,15 @@ python build_viz.py
 
 ## Status
 
+**2026-10-16 (night, 2):** asking-price history (offers/fetch_price_history.py, parse_price_history.py,
+history_story.py -> summary/27): last snapshot per month of the 675 Warsaw datasets (3,551 files, 3 min); 313
+keep history (Sep 2025 - Oct 2026). Files listing one flat several times: latest-dated row wins, undecidable flats
+(> 5 % apart) dropped (991). 8,611 flats followed >= 3 months: 68 % never changed price, 25 % pricier (typically
++3 %), 7 % cheaper (-6 %); the same flats +0.5 % over the year; of newly listed flats 49 % are still for sale after
+12 months (Kaplan-Meier, leaving = vanishing while the developer keeps publishing). Fig. 25 headline corrected
+after a 2 km block bootstrap: café/culture reach explains prices about as well as PKiN + metro distance (beats it
+in 38 % of resamples), effect +4..+9 % per doubling; metro -1.7..-5.4 %/km.
+
 **2026-10-16 (night):** offers/offers_story.py -> summary/26 new flats on offer: 8.6K flats in 336 investments,
 median 16.6K PLN/m², 50 m²; the median investment asks 3 % less per m² than a 5-15-year-old flat within 1 km
 (typical-flat value of 2011-20 buildings); Wola's median (38K) is driven by towers near Rondo Daszyńskiego
