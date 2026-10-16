@@ -173,7 +173,7 @@ blender --background 3d/scenes/prices_wide/scene.blend --python 3d/render.py -- 
   `D:/QGIS/mapy_warszawy_misc/data/osm`, transit-poster colours hardcoded. Colour = `--set price_m2`:
   hedonic `value_2025` (`price_model.gpkg` / `building_value`) for buildings with >= 3 sales, 11 classes
   (breaks 12k..28k PLN/m²), viridis (dark blue = cheap, yellow = dear; deliberately not the transit palette).
-  No value = dark grey. Parts take the parent's value. Origin = PKiN, so `3d/views/*.json` fit.
+  No value = light clay grey (`NODATA_RGB`). Parts take the parent's value. Origin = PKiN, so `3d/views/*.json` fit.
 - `build_blend.py`: copy, plus a fix: degenerate/duplicate faces are dropped before the mesh is made
   (`me.validate()` removed them afterwards and shifted every per-face colour: "internal error setting the array").
 - `--set reputation`: `resid_pct` from `price_drivers.gpkg` (price vs model prediction), fixed breaks, diverging ramp:
@@ -225,7 +225,9 @@ shapefile in `D:/QGIS/mapy_warszawy_misc/BDOT10k/`). Model unchanged in substanc
 within a district metro -3.4 %/km, cafés x2 +2.8 %, 2011-20 buildings +16.5 % vs prefab. Overview + figure index at the
 top of this README; `contact_sheet.py` -> summary/00_contact_sheet.png; shared `save()` retries while a viewer locks the
 PNG. 3D: `export_scene.py --set reputation` (model residual, fixed breaks +-3/6/10/15 %, blue-neutral-red) ->
-3d/renders/04_reputation_{center,zoliborz}.png.
+3d/renders/04_reputation_{center,zoliborz}.png. Dropped as the hero image: the diverging ramp's neutral middle is the brightest
+class on the dark ground. Hero = `--set price_m2` (`prices_v2`, viridis) with unpriced buildings (offices, shops)
+in light clay grey (`NODATA_RGB`, was near-ground dark) -> 3d/renders/05_prices_{center,zoliborz}.png.
 
 **2026-10-17:** fig. 28 full-page map of all 305 projects on sale (offers/projects_map.py; 20 largest named in
 callout columns; projects listed under two street spellings merged); fig. 27 colours swapped (cuts red, raises

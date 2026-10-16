@@ -52,6 +52,7 @@ COLOURS = {'uncovered': (34, 34, 38), 'background': (12, 12, 14), 'green': (12, 
            'forest': (12, 12, 14), 'water': (14, 24, 40), 'roads': (0, 0, 0),
            'buildings': (34, 34, 38), 'railways': (12, 12, 14)}
 CONTEXT_RGB = (36, 37, 42)
+NODATA_RGB = (118, 118, 116)   # unpriced buildings (offices, shops, ...): light clay grey, so they read as buildings
 
 LEVEL_M, DEFAULT_M = 3.2, 9.0
 PARTS_COVER = 0.85
@@ -268,7 +269,7 @@ def main():
     grey = np.array(COLOURS['uncovered'], float)
     base = ramp(n, kind=SETS[args.set]['ramp'])
     faded = [[int(round(c * (1 - FILL_GREY) + g * FILL_GREY)) for c, g in zip(rgb, grey)] for rgb in base]
-    palette = [list(COLOURS['uncovered'])] + base + faded
+    palette = [list(NODATA_RGB)] + base + faded
     context_class = len(palette)
     palette.append(list(CONTEXT_RGB))
     # glow per class (build_blend.py reads it): rises with the class, estimated ones dimmer
