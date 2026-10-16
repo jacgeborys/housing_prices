@@ -41,11 +41,14 @@ def within_r2(v, cols):
 
 def main():
     v, d, w = load()
-    a = {s: pd.read_csv(os.path.join(OUT, f"access_{s}.csv"), index_col=0) for s in ("am_peak", "midday", "evening")}
-    v = v.merge(a["am_peak"][["jobs_30", "jobs_grav", "t_centrum"]], left_on="osm_id", right_index=True, how="left")
+    # reach and model test: gravity_run.py (AM peak, BDOT June 2025, SimCity categories)
+    g = pd.read_csv(os.path.join(OUT, "gravity_am_peak.csv"), index_col=0)
+    v = v.merge(g[["n_jobs_30", "grav_jobs_5"]], left_on="osm_id", right_index=True, how="left")
+    v["jobs_30"] = v["n_jobs_30"].fillna(0)
+    v["log_grav"] = np.log1p(v["grav_jobs_5"].fillna(0))
+    # evening loss: travel_times.py windows (a ratio, so the earlier destination weights largely cancel)
+    a = {s: pd.read_csv(os.path.join(OUT, f"access_{s}.csv"), index_col=0) for s in ("am_peak", "evening")}
     v["eve_ratio"] = v["osm_id"].map(a["evening"]["jobs_30"] / a["am_peak"]["jobs_30"].replace(0, np.nan))
-    v = v.dropna(subset=["jobs_grav"])
-    v["log_grav"] = np.log(v["jobs_grav"].clip(lower=100))
 
     # model test (OLS with district fixed effects): does access replace distance to PKiN and the metro?
     base = [f for f in FEATURES]
@@ -66,7 +69,8 @@ def main():
                "Jobs = floor area (BDOT10k footprint x storeys) per m² per job by building category of the SimCity map "
                "(offices 18, public offices 25, retail & hospitals 40, schools 50...); 250 m cells. Travel: R5 routing on the Warsaw GTFS (ZTM, KM, WKD, timetable of Wed "
                "7.10.2026) and OSM paths, median over every departure minute 07–09 / 19–21. Office clusters: "
-               "neighbouring cells with ≥ 4,000 office job equivalents. Preliminary (3 of 4 time windows). "
+               "neighbouring cells with ≥ 4,000 office job equivalents. Model test: gravity access to jobs (5-min "
+               "half-life) vs distance to PKiN and the metro; figure 25 compares purposes and half-lives. "
                + style.SOURCE)
     # 1 destinations
     ax1 = basemap(fig, d, w)
@@ -114,7 +118,7 @@ def main():
 
     # 4 model test
     ax4 = fig.add_axes([0.62, 0.12, 0.34, 0.26])
-    labels = ["neither", "PKiN +\nmetro", "door-to-door\naccess", "both"]
+    labels = ["neither", "PKiN +\nmetro", "access\nto jobs", "both"]
     vals = [r_dist, r_base, r_swap, r_add]
     ax4.bar(range(4), vals, color=["#c9c7bf", style.CONTEXT_DARK, style.BLUE, "#5a8fd8"], width=0.6)
     for i, val in enumerate(vals):
@@ -125,11 +129,10 @@ def main():
     style.hgrid_only(ax4)
     ax4.set_title("Price model fit (R², within districts)", fontsize=10.5)
     med = v.groupby("district")["eve_ratio"].median().sort_values()
-    fig.text(0.03, 0.885, wrap(f"The centre is two office cores: Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k office "
-                               f"jobs) and Centrum/ONZ ({CLUSTERS[1][3] / 1000:.0f}k), with Służewiec ({CLUSTERS[2][3] / 1000:.0f}k) as the third core. The median "
-                               f"building reaches {v['jobs_30'].median() / 1000:.0f}k jobs in 30 minutes; in the evening "
-                               f"{med.index[0]} keeps only {med.iloc[0]:.0%} of its morning reach. Doubling job access "
-                               f"is worth {gain:+.1f}% in price within a district.", 100),
+    fig.text(0.03, 0.885, wrap(f"Offices cluster at Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k jobs), Centrum/ONZ "
+                               f"({CLUSTERS[1][3] / 1000:.0f}k) and Służewiec ({CLUSTERS[2][3] / 1000:.0f}k). The median "
+                               f"building reaches {v['jobs_30'].median() / 1000:.0f}k jobs in 30 min; doubling job access "
+                               f"is worth {gain:+.1f}% within a district.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "24_transit_access.png")
     print(med.round(2).to_string())
