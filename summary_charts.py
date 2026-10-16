@@ -6,7 +6,7 @@ Reads saved outputs only (no model is re-run):
   02_districts.png          typical flat in 2025 by district (building_value)
   03_what_drives_price.png  within-district effects (price_drivers_coefficients.csv)
   (04_transit.png is made by transit_modes.py)
-  05_blind_spot.png         flats in buildings with no / few recorded sales (coverage_by_district.csv)
+  23_blind_spot.png         flats in buildings with no / few recorded sales (coverage_by_district.csv)
 
 -> output/summary/
 """
@@ -230,7 +230,7 @@ def blind_spot():
     style.vgrid_only(ax)
     ax.set_xlabel("Share of the district's flats")
     ax.legend(loc="upper center", bbox_to_anchor=(0.45, 1.07), ncol=3, fontsize=9.5)
-    save(fig, "05_blind_spot.png")
+    save(fig, "23_blind_spot.png")
 
 
 def main():

@@ -55,6 +55,8 @@ rcn_clean.py              shared RCN cleaning (build_viz.py, analyze_rcn.py -> p
 fetch_building_age.py ->  output/building_age.gpkg: construction decade per building from GIS Expert's public map
                           (mapy.gis-expert.pl/zabudowa-warszawy; tiles cached in data/raw/, not redistributed; credit them)
 building_age_story.py ->  summary/18: price by construction decade, new-vs-prefab premium by place
+frequency_story.py    ->  summary/05: TransitFrequency departures within a 5-min walk vs price, all else equal (district
+                          and neighbourhood fixed effects) + raw medians new vs older; blind spot moved to summary/23
 transit_modes.py      ->  summary/04: price by walking distance to metro / rail / tram / bus, within the same MSI
                           neighbourhood (fixed effects), all else equal; metro and rail only in neighbourhoods with a station
 infill.py             ->  output/infill.gpkg + summary/21: 2001-20 buildings among pre-1961 ones (>= 60 % of neighbours within
