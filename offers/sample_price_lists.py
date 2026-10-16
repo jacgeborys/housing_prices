@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "data", "sample")
 API = "https://api.dane.gov.pl/1.4"
 N_SAMPLE = 300
-PAUSE = 0.5
+PAUSE = 0.1
 LOC_COL = re.compile(r"miejscowo|gmin|powiat|wojew|ulic|adres|lokalizac|miasto|kod poczt", re.I)
 HDRS = {"User-Agent": "ceny-mieszkan research (non-commercial)"}
 
