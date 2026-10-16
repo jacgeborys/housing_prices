@@ -116,7 +116,7 @@ def main():
 
     # 4 model test
     ax4 = fig.add_axes([0.62, 0.12, 0.34, 0.26])
-    labels = ["neither", "PKiN + metro\ndistance", "door-to-door\naccess", "both"]
+    labels = ["neither", "PKiN +\nmetro", "door-to-door\naccess", "both"]
     vals = [r_dist, r_base, r_swap, r_add]
     ax4.bar(range(4), vals, color=["#c9c7bf", style.CONTEXT_DARK, style.BLUE, "#5a8fd8"], width=0.6)
     for i, val in enumerate(vals):
