@@ -249,6 +249,9 @@ the Vistula (no cliffs); renders in ~10 min (per-segment colours). `make_map.py`
 legacy exploratory maps): maps 03-09 in output/analysis are from before the fix. Not rebuilt: Blender renders (price colours unchanged; reputation render uses the old residual).
 Fig. 30 judged too hard to read for posting (kept as evidence that reputation is stable). Fig. 32
 `price_points.py`: same frame and colours as 31, 13.6K priced buildings over all city buildings in grey.
+Fig. 31 fix: peak height now needs ~4 priced buildings within ~350 m (was: sales weight), so a lone building
+cannot make a mountain (Wawer peak was Planetowa 33 alone: 6 sales, mostly large developer flats, extrapolated
+to a 25.5K typical-flat value vs Wawer median 13.8K).
 Next: Bemowo metro extension before/after (measure the "before" now); tram to Wilanów as a lead (check dates).
 
 **2026-10-17 (tidy-up):** main pipeline on BDOT10k June 2025 (`fetch_geodata.py` reads the gpkg, maps the 2025

@@ -21,7 +21,8 @@ from summary_charts import DPI, FIG, save
 MIN_SALES = 3
 CELL = 50                     # m, sampling grid
 SIGMA_M = 350                 # Gaussian smoothing of the price surface
-FULL_WEIGHT = 1.5             # smoothed building weight at which a peak reaches full height (less: it fades)
+FULL_BUILDINGS = 4            # priced buildings (kernel-weighted) for a peak to reach full height; fewer: it fades,
+                              # so one building (e.g. Planetowa 33, Wawer: 6 sales, value 25K) cannot make a mountain
 TAPER_M = 500                 # heights ease to zero over this distance from the city edge and the Vistula
 ROW_M = 250                   # spacing of the lines
 BASE, PER_1K = 12000, 230     # height: metres of line per 1,000 PLN/m² above BASE
@@ -39,15 +40,16 @@ def surface(bv, x0, y0, nx, ny):
     ix = ((pts.x - x0) // CELL).astype(int).clip(0, nx - 1)
     iy = ((pts.y - y0) // CELL).astype(int).clip(0, ny - 1)
     w = np.minimum(bv["n"].to_numpy(float), 20) ** 0.5      # busy buildings count more, but not overwhelmingly
-    s = np.zeros((ny, nx)); c = np.zeros((ny, nx))
+    s = np.zeros((ny, nx)); c = np.zeros((ny, nx)); nb = np.zeros((ny, nx))
     np.add.at(s, (iy, ix), w * np.log(bv["value_2025"].to_numpy()))
     np.add.at(c, (iy, ix), w)
+    np.add.at(nb, (iy, ix), 1.0)
     sig = SIGMA_M / CELL
-    s, c = gaussian_filter(s, sig), gaussian_filter(c, sig)
+    s, c, nb = gaussian_filter(s, sig), gaussian_filter(c, sig), gaussian_filter(nb, sig)
     k = 1 / (2 * np.pi * sig ** 2)                            # peak of the kernel: one building's weight
     with np.errstate(invalid="ignore", divide="ignore"):
         p = np.exp(s / c)
-    t = np.clip(c / k / FULL_WEIGHT, 0, 1)
+    t = np.clip(nb / k / FULL_BUILDINGS, 0, 1)
     return np.where(c > 1e-9, p, BASE), t * t * (3 - 2 * t)  # smoothstep: no cliffs where the data thins out
 
 
