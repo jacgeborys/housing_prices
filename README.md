@@ -24,6 +24,10 @@ travel times (r5py). All findings are associations within a district, not causal
 - Market behaviour: flips are ~6 per 100 resales since 2021 with a +25 % net markup (fig. 16); new flats on offer ask
   about what a 5-15-year-old flat nearby sells for (fig. 26); 68 % of flats on offer never change price in a year,
   half are still listed after 12 months (fig. 27); new flats shrank from 60 to 47 m² (fig. 29).
+- Forward test (fig. 30): reputation measured on 2010-14 resales predicts 2021-25 reputation (r = +0.91 across 43
+  neighbourhoods) but not the price change (r = -0.11): stable, so already priced in. What moved the same buildings
+  vs Warsaw: pre-war +6 %, 1941-60 +2.5 %, 1991-2010 -5.5 % (the new-build premium wears off), new M2 extension
+  station within 800 m +2.9 %; cafés, trees, parks, tram stops ~0.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
 
@@ -47,6 +51,8 @@ travel times (r5py). All findings are associations within a district, not causal
 | 24-25 | transit access, what reach pays | `access/access_preview.py`, `access/gravity_story.py` |
 | 26-28 | new flats on offer, asking prices over time, projects map | `offers/offers_story.py`, `offers/history_story.py`, `offers/projects_map.py` |
 | 29 | flat sizes and rooms | `flat_sizes.py` |
+| 30 | forward test: reputation 2010-14 vs 2021-25, what moved prices | `forward_test.py` |
+| 31 | opening map: price ridgelines (dark, "Unknown Pleasures") | `price_ridgelines.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
 `price_drivers.py` -> figure scripts -> `contact_sheet.py`. Subprojects have their own READMEs or headers:
@@ -234,7 +240,13 @@ coefficient is a cause. Titles changed (fig. 06, 08, 25); flip markup marked as 
 **Known issue, fig. 27:** 23 % of developer files followed 10+ months never drop a flat (sold flats most likely kept
 on the list), so "still for sale after 12 months" and "never changed price" are overstated; not for publication
 until those files are excluded. Snapshot of the previous figures: `output/snapshots/2026-10-17/` (untracked).
-Next: ridgeline price map; Bemowo metro extension before/after (measure the "before" now).
+Same day, later: `forward_test.py` -> summary/30 (Kahneman test: what 2010-14 data knew vs 2021-25; same 2,233
+buildings with >= 4 resales in both periods, so older stock only; new M2 stations by opening: central 2015, extensions
+2019-22, 800 m straight line). `price_ridgelines.py` -> summary/31, the opening map: Gaussian price surface (350 m) of
+value_2025, one line per 250 m row, heights above 12K PLN/m², faded where data is thin and tapered at the city edge and
+the Vistula (no cliffs); renders in ~10 min (per-segment colours). `make_map.py` stalled after map_02 (> 30 min on map_03,
+legacy exploratory maps): maps 03-09 in output/analysis are from before the fix. Not rebuilt: Blender renders (price colours unchanged; reputation render uses the old residual).
+Next: Bemowo metro extension before/after (measure the "before" now); tram to Wilanów as a lead (check dates).
 
 **2026-10-17 (tidy-up):** main pipeline on BDOT10k June 2025 (`fetch_geodata.py` reads the gpkg, maps the 2025
 function names to the old codes, drops destroyed buildings: 166.7K; heritage/ZABYTEK still from the Feb 2024
