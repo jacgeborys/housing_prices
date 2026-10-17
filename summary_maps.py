@@ -110,6 +110,12 @@ def within_district_bars(fig, v, col, bins, labels, title, xlabel, min_n=60, foc
     return ax
 
 
+def cafe_pct():
+    """Within-district café coefficient (% per doubling) from price_drivers.py."""
+    c = pd.read_csv("output/analysis/price_drivers_coefficients.csv").set_index("feature")
+    return c.loc["walk7_food_drink", "pct_district"]
+
+
 def legend_patches(ax, colours, labels, title, loc="upper right"):
     ax.legend(handles=[Patch(color=c, label=l) for c, l in zip(colours, labels)], title=title, loc=loc,
               fontsize=8.5, title_fontsize=9, frameon=True, framealpha=0.9, edgecolor="none")
@@ -117,13 +123,14 @@ def legend_patches(ax, colours, labels, title, loc="upper right"):
 
 # 6 --------------------------------------------------------------------------------------------
 def cheaper_than_expected(v, d, w):
-    fig = page("Reputation has a price",
+    fig = page("Reputation: what a place earns beyond its features",
                wrap("What flats sell for vs what the model predicts from location, transit, amenities, noise "
                     "and the building. The model never sees district names", 80),
                "Median residual per 600 m hexagon (≥ 5 buildings): actual value of a typical flat vs the "
                "out-of-sample prediction (gradient boosting, spatial 5-fold CV on 2 km blocks; the model "
                "never saw the block it predicts; no district variable). Residuals capture what the data can't see: "
-               "reputation, condition, finish, views. A blue hexagon is not a bargain by itself. " + style.SOURCE)
+               "reputation, condition, finish, views. A blue hexagon is not a bargain by itself. The pattern holds when café and "
+               "amenity counts are left out of the model (they may follow reputation rather than cause it). " + style.SOURCE)
     ax = basemap(fig, d, w)
     pts = v.geometry.representative_point()
     norm = TwoSlopeNorm(vmin=-15, vcenter=0, vmax=15)
@@ -199,11 +206,13 @@ def cafes(v, d, w):
     p = gpd.read_file("data/osm_pois.gpkg")
     f = p[p["amenity"].isin(["cafe", "restaurant", "bar", "pub"])]
     f = f[f.within(d.unary_union)]
-    fig = page("The café effect",
-               "A premium appears only where 40 or more venues are within a short walk",
+    fig = page("Cafés and prices go together",
+               wrap("Flats cost more only where 40 or more venues are within a short walk. Cafés follow wealth "
+                    "as much as they attract it", 80),
                f"{len(f):,} cafés, restaurants, bars and pubs from OpenStreetMap (Oct 2026), counted per 600 m "
                "hexagon. Bars: typical-flat price net of the district and every other feature, by venues within a "
-               "7-minute walk (560 m on footpaths). Regression: +3.4 % per doubling of venues; Żabka shops: no effect. " + style.SOURCE)
+               f"7-minute walk (560 m on footpaths). Regression: {cafe_pct():+.1f} % per doubling of venues within a district; "
+               "Żabka shops: no effect. An association, not a measured cause. " + style.SOURCE)
     ax = basemap(fig, d, w)
     cmap = ListedColormap(["#fde4cf", "#f9b98a", "#f08a4b", "#d4602a", "#a33f14", "#6e2508"])
     bounds = [1, 3, 6, 12, 25, 50, 1000]

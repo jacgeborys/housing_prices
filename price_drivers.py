@@ -1,8 +1,9 @@
 """
 What explains the price of a building? Stage 2 on top of the hedonic model (price_index.py).
 
-Target: log(value_2025) = what a typical flat in the building would sell for in 2025 (date, floor,
-size, new-build effects already removed), buildings with >= MIN_SALES sales.
+Target: log(value_2025_raw) = what a typical flat in the building would sell for in 2025 (date, floor,
+size, new-build effects already removed), NOT shrunk toward the district mean, buildings with >= MIN_SALES
+sales. Buildings are weighted by precision; the residual is shrunk toward the model's prediction.
 
 Features (cheap batch, all from local files):
   transit   departures/day within a 5-min walk (D:/QGIS/TransitFrequency, read only), metro and
@@ -228,7 +229,8 @@ def build_features():
     v["log_footprint"] = np.log2(v["footprint_m2"].clip(lower=50))
     v["pct_primary"] = v["pct_primary"].fillna(0) / 100        # stored as 0-100
     v["new_build"] = ((v["first_year"] >= 2015) & (v["pct_primary"] > 0.3)).astype(float)
-    v["y"] = np.log(v["value_2025"])
+    # unshrunk value: price_index.py shrinks toward the district mean, which would leak the district into the residual
+    v["y"] = np.log(v["value_2025_raw"])
     if INDEX == "district":
         v["y"] = district_target(v)
         print("target re-based with district indices")
@@ -274,7 +276,12 @@ def linear_models(v, feats):
     return pd.DataFrame(rows), {"ols": r0, "district": r_d, "ols_district": r1}
 
 
-def boosted(v, feats, k=5, seed=0):
+def gbm(seed):
+    return HistGradientBoostingRegressor(max_iter=400, learning_rate=0.05, max_leaf_nodes=31,
+                                         min_samples_leaf=40, l2_regularization=1.0, random_state=seed)
+
+
+def oof(v, feats, w=None, k=5, seed=0):
     """Spatial k-fold on 2 km blocks: out-of-fold predictions."""
     rng = np.random.default_rng(seed)
     blocks = v["block_2km"].unique()
@@ -284,18 +291,32 @@ def boosted(v, feats, k=5, seed=0):
     pred = np.zeros(len(v))
     for f in range(k):
         tr, te = fold != f, fold == f
-        m = HistGradientBoostingRegressor(max_iter=400, learning_rate=0.05, max_leaf_nodes=31,
-                                          min_samples_leaf=40, l2_regularization=1.0, random_state=seed)
-        m.fit(X[tr], y[tr])
-        pred[te] = m.predict(X[te])
-    r2 = 1 - ((y - pred) ** 2).sum() / ((y - y.mean()) ** 2).sum()
-    full = HistGradientBoostingRegressor(max_iter=400, learning_rate=0.05, max_leaf_nodes=31,
-                                         min_samples_leaf=40, l2_regularization=1.0, random_state=seed).fit(X, y)
-    imp = permutation_importance(full, X, y, n_repeats=5, random_state=seed)
-    importance = pd.Series(imp.importances_mean, index=feats).sort_values(ascending=False)
-    print(f"Boosting, spatial 5-fold on 2 km blocks: out-of-sample R² {r2:.3f}, "
-          f"residual SD {np.std(y - pred):.3f} log points")
-    return pred, r2, importance
+        pred[te] = gbm(seed).fit(X[tr], y[tr], sample_weight=None if w is None else w[tr]).predict(X[te])
+    return pred
+
+
+def boosted(v, feats, seed=0, importance=True):
+    """Out-of-fold prediction of the unshrunk building value, then the residual shrunk toward it.
+
+    Pass 1 (unweighted) gives the spread of residuals; tau² = that variance minus the average sampling
+    noise of the building values (fe_var) = how much buildings truly differ from the prediction. Pass 2
+    weights each building by 1 / (tau² + fe_var). Reputation = residual x tau² / (tau² + fe_var): a building
+    with few sales is pulled toward what its features predict, never toward its district."""
+    y, s2 = v["y"].to_numpy(), v["fe_var"].to_numpy()
+    r0 = y - oof(v, feats, seed=seed)
+    tau2 = max(np.var(r0) - s2.mean(), 1e-3)
+    w = 1 / (tau2 + s2)
+    pred = oof(v, feats, w=w, seed=seed)
+    r2 = 1 - (w * (y - pred) ** 2).sum() / (w * (y - np.average(y, weights=w)) ** 2).sum()
+    resid = (y - pred) * tau2 / (tau2 + s2)
+    print(f"Boosting, spatial 5-fold on 2 km blocks: out-of-sample R² {r2:.3f} (precision-weighted), "
+          f"residual SD {np.std(y - pred):.3f}, true spread (tau) {np.sqrt(tau2):.3f} log points")
+    if not importance:
+        return pred, resid, r2, None
+    X = v[feats].to_numpy(float)
+    full = gbm(seed).fit(X, y, sample_weight=w)
+    imp = permutation_importance(full, X, y, n_repeats=5, random_state=seed, sample_weight=w)
+    return pred, resid, r2, pd.Series(imp.importances_mean, index=feats).sort_values(ascending=False)
 
 
 def plot(coef, importance, scores, v):
@@ -355,16 +376,25 @@ def main():
     LABELS.update(AGE_LABELS)
     print(v[feats + ["value_2025"]].describe().T[["mean", "min", "50%", "max"]].round(2).to_string())
     coef, scores = linear_models(v, feats)
-    pred, r2, importance = boosted(v, feats)
+    pred, resid, r2, importance = boosted(v, feats)
     scores["gbm"] = r2
     v["pred_2025"] = np.exp(pred)
-    v["resid_pct"] = 100 * (np.exp(v["y"] - pred) - 1)
+    v["resid_pct"] = 100 * (np.exp(resid) - 1)
+    # Robustness: reputation without the amenity counts (cafés etc. partly follow reputation, so they may absorb it)
+    no_amen = [f for f in feats if f not in AMENITY_LABELS]
+    _, resid_na, r2_na, _ = boosted(v, no_amen, importance=False)
+    scores["gbm_no_amenities"] = r2_na
+    v["resid_pct_no_amen"] = 100 * (np.exp(resid_na) - 1)
+    chk = pd.DataFrame({"all": v.groupby("district")["resid_pct"].median(),
+                        "sales >= 11": v[v["n"] >= 11].groupby("district")["resid_pct"].median(),
+                        "no amenities": v.groupby("district")["resid_pct_no_amen"].median()}).sort_values("all")
+    print("Reputation by district (median %):\n" + chk.round(1).to_string())
     coef.round(2).to_csv(OUT_CSV, index=False)
     pd.Series(scores).round(4).to_csv(OUT_CSV.replace("coefficients", "scores"), header=["r2"])
     print(coef.round(1).to_string(index=False))
     print("Importance:\n" + (importance / importance.sum()).round(3).to_string())
     keep = ["osm_id", "name", "addr_street", "addr_housenumber", "district", "n", "value_2025", "pred_2025",
-            "resid_pct", "trips"] + (["decade_end"] if "decade_end" in v else []) + feats + ["geometry"]
+            "resid_pct", "resid_pct_no_amen", "trips"] + (["decade_end"] if "decade_end" in v else []) + feats + ["geometry"]
     v[keep].to_file(OUT_GPKG, layer="building_drivers", driver="GPKG")
     print(f"Saved {OUT_GPKG}, {OUT_CSV}")
     plot(coef, importance, scores, v)

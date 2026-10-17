@@ -132,7 +132,7 @@ def main():
                "city-wide quality-adjusted index over the holding period. Map: flips per 100 resales, 2021–25, "
                "600 m hexagons with ≥ 40 resales. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"2021–25: {n_r:,} flips, {100 * n_r / len(recent_s):.1f} per 100 resales. "
-                               f"Median markup {med:+.0f}% ({med_net:+.0f}% beyond what the market did), "
+                               f"Median markup {med:+.0f}% ({med_net:+.0f}% beyond what the market did), before renovation, tax and fees, "
                                f"median holding {recent_f['days'].median():.0f} days. The markup sticks: flipped flats that sold again "
                                f"later went for {held['after_net'].median():+.0f}% vs the flipper's price, net of the "
                                f"market ({len(held)} flats). Flipping is busiest where "

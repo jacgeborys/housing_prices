@@ -18,7 +18,8 @@ travel times (r5py). All findings are associations within a district, not causal
 - Location: -2..-5 % per km walked to the metro; reach to cafés, restaurants and culture +4..+9 % per doubling,
   about as informative as distance to PKiN + metro (fig. 04, 08, 25). Bus/tram frequency adds ~nothing once age
   is known (fig. 05); tram and train noise costs ~2 % per 10 dB, road noise much less (fig. 09).
-- Reputation: Żoliborz about +15 %, Praga-Północ about -19 % vs the prediction (fig. 06); central areas are pulling
+- Reputation: Żoliborz about +14 %, Praga-Północ about -18 % vs the prediction (fig. 06), unchanged when café and
+  amenity counts are dropped from the model; central areas are pulling
   away, the two Pragas gain most (fig. 14); estate-level extremes in fig. 15.
 - Market behaviour: flips are ~6 per 100 resales since 2021 with a +25 % net markup (fig. 16); new flats on offer ask
   about what a 5-15-year-old flat nearby sells for (fig. 26); 68 % of flats on offer never change price in a year,
@@ -218,6 +219,22 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-17 (audit before posting):** reputation no longer leaks the district. `price_index.py` also saves the
+unshrunk building value (`value_2025_raw`) and its sampling variance (`fe_var`); `price_drivers.py` models the unshrunk
+value (the shrunk one was pulled toward the district mean, so thinly sold buildings borrowed their district's level),
+weights buildings by 1/(tau² + fe_var) and shrinks the residual toward the model's prediction instead. Effect small:
+Żoliborz +15.7 -> +14.1 %, Praga-Północ -18.8 -> -18.3 %. The bigger Żoliborz gap between thinly and heavily sold
+buildings is composition (pre-war villas vs new estates), not the method. Robustness: `resid_pct_no_amen` (model
+without the walk7_* amenity counts) gives the same district pattern, so cafés do not absorb reputation. Out-of-sample
+R² 0.571 (precision-weighted). Listed heritage now +3.5 % within a district (was ~0 on the shrunk target).
+Wording: every factor is an association ("buildings with X sell for Y % more than similar ones in the district");
+cafés follow wealth as much as they attract it, transit supply is planned and slow to follow demand, so neither
+coefficient is a cause. Titles changed (fig. 06, 08, 25); flip markup marked as before renovation, tax and fees.
+**Known issue, fig. 27:** 23 % of developer files followed 10+ months never drop a flat (sold flats most likely kept
+on the list), so "still for sale after 12 months" and "never changed price" are overstated; not for publication
+until those files are excluded. Snapshot of the previous figures: `output/snapshots/2026-10-17/` (untracked).
+Next: ridgeline price map; Bemowo metro extension before/after (measure the "before" now).
 
 **2026-10-17 (tidy-up):** main pipeline on BDOT10k June 2025 (`fetch_geodata.py` reads the gpkg, maps the 2025
 function names to the old codes, drops destroyed buildings: 166.7K; heritage/ZABYTEK still from the Feb 2024

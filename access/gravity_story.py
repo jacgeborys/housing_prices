@@ -60,7 +60,7 @@ def main():
     best = scan.loc[scan["r2"].idxmax()]
     print(scan.round(4).to_string(index=False))
 
-    fig = page("Buyers pay for what's close, not for the commute",
+    fig = page("Reach to cafés and culture tracks prices as well as the commute",
                "Which kind of reach by public transport explains flat prices best, and how fast it fades",
                "Gravity access: every 250 m cell weighted by its jobs (BDOT10k floor area by SimCity category), office "
                "jobs, shop floor area or cafés/restaurants/culture (OSM), discounted by door-to-door travel time "

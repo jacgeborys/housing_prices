@@ -292,6 +292,10 @@ def building_values(df, model, qidx):
     # 2025 average: shift by the 2025Q1 offset so values are 2025-average levels.
     offset = -qidx.loc[model["ref_q"], "gamma"]
     info["value_2025"] = np.exp(info["fe_shrunk"] - offset) * model["smear"]
+    # Unshrunk value + its sampling variance (log): price_drivers.py models these, so a thinly sold building
+    # does not borrow its district's level (that leaked the district into the "reputation" residual)
+    info["value_2025_raw"] = np.exp(info["fe"] - offset) * model["smear"]
+    info["fe_var"] = resid_var / info["n"]
     return info
 
 
@@ -639,7 +643,7 @@ def save_outputs(df, qidx, di, bv, model):
         pct_primary=("market", lambda s: 100 * (s == "primary").mean()))
     agg.index = agg.index.astype("int64")
     b = b.set_index("osm_id").join(agg)
-    out = bld.merge(b[["district", "n", "value_2025", "median_price_m2", "median_price_m2_2025",
+    out = bld.merge(b[["district", "n", "value_2025", "value_2025_raw", "fe_var", "median_price_m2", "median_price_m2_2025",
                        "first_year", "last_year", "pct_primary"]],
                     left_on="osm_id", right_index=True, how="inner")
     out.to_file(MODEL_GPKG, layer="building_value", driver="GPKG")
