@@ -53,6 +53,7 @@ travel times (r5py). All findings are associations within a district, not causal
 | 29 | flat sizes and rooms | `flat_sizes.py` |
 | 30 | forward test: reputation 2010-14 vs 2021-25, what moved prices | `forward_test.py` |
 | 31 | opening map: price ridgelines (dark, "Unknown Pleasures") | `price_ridgelines.py` |
+| 32 | companion to 31: every building with >= 3 sales as a dot (price colour, size = sales), 2400x3000 | `price_points.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
 `price_drivers.py` -> figure scripts -> `contact_sheet.py`. Subprojects have their own READMEs or headers:
@@ -246,6 +247,8 @@ buildings with >= 4 resales in both periods, so older stock only; new M2 station
 value_2025, one line per 250 m row, heights above 12K PLN/m², faded where data is thin and tapered at the city edge and
 the Vistula (no cliffs); renders in ~10 min (per-segment colours). `make_map.py` stalled after map_02 (> 30 min on map_03,
 legacy exploratory maps): maps 03-09 in output/analysis are from before the fix. Not rebuilt: Blender renders (price colours unchanged; reputation render uses the old residual).
+Fig. 30 judged too hard to read for posting (kept as evidence that reputation is stable). Fig. 32
+`price_points.py`: same frame and colours as 31, 13.6K priced buildings over all city buildings in grey.
 Next: Bemowo metro extension before/after (measure the "before" now); tram to Wilanów as a lead (check dates).
 
 **2026-10-17 (tidy-up):** main pipeline on BDOT10k June 2025 (`fetch_geodata.py` reads the gpkg, maps the 2025
