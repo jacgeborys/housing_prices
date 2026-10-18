@@ -36,7 +36,8 @@ def main():
                "RCN flat sales (full ownership). New = sold by the developer (deed at completion, so a year or two after "
                "the flat was bought). Years with < 300 sales hidden (2017–20 RCN gap). Price by size: hedonic model, same "
                "building and quarter, vs a 45–60 m² flat. Map: median size of resold flats 2021–26, hexagons with ≥ 30 "
-               "sales. " + style.SOURCE)
+               "sales. Rooms = RCN 'izby': a separate kitchen counts, a kitchen annex does not, so part of the fall in "
+               "room counts is kitchens opening into living rooms. " + style.SOURCE)
     a1 = fig.add_axes([0.09, 0.55, 0.38, 0.23])
     for mk, lab, colr in (("primary", "new (developer)", "#c4521f"), ("secondary", "resale", style.BLUE)):
         s = sz[("median", mk)].where(sz[("size", mk)] >= 300).reindex(range(2006, 2027))
@@ -64,7 +65,8 @@ def main():
     a2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0f}%"))
     a2.legend(loc="lower left", fontsize=7.5, ncol=4, bbox_to_anchor=(0, 1.0), frameon=False, handlelength=1)
     style.hgrid_only(a2)
-    a2.set_title("Rooms in new flats sold", fontsize=10.5, loc="left", pad=20)
+    a2.set_title("Rooms in new flats sold (register count: a separate kitchen is a room)", fontsize=10.5,
+                  loc="left", pad=20)
 
     a3 = fig.add_axes([0.09, 0.12, 0.38, 0.30])
     x = np.arange(len(prem))

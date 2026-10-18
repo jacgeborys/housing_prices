@@ -55,6 +55,7 @@ travel times (r5py). All findings are associations within a district, not causal
 | 30 | forward test: reputation 2010-14 vs 2021-25, what moved prices | `forward_test.py` |
 | 31 | opening map: price ridgelines (dark, "Unknown Pleasures") | `price_ridgelines.py` |
 | 32 | companion to 31: every building with >= 3 sales as a dot (price colour, size = sales), 2400x3000 | `price_points.py` |
+| 33-34 | what 1 million PLN buys (size of 0.9-1.1M resales 2024-26); room for a family (share of 70 m²+ resales, price of a 65-80 m² flat) | `family_flats.py` |
 | LinkedIn PDF | 21 selected figures in story order -> output/linkedin/ (numbered PNGs + warsaw_flat_prices.pdf) | `linkedin_pdf.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
@@ -228,6 +229,13 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-18 (buyer's figures):** `family_flats.py` -> summary/33 (1 million PLN buys 49-50 m² in Żoliborz,
+Śródmieście, Wola and 74 m² in Wawer; 3,955 resales at 0.9-1.1M 2024-26) and summary/34 (17 % of resales since 2021
+are 70 m²+; a 65-80 m² flat costs 0.80M in Rembertów to 1.63M in Żoliborz). Actual sales, resales only (developer
+deeds carry older prices). RCN rooms are "izby" (a separate kitchen counts, a kitchen annex does not): fig. 29's room
+panel now says so, and size in m² is used for families. Figures dropped from posting by the user: 22 (lift status not
+known per building), 02 (needs the benchmark explained). House sales: `fetch_rcn.py --layer budynki` started.
 
 **2026-10-18 (age check):** GIS Expert's map (~2020) has no 2021+ layer; undated buildings fell into the
 reference class (1961-90 prefab). `age_check.py` -> output/age_check.gpkg (flag per building) +
