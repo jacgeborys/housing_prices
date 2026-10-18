@@ -57,7 +57,7 @@ def district_anatomy(v):
 
     cols = style.CAT[:7] + ["#9a9890"]
     fig = page("Why a district is expensive",
-               "Each district's price gap to the city average, split into its causes",
+               "Each district's price gap to the city average, split into what goes with it",
                "Linear regression of log price on all features (no district variable), 12.7K buildings with "
                "≥ 3 sales. Building age = construction decade (GIS Expert) vs 1961–90; building form = height, footprint, "
                "heritage listing, share of developer sales. A group's bar = its coefficients × how far the district's "

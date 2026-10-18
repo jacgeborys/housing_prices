@@ -1,7 +1,8 @@
 """
 Intermediate look at transit accessibility (run with the main Python, after travel_times.py's AM / midday /
 evening windows): where "the centre" is, who reaches it, where service collapses in the evening, and whether
-door-to-door access explains prices better than straight-line distance to PKiN.
+door-to-door access explains prices better than straight-line distance to PKiN (printed only; the figure shows
+the two job maps and minutes to the centre by district).
 
 Output: output/summary/24_transit_access.png  (+ printed model test)
 """
@@ -52,8 +53,8 @@ def main():
     v["jobs_30"] = v["n_jobs_30"].fillna(0)
     v["log_grav"] = np.log1p(v["grav_jobs_5"].fillna(0))
     # evening loss: travel_times.py windows (a ratio, so the earlier destination weights largely cancel)
-    a = {s: pd.read_csv(os.path.join(OUT, f"access_{s}.csv"), index_col=0) for s in ("am_peak", "evening")}
-    v["eve_ratio"] = v["osm_id"].map(a["evening"]["jobs_30"] / a["am_peak"]["jobs_30"].replace(0, np.nan))
+    acc = {s: pd.read_csv(os.path.join(OUT, f"access_{s}.csv"), index_col=0) for s in ("am_peak", "evening")}
+    v["eve_ratio"] = v["osm_id"].map(acc["evening"]["jobs_30"] / acc["am_peak"]["jobs_30"].replace(0, np.nan))
 
     # model test (OLS with district fixed effects): does access replace distance to PKiN and the metro?
     base = [f for f in FEATURES]
@@ -73,13 +74,13 @@ def main():
                "Jobs reachable by public transport, door to door: walking, waiting, riding, changing",
                "Jobs = floor area (BDOT10k footprint x storeys) per m² per job by building category of the SimCity map "
                "(offices 18, public offices 25, retail & hospitals 40, schools 50...); 250 m cells. Travel: R5 routing on the Warsaw GTFS (ZTM, KM, WKD, timetable of Wed "
-               "7.10.2026) and OSM paths, median over every departure minute 07–09 / 19–21. Office clusters: "
-               "neighbouring cells with ≥ 4,000 office job equivalents (smaller centres: ≥ 1,500). Model test: gravity access to jobs (5-min "
-               "half-life) vs distance to PKiN and the metro; figure 25 compares purposes and half-lives. "
+               "7.10.2026) and OSM paths, median over every departure minute 07–09. Office clusters: "
+               "neighbouring cells with ≥ 4,000 office job equivalents (smaller centres: ≥ 1,500). Minutes: median over the "
+               "district's priced buildings; no route within 60 min counted as 60+. "
                + style.SOURCE)
     # 1 destinations
     ax1 = basemap(fig, d, w)
-    ax1.set_position([0.01, 0.45, 0.48, 0.35])
+    ax1.set_position([0.01, 0.42, 0.48, 0.36])
     dest = gpd.read_file(os.path.join(HERE, "data", "destinations.gpkg")).to_crs(2180)
     dest = dest[dest["jobs"] > 50]
     cm1 = ListedColormap(["#fde4cf", "#f9b98a", "#f08a4b", "#c4521f", "#7a2a08"])
@@ -127,7 +128,7 @@ def main():
 
     # 2 jobs within 30 min
     ax2 = basemap(fig, d, w)
-    ax2.set_position([0.51, 0.45, 0.48, 0.35])
+    ax2.set_position([0.51, 0.42, 0.48, 0.36])
     cm2 = ListedColormap(["#e6effa", "#b9d3f3", "#83b2ea", "#4c8bd9", "#2461b0", "#0d3670"])
     nb2 = BoundaryNorm([0, 25e3, 75e3, 150e3, 300e3, 500e3, 2e6], 6)
     pts = v.geometry.representative_point()
@@ -137,37 +138,30 @@ def main():
                    "Jobs within 30 min")
     ax2.set_title("Jobs within 30 minutes, morning peak", fontsize=10.5)
 
-    # 3 evening loss
-    ax3 = basemap(fig, d, w)
-    ax3.set_position([0.01, 0.07, 0.48, 0.33])
-    cm3 = ListedColormap(["#7a2a08", "#c4521f", "#f08a4b", "#f9d7bd", "#eceae4"])
-    nb3 = BoundaryNorm([0, 0.6, 0.75, 0.85, 0.95, 10], 5)
-    ax3.scatter(pts.x, pts.y, c=v["eve_ratio"].clip(0, 2), cmap=cm3, norm=nb3, s=3, lw=0, zorder=3)
-    outlines(ax3, d, labels=False)
-    legend_patches(ax3, [cm3(i) for i in range(5)], ["< 60 %", "60–75 %", "75–85 %", "85–95 %", "95 %+"],
-                   "Evening vs morning")
-    ax3.set_title("Jobs reachable at 19–21 h vs 07–09 h", fontsize=10.5)
-
-    # 4 model test
-    ax4 = fig.add_axes([0.62, 0.12, 0.34, 0.26])
-    labels = ["neither", "PKiN +\nmetro", "access\nto jobs", "both"]
-    vals = [r_dist, r_base, r_swap, r_add]
-    ax4.bar(range(4), vals, color=["#c9c7bf", style.CONTEXT_DARK, style.BLUE, "#5a8fd8"], width=0.6)
-    for i, val in enumerate(vals):
-        ax4.text(i, val + 0.003, f"{val:.3f}", ha="center", fontsize=9)
-    ax4.set_xticks(range(4))
-    ax4.set_xticklabels(labels, fontsize=8.5)
-    ax4.set_ylim(min(vals) - 0.03, max(vals) + 0.02)
-    style.hgrid_only(ax4)
-    ax4.set_title("Price model fit (R², within districts)", fontsize=10.5)
-    med = v.groupby("district")["eve_ratio"].median().sort_values()
+    # 3 minutes to the centre (PKiN), median per district; > 60 min (no route within the hour) counted as 61
+    tc = v["osm_id"].map(acc["am_peak"]["t_centrum"]).fillna(61)
+    mins = tc.groupby(v["district"]).median().sort_values()
+    ax3 = fig.add_axes([0.20, 0.09, 0.74, 0.27])
+    y = np.arange(len(mins))
+    ax3.barh(y, mins.values, color=style.BLUE, height=0.66)
+    for yi, m in zip(y, mins.values):
+        ax3.text(m, yi, f" {m:.0f} min" if m <= 60 else " 60+ min", va="center", fontsize=8.5)
+    ax3.set_yticks(y)
+    ax3.set_yticklabels(mins.index, fontsize=8.5)
+    ax3.invert_yaxis()
+    ax3.set_xlim(0, 72)
+    ax3.set_xticks([])
+    for sp in ("top", "right", "bottom"):
+        ax3.spines[sp].set_visible(False)
+    ax3.set_title("Minutes to the centre (Palace of Culture) by public transport, 7–9 am, typical flat in the district",
+                  fontsize=10.5, loc="left")
     fig.text(0.03, 0.885, wrap(f"Offices cluster at Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k jobs), ONZ / Central "
-                               f"Station ({CLUSTERS[1][3] / 1000:.0f}k) and Służewiec ({CLUSTERS[2][3] / 1000:.0f}k). The median "
-                               f"building reaches {v['jobs_30'].median() / 1000:.0f}k jobs in 30 min; doubling job access "
-                               f"is worth {gain:+.1f}% within a district.", 100),
+                               f"Station ({CLUSTERS[1][3] / 1000:.0f}k) and Służewiec ({CLUSTERS[2][3] / 1000:.0f}k). By public "
+                               f"transport the centre is {mins.iloc[0]:.0f} minutes away in {mins.index[0]} and "
+                               f"{mins.iloc[-1]:.0f} in {mins.index[-1]}.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "24_transit_access.png")
-    print(med.round(2).to_string())
+    print(mins.round(0).to_string())
 
 
 if __name__ == "__main__":

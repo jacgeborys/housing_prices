@@ -32,6 +32,20 @@ travel times (r5py). All findings are associations within a district, not causal
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
 
+**The report** (`report/`, the deliverable): 27 slides in story order -> `output/report/NN_*.png` +
+`output/report/warsaw_flats.pdf`. `python report/build_report.py` assembles it from built figures; `--rebuild` reruns
+the figure scripts first (pipeline order, ~1 h). Principles: one question per slide, title = the answer, at most two
+panels, describe before explaining, no model internals on slides (they go to the methods page).
+- Opening: 31 price ridgelines, 32 every priced building as a dot
+- 1 What's in the data: r01 sales per year / district (new, resale), 23 blind spot
+- 2 Sizes: r02 size categories by district + share over time, r03 new vs resale (price as paid, sizes), 29 smaller flats
+- 3 Prices: 01 over time, 33 what 1 million buys, 34 room for a family, 35 house or flat
+- 4 What goes with price: 03, 18 age, 21 infill, 08 cafés, 09 noise, 20 trees, 11 transit x price, 12 compass, 24 jobs
+- 5 Reputation: 10 district anatomy, 06 reputation map, 15 estates, 14 over time
+- 6 Market: 16 flippers, 26 new flats on offer; end: r99 how to read these charts (yardstick flat, sources, limits)
+Not in the report (kept in output/summary/): 02, 04, 05, 13, 19, 22, 25, 27, 28, 30, 36.
+`report/descriptive.py` builds r01-r03 and r99 (plain counts, shares and prices as paid; no model).
+
 **Figures** (`output/summary/`, contact sheet in `00_contact_sheet.png`, built by `contact_sheet.py`)
 
 | # | Figure | Script |
@@ -58,7 +72,6 @@ travel times (r5py). All findings are associations within a district, not causal
 | 33-34 | what 1 million PLN buys (size of 0.9-1.1M resales 2024-26); room for a family (share of 70 m²+ resales, price of a 65-80 m² flat) | `family_flats.py` |
 | 36 | where the big flats are: median size and share of 4+ room flats, all sales since 2016, top MSI neighbourhoods | `family_flats.py` |
 | 35 | house or flat: house sales (RCN budynki layer) vs flat resales by district, per m² and in total | `houses.py` |
-| LinkedIn PDF | 21 selected figures in story order -> output/linkedin/ (numbered PNGs + warsaw_flat_prices.pdf) | `linkedin_pdf.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
 `price_drivers.py` -> figure scripts -> `contact_sheet.py`. Subprojects have their own READMEs or headers:
@@ -231,6 +244,14 @@ python build_viz.py
 ```
 
 ## Status
+
+**2026-10-18 (report overhaul):** one deck instead of a growing pile of figures (user: newer charts "obscure what
+the dataset holds"). New `report/` folder: build_report.py (slide list, --rebuild pipeline, PDF) and descriptive.py
+(r01 data overview, r02 sizes by district and over time = clean redo of analysis/07, r03 new vs resale = redo of
+analysis/05, r99 methods page). Trimmed: 24 (evening map and "price model fit" panel dropped, minutes to the centre by
+district added), 29 (rooms panel and map dropped), 35 (map dropped), 10 subtitle ("what goes with it", not "causes").
+linkedin_pdf.py removed (superseded by report/build_report.py). In the register 2026 holds only deeds registered by
+late September (months of lag), not a full year.
 
 **2026-10-18 (buyer's figures):** `family_flats.py` -> summary/33 (1 million PLN buys 49-50 m² in Żoliborz,
 Śródmieście, Wola and 74 m² in Wawer; 3,955 resales at 0.9-1.1M 2024-26) and summary/34 (17 % of resales since 2021

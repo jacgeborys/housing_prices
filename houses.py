@@ -9,7 +9,7 @@ is per m² of the house INCLUDING its plot, and only where the deed records the 
 deed in three (2023-26); where recorded it is ~1.6x the footprint, so plausible. Totals use every deed. RCN records
 houses from 2017; 2021-22 are nearly empty (register gap).
 
-Outputs: output/houses.gpkg (clean house sales), output/summary/35_house_or_flat.png
+Outputs: output/houses.gpkg (clean house sales, for QGIS), output/summary/35_house_or_flat.png (two bar charts)
 """
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ import pandas as pd
 
 import style
 from summary_charts import page, save, wrap
-from summary_maps import basemap, legend_patches, load, outlines
+from summary_maps import load
 
 style.apply()
 RECENT = (2023, 2026)
@@ -79,19 +79,8 @@ def main():
                                f"has {g.loc[k, 'usable']:.0f} m² and costs {g.loc[k, 'house'] / 1e6:.1f} million, a flat "
                                f"{g.loc[k, 'flat'] / 1e6:.2f} million.", 100), fontsize=10.5, fontweight="semibold", va="top")
 
-    ax = basemap(fig, d, w)
-    ax.set_position([0.02, 0.38, 0.55, 0.42])
-    cmap = plt.cm.colors.ListedColormap(["#c9dfc0", "#8fc27f", "#4f9a4a", "#2a6b35", "#123d1f"])
-    bounds = [0, 12000, 15000, 18000, 24000, 1e9]
-    norm = plt.cm.colors.BoundaryNorm(bounds, 5)
-    rs = r[r["price_m2"].notna()].sort_values("price_m2")
-    ax.scatter(rs.geometry.x, rs.geometry.y, s=5, c=rs["price_m2"], cmap=cmap, norm=norm, lw=0, zorder=4)
-    outlines(ax, d, labels=False)
-    legend_patches(ax, [cmap(i) for i in range(5)], ["< 12K", "12–15K", "15–18K", "18–24K", "24K+"],
-                   "House, PLN/m²")
-    ax.set_title(f"Houses sold {RECENT[0]}–{RECENT[1]} (deeds with a recorded size)", fontsize=10.5)
 
-    a2 = fig.add_axes([0.66, 0.44, 0.31, 0.36])
+    a2 = fig.add_axes([0.16, 0.47, 0.78, 0.33])
     y = np.arange(len(g))
     a2.barh(y + 0.19, g["house_m2"], height=0.36, color="#2a6b35", label="House (with plot)")
     a2.barh(y - 0.19, g["flat_m2"], height=0.36, color=style.CONTEXT, label="Resold flat")
@@ -105,9 +94,9 @@ def main():
     for sp in ("top", "right", "bottom"):
         a2.spines[sp].set_visible(False)
     a2.legend(loc="upper left", bbox_to_anchor=(0, -0.01), fontsize=8, frameon=False, ncol=2)
-    a2.set_title("Price per m², median", fontsize=10.5, loc="left")
+    a2.set_title("Price per m² of living space, median", fontsize=10.5, loc="left")
 
-    a3 = fig.add_axes([0.10, 0.115, 0.86, 0.20])
+    a3 = fig.add_axes([0.10, 0.12, 0.86, 0.25])
     x = np.arange(len(g))
     a3.bar(x - 0.2, g["house"] / 1e6, width=0.4, color="#2a6b35", label="House")
     a3.bar(x + 0.2, g["flat"] / 1e6, width=0.4, color=style.CONTEXT, label="Resold flat")
