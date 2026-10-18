@@ -54,6 +54,7 @@ travel times (r5py). All findings are associations within a district, not causal
 | 30 | forward test: reputation 2010-14 vs 2021-25, what moved prices | `forward_test.py` |
 | 31 | opening map: price ridgelines (dark, "Unknown Pleasures") | `price_ridgelines.py` |
 | 32 | companion to 31: every building with >= 3 sales as a dot (price colour, size = sales), 2400x3000 | `price_points.py` |
+| LinkedIn PDF | 21 selected figures in story order -> output/linkedin/ (numbered PNGs + warsaw_flat_prices.pdf) | `linkedin_pdf.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
 `price_drivers.py` -> figure scripts -> `contact_sheet.py`. Subprojects have their own READMEs or headers:
