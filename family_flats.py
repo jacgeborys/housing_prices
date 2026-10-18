@@ -4,12 +4,14 @@ Two buyer's-eye figures from actual sales (no model, no benchmark flat):
   33  What 1 million złoty buys: size of flats resold for 0.9-1.1 million PLN in 2024-26, by hexagon and district
   34  Room for a family: where flats of 70 m² or more are resold (share of resales 2021-26) and what a 65-80 m²
       flat costs (median total price, resales 2024-26)
+  36  Where the big flats are: median size and share of 4+ room flats among all flat sales since 2016 (developer
+      and resale: where such flats exist), per hexagon, with the top city neighbourhoods (MSI) named
 
 Resales only: developer deeds are recorded at completion, at a price agreed 1-2 years earlier, so they would make
 recent money look like it buys more. Rooms in RCN are "izby" (a separate kitchen counts as a room, a kitchen annex
 does not), so size in m² is the measure here.
 
-Output: output/summary/33_what_1m_buys.png, 34_family_flats.png
+Output: output/summary/33_what_1m_buys.png, 34_family_flats.png, 36_big_flats.png
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -114,11 +116,58 @@ def family_flats(t, d, w):
     print(cost.sort_values().round(-3).to_string())
 
 
+def top_list(fig, x, y, title, s, fmt):
+    fig.text(x, y, title, fontsize=10, fontweight="semibold", va="top")
+    for k, (name, val) in enumerate(s.items()):
+        fig.text(x, y - 0.028 * (k + 1.3), f"{fmt(val)}", fontsize=9, va="top", ha="right", color=style.INK)
+        fig.text(x + 0.012, y - 0.028 * (k + 1.3), name, fontsize=9, va="top", color=style.INK_2)
+
+
+def big_flats(d, w):
+    t = gpd.read_file("output/price_model.gpkg", layer="transactions_adj")
+    t = t[(t["year"] >= 2016) & t["district"].notna() & t["area"].between(12, 300)]
+    t["many"] = (t["rooms"] >= 4).astype(float)
+    msi = gpd.read_file("data/msi.gpkg").to_crs(2180)
+    j = gpd.sjoin(t[["area", "many", "geometry"]], msi[["name", "geometry"]], predicate="within")
+    nb = j.groupby("name").agg(n=("area", "size"), med=("area", "median"), many=("many", "mean"))
+    nb = nb[nb["n"] >= 300]
+    many_small = nb[(nb["many"] >= 0.35) & (nb["med"] < 55)].sort_values("med")      # many rooms, little space
+    fig = page("Where the big flats are",
+               f"All flat sales since 2016 (developer and resale): size and number of rooms",
+               f"{len(t):,} RCN flat sales 2016–{int(t['year'].max())} in Warsaw (full ownership). Hexagons with ≥ 40 "
+               "sales. Rooms = the register's 'izby': a separate kitchen counts as a room, a kitchen annex does not. "
+               "Lists: the city's MSI neighbourhoods with ≥ 300 sales. Terraced houses sold as flats are included "
+               "(Las, Wawer). " + style.SOURCE)
+    ex = many_small.index[0] if len(many_small) else None
+    fig.text(0.03, 0.885, wrap("Space and rooms are not the same thing. The biggest flats sell in Wawer, on the Saska "
+                               "Kępa riverside and around Stegny and Wyględów"
+                               + (f". Many rooms also come in prefab estates: in {ex}, {100 * many_small.loc[ex, 'many']:.0f} % "
+                                  f"of flats have 4+ rooms in a median {many_small.loc[ex, 'med']:.0f} m²." if ex else "."),
+                               100), fontsize=10.5, fontweight="semibold", va="top")
+    panels = (("area", np.median, ["#f3e4d0", "#e6bb8a", "#d08a4f", "#a65a2a", "#6b3214"], [0, 45, 52, 60, 70, 500],
+               ["< 45 m²", "45–52", "52–60", "60–70", "70+ m²"], "Median size", [0.02, 0.44, 0.62, 0.37]),
+              ("many", np.mean, ["#e2e6f3", "#b3bde3", "#7f8fcc", "#4d5fae", "#26337a"], [0, 0.15, 0.22, 0.30, 0.40, 1],
+               ["< 15 %", "15–22 %", "22–30 %", "30–40 %", "40 %+"], "4+ rooms", [0.02, 0.06, 0.62, 0.38]))
+    for col, red, colors, bounds, labels, title, box in panels:
+        ax = basemap(fig, d, w)
+        ax.set_position(box)
+        cmap = plt.cm.colors.ListedColormap(colors)
+        ax.hexbin(t.geometry.x, t.geometry.y, C=t[col], gridsize=(48, 42), reduce_C_function=red, mincnt=40,
+                  cmap=cmap, norm=plt.cm.colors.BoundaryNorm(bounds, 5), linewidths=0.3, edgecolors=style.SURFACE,
+                  zorder=3, extent=(*ax.get_xlim(), *ax.get_ylim()))
+        outlines(ax, d, labels=False)
+        legend_patches(ax, colors, labels, title)
+    top_list(fig, 0.70, 0.80, "Biggest flats (median)", nb["med"].nlargest(9), lambda v_: f"{v_:.0f} m²")
+    top_list(fig, 0.70, 0.41, "Most 4+ room flats", nb["many"].nlargest(9), lambda v_: f"{100 * v_:.0f} %")
+    save(fig, "36_big_flats.png")
+
+
 def main():
     v, d, w = load()
     t = resales()
     what_1m_buys(t, d, w)
     family_flats(t, d, w)
+    big_flats(d, w)
 
 
 if __name__ == "__main__":

@@ -56,6 +56,7 @@ travel times (r5py). All findings are associations within a district, not causal
 | 31 | opening map: price ridgelines (dark, "Unknown Pleasures") | `price_ridgelines.py` |
 | 32 | companion to 31: every building with >= 3 sales as a dot (price colour, size = sales), 2400x3000 | `price_points.py` |
 | 33-34 | what 1 million PLN buys (size of 0.9-1.1M resales 2024-26); room for a family (share of 70 m²+ resales, price of a 65-80 m² flat) | `family_flats.py` |
+| 36 | where the big flats are: median size and share of 4+ room flats, all sales since 2016, top MSI neighbourhoods | `family_flats.py` |
 | 35 | house or flat: house sales (RCN budynki layer) vs flat resales by district, per m² and in total | `houses.py` |
 | LinkedIn PDF | 21 selected figures in story order -> output/linkedin/ (numbered PNGs + warsaw_flat_prices.pdf) | `linkedin_pdf.py` |
 
@@ -236,7 +237,9 @@ python build_viz.py
 are 70 m²+; a 65-80 m² flat costs 0.80M in Rembertów to 1.63M in Żoliborz). Actual sales, resales only (developer
 deeds carry older prices). RCN rooms are "izby" (a separate kitchen counts, a kitchen annex does not): fig. 29's room
 panel now says so, and size in m² is used for families. Figures dropped from posting by the user: 22 (lift status not
-known per building), 02 (needs the benchmark explained). House sales: `fetch_rcn.py --layer budynki` -> output/rcn_budynki_warszawa.gpkg (386K rows: every transaction
+known per building), 02 (needs the benchmark explained). Fig. 36 (successor of analysis/map_05, cleaned, in-city): biggest
+flats in Las (Wawer, terraced homes sold as flats, 100 m²), Nadwiśle, Zerzeń, Wyględów, Stegny; many rooms is partly a
+prefab layout signal (Piaski: 40 % of flats 4+ izby at a median 47 m²). House sales: `fetch_rcn.py --layer budynki` -> output/rcn_budynki_warszawa.gpkg (386K rows: every transaction
 touching a building, mostly flats again; TERYT 1465 = Warsaw, others neighbours; no date field, year from the deed
 number). `houses.py` -> output/houses.gpkg + summary/35: single-house deeds (built-up land, 1/1, free market, one
 building per deed), 2,272 in 2023-26; usable area recorded in only ~1 deed in 3 (where present ~1.6x footprint), so

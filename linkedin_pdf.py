@@ -14,7 +14,7 @@ from PIL import Image
 SRC, OUT = "output/summary", "output/linkedin"
 PDF = f"{OUT}/warsaw_flat_prices.pdf"
 ORDER = [   # 1 what a flat is worth, 2 what you pay for around it, 3 reputation
-    "31_price_ridgelines", "23_blind_spot", "01_prices_over_time", "33_what_1m_buys", "34_family_flats", "35_house_or_flat",
+    "31_price_ridgelines", "23_blind_spot", "01_prices_over_time", "33_what_1m_buys", "34_family_flats", "36_big_flats", "35_house_or_flat",
     "18_building_age", "21_infill", "26_new_flats_on_offer", "16_flippers",
     "03_what_drives_price", "08_cafes", "09_noise", "20_trees", "24_transit_access", "25_what_reach_pays",
     "11_transit_x_price", "12_price_compass", "13_shape_of_value",
