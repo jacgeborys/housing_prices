@@ -228,6 +228,14 @@ python build_viz.py
 
 ## Status
 
+**2026-10-18 (age check):** GIS Expert's map (~2020) has no 2021+ layer; undated buildings fell into the
+reference class (1961-90 prefab). `age_check.py` -> output/age_check.gpkg (flag per building) +
+output/analysis/age_check_centre.png. Priced buildings: 935 undated with developer sales 2019+ (likely 2021+), 185
+undated otherwise, 283 dated <= 1990 with developer sales 2016+ (renovated tenements / attic conversions, or stale
+map). Test refit with the two undated groups as own classes: 2011-20 premium +17.5 -> +30.7 %, 2001-10 +18.3 ->
++25.6 %, pre-war +1.2 -> +4.7 %, developer share +20 -> +13 %; metro and cafés unchanged. Fix in price_drivers.py
+pending the user's visual check; age figures (03, 10, 18, 21) understate age premiums until then.
+
 **2026-10-17 (audit before posting):** reputation no longer leaks the district. `price_index.py` also saves the
 unshrunk building value (`value_2025_raw`) and its sampling variance (`fe_var`); `price_drivers.py` models the unshrunk
 value (the shrunk one was pulled toward the district mean, so thinly sold buildings borrowed their district's level),
