@@ -41,7 +41,7 @@ INDEX = "city"                      # --index district: re-base the target with 
 TRANSIT_SNAP_M = 25
 WALK_AMEN = "output/walk_amenities.gpkg"   # walk_amenities.py: POIs within a 7-minute walk
 TREES = "trees/output/tree_features.gpkg"   # trees/tree_features.py: canopy around each building
-AGE = "output/building_age.gpkg"           # fetch_building_age.py (GIS Expert decades); used when present
+AGE = "output/age_check.gpkg"              # age_check.py: GIS Expert decades corrected (2021+ = 2030, unknown = -1)
 TRANSIT = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_gates.gpkg"   # read only
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
 WALK = "output/walk_access.gpkg"    # walk_access.py: network walking distances
@@ -90,6 +90,8 @@ AGE_LABELS = {   # construction period dummies; reference = 1961-1990 (prefab er
     "age_1991_00": "Built 1991–2000",
     "age_2001_10": "Built 2001–2010",
     "age_2011_20": "Built 2011–2020",
+    "age_2021_plus": "Built 2021 or later (developer sales 2019+)",
+    "age_unknown": "Construction date unknown",
 }
 SCALE = {"walk_bus_km": 0.1, "canopy_100": 10, "green_ha_500": 10, "height_m": 10, "noise_road_db": 10, "noise_rail_db": 10, "noise_air_db": 10}     # coefficients reported per this many units
 
@@ -219,9 +221,10 @@ def build_features():
         de = v["osm_id"].map(a)
         v["decade_end"] = de
         bins = {"age_prewar": (0, 1940), "age_1941_60": (1941, 1960), "age_1991_00": (1991, 2000),
-                "age_2001_10": (2001, 2010), "age_2011_20": (2011, 2020)}
+                "age_2001_10": (2001, 2010), "age_2011_20": (2011, 2020), "age_2021_plus": (2021, 2030)}
         for c, (lo, hi) in bins.items():
             v[c] = de.between(lo, hi).astype(float)
+        v["age_unknown"] = (~(de > 0)).astype(float)   # missing or -1: own class, not the prefab reference
         print(f"building age: {de.gt(0).mean():.0%} of buildings dated "
               f"({', '.join(f'{c} {int(v[c].sum()):,}' for c in bins)})")
 

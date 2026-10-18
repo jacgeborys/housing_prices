@@ -13,12 +13,13 @@ travel times (r5py). All findings are associations within a district, not causal
 
 **Headline findings**
 - A constant-quality flat costs 2.2x its 2013 price, but in real terms is only back at the 2008 peak (fig. 01).
-- Building age matters most: 1991-2020 buildings +11..+17 % over 1961-90 prefab within the same district (fig. 18);
-  infill among pre-1961 blocks sells +32 % over its old neighbours (fig. 21).
+- Building age matters most: within the same district vs 1961-90 prefab, 1991-2000 +16 %, 2001-10 +26 %, 2011-20
+  +31 %, 2021+ +30 %, pre-war +4.5 % (fig. 03, 18); infill among pre-1961 blocks (420 buildings, now incl. 2021+)
+  sells +33 % over its old neighbours (fig. 21).
 - Location: -2..-5 % per km walked to the metro; reach to cafés, restaurants and culture +4..+9 % per doubling,
   about as informative as distance to PKiN + metro (fig. 04, 08, 25). Bus/tram frequency adds ~nothing once age
   is known (fig. 05); tram and train noise costs ~2 % per 10 dB, road noise much less (fig. 09).
-- Reputation: Żoliborz about +14 %, Praga-Północ about -18 % vs the prediction (fig. 06), unchanged when café and
+- Reputation: Żoliborz about +13 %, Praga-Północ about -18 % vs the prediction (fig. 06), unchanged when café and
   amenity counts are dropped from the model; central areas are pulling
   away, the two Pragas gain most (fig. 14); estate-level extremes in fig. 15.
 - Market behaviour: flips are ~6 per 100 resales since 2021 with a +25 % net markup (fig. 16); new flats on offer ask
@@ -233,8 +234,13 @@ reference class (1961-90 prefab). `age_check.py` -> output/age_check.gpkg (flag 
 output/analysis/age_check_centre.png. Priced buildings: 935 undated with developer sales 2019+ (likely 2021+), 185
 undated otherwise, 283 dated <= 1990 with developer sales 2016+ (renovated tenements / attic conversions, or stale
 map). Test refit with the two undated groups as own classes: 2011-20 premium +17.5 -> +30.7 %, 2001-10 +18.3 ->
-+25.6 %, pre-war +1.2 -> +4.7 %, developer share +20 -> +13 %; metro and cafés unchanged. Fix in price_drivers.py
-pending the user's visual check; age figures (03, 10, 18, 21) understate age premiums until then.
++25.6 %, pre-war +1.2 -> +4.7 %, developer share +20 -> +13 %; metro and cafés unchanged. User checked the centre by eye:
+yellow flags right; red mostly genuinely old (kept as dated) except Rotunda na Dynasach, Moderna Powiśle
+(Zajęcza 1A), Koszykowa 49A (age_check.OVERRIDES -> 2021+). Applied: age_check.gpkg holds the corrected decade
+(2021+ = 2030, unknown = -1, map value kept as decade_gisexpert) and replaces building_age.gpkg in price_drivers,
+building_age_story, infill (now 2001+ incl. 2021+), walkups, offers_story; new dummies age_2021_plus, age_unknown
+(also in summary_maps.FEATURES). Run order: price_index -> age_check -> price_drivers -> figures. Results: age
+premiums as in the overview; metro -3.5 %/km, cafés +2.7 %, reputation Żoliborz +13 %, Praga-Północ -18 %, R² 0.574.
 
 **2026-10-17 (audit before posting):** reputation no longer leaks the district. `price_index.py` also saves the
 unshrunk building value (`value_2025_raw`) and its sampling variance (`fe_var`); `price_drivers.py` models the unshrunk

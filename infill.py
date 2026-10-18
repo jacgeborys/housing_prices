@@ -1,7 +1,7 @@
 """
 Infill ("plomby"): new buildings squeezed into old neighbourhoods vs new buildings in new estates.
 
-A building of 2001-2020 (fetch_building_age.py, GIS Expert decades) is
+A building of 2001 or later (age_check.py: GIS Expert decades + 2021+ from developer sales) is
   infill       if >= 60 % of the dated buildings within NEAR_M were built before 1961 (>= MIN_NEIGH of them)
   new estate   if >= 60 % of them were built 2001 or later
   mixed        otherwise
@@ -31,13 +31,13 @@ SHARE = 0.6
 
 def main():
     v, d, w = load()                                         # priced buildings with resid_pct, value_2025
-    age = gpd.read_file("output/building_age.gpkg")
+    age = gpd.read_file("output/age_check.gpkg")
     age = age[age["decade_end"] > 0].copy()
     ap = age.geometry.representative_point()
     tree = cKDTree(np.c_[ap.x, ap.y])
     dec = age["decade_end"].to_numpy()
 
-    new = age[age["decade_end"].between(2001, 2020)].copy()
+    new = age[age["decade_end"].between(2001, 2030)].copy()
     npnt = new.geometry.representative_point()
     kinds, shares = [], []
     for i, nb in zip(new.index, tree.query_ball_point(np.c_[npnt.x, npnt.y], NEAR_M)):
@@ -79,7 +79,7 @@ def main():
 
     fig = page("New among the old",
                "Infill buildings (plomby) vs new buildings in new estates",
-               f"Buildings of 2001–2020 (construction decade: GIS Expert, mapy.gis-expert.pl). Infill: ≥ {SHARE:.0%} "
+               f"Buildings of 2001 or later (construction decade: GIS Expert, mapy.gis-expert.pl; 2021+ from RCN developer sales). Infill: ≥ {SHARE:.0%} "
                f"of dated buildings within {NEAR_M} m built before 1961 (≥ {MIN_NEIGH} neighbours); new estate: ≥ "
                f"{SHARE:.0%} built 2001 or later. Price: typical-flat value 2025 (≥ 3 sales); vs prediction = model "
                "residual (location, amenities, noise, age); vs old neighbours = median of priced pre-1961 buildings "
@@ -93,7 +93,7 @@ def main():
                    label=f"{k} ({(new['kind'] == k).sum():,})")
     outlines(ax, d)
     ax.legend(loc="upper right", fontsize=8.5, markerscale=1.8, frameon=True, framealpha=0.9, edgecolor="none",
-              title="Buildings of 2001–2020", title_fontsize=9)
+              title="Buildings of 2001 or later", title_fontsize=9)
 
     a2 = fig.add_axes([0.72, 0.60, 0.24, 0.20])
     s2 = summ.loc[[k for k in ("infill", "mixed", "new estate") if k in summ.index]]

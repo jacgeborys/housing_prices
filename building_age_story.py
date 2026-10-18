@@ -22,15 +22,15 @@ style.apply()
 
 ORDER = [(1900, "before\n1901"), (1910, "1901–\n10"), (1920, "1911–\n20"), (1930, "1921–\n30"), (1940, "1931–\n40"),
          (1950, "1941–\n50"), (1960, "1951–\n60"), (1970, "1961–\n70"), (1980, "1971–\n80"), (1990, "1981–\n90"),
-         (2000, "1991–\n2000"), (2010, "2001–\n10"), (2020, "2011–\n20")]
+         (2000, "1991–\n2000"), (2010, "2001–\n10"), (2020, "2011–\n20"), (2030, "2021+")]
 ERA_COL = {1900: "#8c6d46", 1910: "#8c6d46", 1920: "#8c6d46", 1930: "#8c6d46", 1940: "#8c6d46",
            1950: "#b5651d", 1960: "#b5651d", 1970: "#7d7d7d", 1980: "#7d7d7d", 1990: "#7d7d7d",
-           2000: "#3a7fc1", 2010: "#2a78d6", 2020: "#2a78d6"}
+           2000: "#3a7fc1", 2010: "#2a78d6", 2020: "#2a78d6", 2030: "#2a78d6"}
 
 
 def main():
     v, d, w = load()
-    age = gpd.read_file("output/building_age.gpkg", ignore_geometry=True)[["osm_id", "decade_end"]]
+    age = gpd.read_file("output/age_check.gpkg", ignore_geometry=True)[["osm_id", "decade_end"]]
     v = v.drop(columns=[c for c in ("decade_end",) if c in v]).merge(age, on="osm_id", how="left")
     v = v[v["decade_end"] > 0].copy()
     v["lv"] = np.log(v["value_2025"])
@@ -43,7 +43,8 @@ def main():
     fig = page("Old, older, newest",
                "What a building's age does to the price of its flats",
                "Construction decade: GIS Expert, mapy.gis-expert.pl/zabudowa-warszawy (based on City of Warsaw and "
-               "GUGiK data, ~2020), majority of 5 points per footprint. Price: typical-flat value 2025 (hedonic model, "
+               "GUGiK data, ~2020), majority of 5 points per footprint; 2021+ = no date on that map, developer sales "
+               "from 2019 (RCN). Price: typical-flat value 2025 (hedonic model, "
                f"≥ 3 sales), relative to the median building of the same district; decades with ≥ 30 buildings. Map: "
                "2011–20 vs 1961–90 buildings in the same 1.5 km hexagon (≥ 3 of each). " + style.SOURCE)
     a1 = fig.add_axes([0.10, 0.59, 0.86, 0.21])

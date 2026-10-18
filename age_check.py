@@ -10,6 +10,11 @@ Flags per building:
   newer_than_dated        dated <= 1990 but first developer sale 2016+ (renovated tenement or attic conversion
                           sold by a developer, or a new building where the map still shows the old one)
 
+Corrected age (column decade_end; the map's own value kept as decade_gisexpert), read by every age-dependent
+script: likely_2021_plus -> 2030 ("2021+"), no_data -> -1 (unknown, NOT the prefab reference), hand-checked new
+buildings on old plots (OVERRIDES) -> 2030; newer_than_dated stays as dated: checked by eye 2026-10-18, most are
+genuinely old (renovations / attic conversions sold by developers).
+
 Outputs: output/age_check.gpkg (layer age_check, every dated or flagged building; open in QGIS over a basemap),
          output/analysis/age_check_centre.png (preview of the centre, 2400 x 3000)
 """
@@ -27,6 +32,11 @@ HALF_W, HALF_H = 2600, 3250          # m around PKiN for the preview
 DECADE_COL = {1900: "#5a1e0f", 1910: "#7a2a12", 1920: "#983818", 1930: "#b4491f", 1940: "#c9622a",
               1950: "#e08a3c", 1960: "#efb15c", 1970: "#9fb3c8", 1980: "#7f9bb8", 1990: "#5f7fa6",
               2000: "#a9d38f", 2010: "#5fb36b", 2020: "#1f7a4d"}
+OVERRIDES = {   # osm_id: new building on an old plot, map still shows the old one (checked by eye 2026-10-18)
+    80030649: "Rotunda na Dynasach, Dynasy 22 (old rotunda demolished, rebuilt)",
+    152094243: "Moderna Powiśle, Zajęcza 1A",
+    97629178: "Koszykowa 49A",
+}
 FLAG_COL = {"likely_2021_plus": "#ffd400", "no_data": "#e01cd5"}
 
 
@@ -44,6 +54,11 @@ def flags():
     a.loc[~dated & (a["first_dev"] >= 2019), "flag"] = "likely_2021_plus"
     a.loc[~dated & ~(a["first_dev"] >= 2019), "flag"] = "no_data"
     a.loc[dated & (a["decade_end"] <= 1990) & (a["first_dev"] >= 2016), "flag"] = "newer_than_dated"
+    a.loc[a["osm_id"].isin(list(OVERRIDES)), "flag"] = "override_2021_plus"
+    a["decade_gisexpert"] = a["decade_end"]
+    a["decade_end"] = np.where(a["flag"].isin(["likely_2021_plus", "override_2021_plus"]), 2030,
+                               np.where(a["flag"] == "no_data", -1, a["decade_end"]))
+    a["label"] = np.where(a["decade_end"] == 2030, "2021+", np.where(a["decade_end"] < 0, "unknown", a["label"]))
     print(a["flag"].value_counts().to_string())
     priced = a["n_sales"] >= 3
     print("priced buildings (>= 3 sales):\n" + a.loc[priced, "flag"].value_counts().to_string())
@@ -65,8 +80,9 @@ def preview(a):
     ax = fig.add_axes([0.01, 0.13, 0.98, 0.79])
     allb.plot(ax=ax, color="#e4e2da", lw=0)
     roads.plot(ax=ax, color="#c9c6bb", lw=0.6)
-    dated = a[a["decade_end"] > 0]
-    dated.plot(ax=ax, color=dated["decade_end"].map(DECADE_COL).fillna("#999999"), lw=0)
+    dated = a[(a["decade_gisexpert"] > 0) & (a["decade_end"] < 2030)]
+    dated.plot(ax=ax, color=dated["decade_gisexpert"].map(DECADE_COL).fillna("#999999"), lw=0)
+    FLAG_COL["override_2021_plus"] = FLAG_COL["likely_2021_plus"]
     for f, c in FLAG_COL.items():
         s = a[a["flag"] == f]
         if len(s):

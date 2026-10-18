@@ -35,7 +35,7 @@ def main():
     t = gpd.read_file("output/price_model.gpkg", layer="transactions_adj", ignore_geometry=True,
                       columns=["osm_id", "floor", "market", "price_m2_2025"])
     t = t[(t["market"] == "secondary")].dropna(subset=["osm_id", "floor"])
-    age = gpd.read_file("output/building_age.gpkg", ignore_geometry=True)[["osm_id", "decade_end"]]
+    age = gpd.read_file("output/age_check.gpkg", ignore_geometry=True)[["osm_id", "decade_end"]]
     cov = gpd.read_file("output/coverage.gpkg", layer="building_coverage", ignore_geometry=True)[["osm_id", "floors"]]
     t = t.merge(age, on="osm_id").merge(cov, on="osm_id")
     t["lp"] = np.log(t["price_m2_2025"])

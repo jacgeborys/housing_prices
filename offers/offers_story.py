@@ -50,7 +50,7 @@ def main():
     o["district"] = gpd.sjoin(o, d[["district", "geometry"]], predicate="within", how="left") \
         .groupby(level=0)["district"].first().reindex(o.index).to_numpy()
 
-    vv = v if "decade_end" in v else v.merge(gpd.read_file(os.path.join(ROOT, "output", "building_age.gpkg"),
+    vv = v if "decade_end" in v else v.merge(gpd.read_file(os.path.join(ROOT, "output", "age_check.gpkg"),
                                                            ignore_geometry=True)[["osm_id", "decade_end"]], on="osm_id")
     rec = vv[vv["decade_end"].between(2011, 2020)]
     rp = rec.geometry.representative_point()

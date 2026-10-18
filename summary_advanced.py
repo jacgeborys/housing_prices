@@ -31,7 +31,8 @@ GROUPS = {   # feature group -> features (fixed order = fixed colour)
                                "walk7_health", "walk7_sport_play", "walk_school_km"],
     "Green & quiet": ["green_ha_500", "walk_park_km", "canopy_100", "noise_road_db", "noise_rail_db",
                       "noise_air_db"],
-    "Building age": ["age_prewar", "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20"],
+    "Building age": ["age_prewar", "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20",
+                     "age_2021_plus", "age_unknown"],
     "Building form": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage"],
 }
 REPUTATION = "Unexplained (reputation)"
