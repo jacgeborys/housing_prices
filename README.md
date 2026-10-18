@@ -56,6 +56,7 @@ travel times (r5py). All findings are associations within a district, not causal
 | 31 | opening map: price ridgelines (dark, "Unknown Pleasures") | `price_ridgelines.py` |
 | 32 | companion to 31: every building with >= 3 sales as a dot (price colour, size = sales), 2400x3000 | `price_points.py` |
 | 33-34 | what 1 million PLN buys (size of 0.9-1.1M resales 2024-26); room for a family (share of 70 m²+ resales, price of a 65-80 m² flat) | `family_flats.py` |
+| 35 | house or flat: house sales (RCN budynki layer) vs flat resales by district, per m² and in total | `houses.py` |
 | LinkedIn PDF | 21 selected figures in story order -> output/linkedin/ (numbered PNGs + warsaw_flat_prices.pdf) | `linkedin_pdf.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
@@ -235,7 +236,14 @@ python build_viz.py
 are 70 m²+; a 65-80 m² flat costs 0.80M in Rembertów to 1.63M in Żoliborz). Actual sales, resales only (developer
 deeds carry older prices). RCN rooms are "izby" (a separate kitchen counts, a kitchen annex does not): fig. 29's room
 panel now says so, and size in m² is used for families. Figures dropped from posting by the user: 22 (lift status not
-known per building), 02 (needs the benchmark explained). House sales: `fetch_rcn.py --layer budynki` started.
+known per building), 02 (needs the benchmark explained). House sales: `fetch_rcn.py --layer budynki` -> output/rcn_budynki_warszawa.gpkg (386K rows: every transaction
+touching a building, mostly flats again; TERYT 1465 = Warsaw, others neighbours; no date field, year from the deed
+number). `houses.py` -> output/houses.gpkg + summary/35: single-house deeds (built-up land, 1/1, free market, one
+building per deed), 2,272 in 2023-26; usable area recorded in only ~1 deed in 3 (where present ~1.6x footprint), so
+per-m² uses those 717, totals use all. Result: in all six districts with enough sales a house costs less per m² than
+a resold flat, plot included (Wawer 9.4K vs 13.3K, Białołęka 8.3K vs 12.9K), but a median house costs ~2x a median
+flat in total (Wawer 1.35M, 149 m², 360 m² plot). Houses only recorded from 2017; 2021-22 nearly empty. The old
+analysis/08 "houses" chart was a heuristic on the flats layer: superseded.
 
 **2026-10-18 (age check):** GIS Expert's map (~2020) has no 2021+ layer; undated buildings fell into the
 reference class (1961-90 prefab). `age_check.py` -> output/age_check.gpkg (flag per building) +
