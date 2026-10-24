@@ -29,6 +29,9 @@ travel times (r5py). All findings are associations within a district, not causal
   neighbourhoods) but not the price change (r = -0.11): stable, so already priced in. What moved the same buildings
   vs Warsaw: pre-war +6 %, 1941-60 +2.5 %, 1991-2010 -5.5 % (the new-build premium wears off), new M2 extension
   station within 800 m +2.9 %; cafés, trees, parks, tram stops ~0.
+- Trees: 2025 LiDAR canopy (`trees/lidar_features.py`, `price_drivers.py --trees lidar`) doubles the measured cover
+  round buildings but leaves the tree association where it was (~+1 % per 10 points within a district, not
+  significant); Copernicus 2018 stays the default (trees/README.md).
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
 

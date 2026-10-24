@@ -41,6 +41,7 @@ INDEX = "city"                      # --index district: re-base the target with 
 TRANSIT_SNAP_M = 25
 WALK_AMEN = "output/walk_amenities.gpkg"   # walk_amenities.py: POIs within a 7-minute walk
 TREES = "trees/output/tree_features.gpkg"   # trees/tree_features.py: canopy around each building
+TREES_LIDAR = "trees/output/tree_features_lidar.gpkg"   # trees/lidar_features.py: 2025 LiDAR canopy (--trees lidar)
 AGE = "output/age_check.gpkg"              # age_check.py: GIS Expert decades corrected (2021+ = 2030, unknown = -1)
 TRANSIT = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_gates.gpkg"   # read only
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
@@ -364,11 +365,17 @@ def plot(coef, importance, scores, v):
 
 
 def main():
-    global INDEX, OUT_GPKG, OUT_CSV, OUT_PNG
+    global INDEX, TREES, OUT_GPKG, OUT_CSV, OUT_PNG
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--index", choices=["city", "district"], default="city")
-    INDEX = ap.parse_args().index
+    ap.add_argument("--trees", choices=["copernicus", "lidar"], default="copernicus")
+    args = ap.parse_args()
+    INDEX = args.index
+    if args.trees == "lidar":    # comparison run: 2025 LiDAR canopy instead of Copernicus 2018, separate outputs
+        TREES = TREES_LIDAR
+        OUT_GPKG, OUT_CSV = OUT_GPKG.replace(".gpkg", "_lidar.gpkg"), OUT_CSV.replace(".csv", "_lidar.csv")
+        OUT_PNG = OUT_PNG.replace(".png", "_lidar.png")
     if INDEX == "district":      # robustness run: separate outputs
         OUT_GPKG, OUT_CSV = OUT_GPKG.replace(".gpkg", "_district_index.gpkg"), OUT_CSV.replace(".csv", "_district_index.csv")
         OUT_PNG = OUT_PNG.replace(".png", "_district_index.png")
