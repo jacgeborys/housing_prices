@@ -16,7 +16,8 @@ undated -> makscape, official date >= 20 years from GIS Expert's -> makscape_reb
 the year before the first one (dev_sale). New on an old plot (infill()): flagged newer_than_dated buildings sold whole by their developer, or
 whose outline the ~2020 map does not cover, take the completion decade (infill_new / infill_or_renovated, listed in
 output/analysis/age_infill.csv). Flats on sale now in a developer price list (on_sale(), offers/): undated, or dated <= 1990 with no sale -> 2021+.
-BDOT10k creation date (bdot_new()): undated or newer_than_dated buildings first drawn in 2021+ -> new.
+BDOT10k creation date (bdot_new()): undated or newer_than_dated buildings first drawn in 2021+ -> new; undated
+buildings on neither GIS Expert's map nor in BDOT -> 2021+ (absent_new).
 Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
 the same block) when >= 2 dated twins, >= 75 % of them, agree (twin_imputed); dated buildings whose twins disagree are listed for
 review (twin_conflict, decade kept).
@@ -231,6 +232,15 @@ def bdot_new(a):
     a.loc[hit, "flag"] = "bdot_new"
     print(f"BDOT creation date: {hit.sum()} uncertain buildings drawn in BDOT {BDOT_NEW_YEAR}+ dated as new "
           f"({(hit & (a['n_sales'] >= 3)).sum()} priced)")
+    # in OSM now, but on neither GIS Expert's ~2020 map (no layer drawn at all, not even "no data") nor in this BDOT
+    # (< 10 % of the footprint under any BDOT building): built after both -> 2021+ (flag absent_new); roofs excluded
+    u = (a["flag"] == "no_data") & (a["votes"] == 0) & (a["building"] != "roof")
+    ov = gpd.overlay(a.loc[u, ["osm_id", "geometry"]], b[["geometry"]], how="intersection", keep_geom_type=True)
+    share = a["osm_id"].map(ov.dissolve("osm_id").area / a.loc[u].set_index("osm_id").area).fillna(0)
+    absent = u & (share < 0.1)
+    a.loc[absent, ["decade_end", "label", "flag"]] = [2030, "2021+", "absent_new"]
+    print(f"absent from GIS Expert and BDOT: {absent.sum()} undated buildings dated 2021+ "
+          f"({(absent & (a['n_sales'] >= 3)).sum()} priced)")
     return a
 
 

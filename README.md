@@ -63,7 +63,8 @@ travel times (r5py). All findings are associations within a district, not causal
   output/analysis/age_infill.csv. Flats on sale in developer price lists (on_sale(), offers/): 36 more 2021+ (none
   priced). BDOT10k creation date (bdot_new(), new BUBD_A shapefile, X_DATAUTW): uncertain buildings first drawn in
   the 2022 update (~80 % built 2011+; old ones in it are redraws, so dated buildings are left) -> new: 223 (25
-  priced, e.g. Smolna 23). 766 stay unknown (93 priced, mostly Praga-Południe and Śródmieście): GIS Expert's own map has
+  priced); undated buildings on neither GIS Expert's map nor in that BDOT -> 2021+ (265, none priced, e.g. Smolna
+  23). 480 stay unknown (93 priced, mostly Praga-Południe and Śródmieście): GIS Expert's own map has
   them in its "brak danych" layer (checked on the cached tiles, e.g. Nowy Świat 53), not a scraping gap. Not yet propagated: price_drivers.py and the figures
   still need a rerun.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
