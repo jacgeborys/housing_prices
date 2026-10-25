@@ -11,7 +11,8 @@ Flags per building:
                           sold by a developer, or a new building where the map still shows the old one)
 
 OSM (osm_dates()): undated buildings with a construction year tagged in OSM (fetch_osm_dates.py) take its decade
-(osm_date). Developer sales (dev_dates()): undated buildings with >= 5 developer sales take the decade of
+(osm_date), after Maksim Pashnin's dates (makscape(), fetch_makscape.py: heritage registers, project documents;
+undated -> makscape, official date >= 20 years from GIS Expert's -> makscape_rebuilt). Developer sales (dev_dates()): undated buildings with >= 5 developer sales take the decade of
 the year before the first one (dev_sale). Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
 the same block) when >= 2 dated twins, >= 75 % of them, agree (twin_imputed); dated buildings whose twins disagree are listed for
 review (twin_conflict, decade kept).
@@ -50,6 +51,9 @@ TWIN_R, TWIN_TOL, TWIN_DH = 600, 0.03, 3       # twins: within 600 m, footprint 
 TWIN_CSV = "output/analysis/age_twin_conflicts.csv"
 OSM_DATES = "data/osm_building_dates.csv"     # fetch_osm_dates.py
 DEV_MIN = 5                                   # developer sales needed to date a building by its first one
+MAKSCAPE = "data/makscape/makscape_dates.gpkg"  # fetch_makscape.py (Maksim Pashnin, warsaw.makscape.com; local only)
+MK_OFFICIAL = ["official-heritage", "official-address-date", "primary-source-date"]
+MK_GAP = 20                                   # years: an official date this far from GIS Expert's replaces it
 
 
 def flags():
@@ -70,6 +74,7 @@ def flags():
     a["decade_gisexpert"] = a["decade_end"]
     a["decade_end"] = np.where(a["flag"].isin(["likely_2021_plus", "override_2021_plus"]), 2030,
                                np.where(a["flag"] == "no_data", -1, a["decade_end"]))
+    a = makscape(a)
     a = osm_dates(a)
     a = dev_dates(a)
     a = twins(a)
@@ -78,6 +83,44 @@ def flags():
     priced = a["n_sales"] >= 3
     print("priced buildings (>= 3 sales):\n" + a.loc[priced, "flag"].value_counts().to_string())
     a.to_file("output/age_check.gpkg", layer="age_check", driver="GPKG")
+    return a
+
+
+def _decade(year):
+    year = np.asarray(year, float)
+    return np.where(year >= 2021, 2030, np.clip((year - 1) // 10 * 10 + 10, 1900, None))
+
+
+def _label(d):
+    return "2021+" if d == 2030 else "before 1901" if d == 1900 else f"{int(d) - 9}–{int(d)}"
+
+
+def makscape(a):
+    """Maksim Pashnin's dates (fetch_makscape.py), matched by his building's centre inside our footprint (largest of
+    his footprints when several fall in one). Decade of the end of his date (completion; a range like 1948-1953 ->
+    1951-60). Undated buildings (no_data) take any of his dates except a vague century (flag makscape). Dated
+    buildings take his official or primary-source date (heritage registers, mostly post-war reconstructions) when it
+    is >= MK_GAP years from GIS Expert's (flag makscape_rebuilt); smaller gaps are left, mostly range boundaries."""
+    if not os.path.exists(MAKSCAPE):
+        print(f"makscape: {MAKSCAPE} missing (python fetch_makscape.py), skipped")
+        return a
+    m = gpd.read_file(MAKSCAPE)
+    m = m[m["kind"] != "century"]
+    j = gpd.sjoin(m, a[["osm_id", "geometry"]], predicate="within", how="inner")
+    j = j.sort_values("footprint_m2", ascending=False).drop_duplicates("osm_id").set_index("osm_id")
+    yr = a["osm_id"].map(j["date_end"].fillna(j["date_start"]))
+    q = a["osm_id"].map(j["quality"])
+    dec = pd.Series(_decade(yr), index=a.index)
+    a["mk_quality"], a["mk_source"], a["mk_raw"] = q, a["osm_id"].map(j["source"]), a["osm_id"].map(j["raw"])
+    fill = (a["flag"] == "no_data") & yr.notna()
+    rebuilt = (a["flag"].isin(["ok", "newer_than_dated"]) & q.isin(MK_OFFICIAL)
+               & ((dec - a["decade_end"]).abs() >= MK_GAP))
+    for mask, flag in ((fill, "makscape"), (rebuilt, "makscape_rebuilt")):
+        a.loc[mask, "decade_end"] = dec[mask]
+        a.loc[mask, "label"] = [_label(d) for d in dec[mask]]
+        a.loc[mask, "flag"] = flag
+    print(f"makscape: {len(j):,} of our buildings matched; {fill.sum()} undated dated ({(fill & (a['n_sales'] >= 3)).sum()} "
+          f"priced), {rebuilt.sum()} re-dated from heritage registers ({(rebuilt & (a['n_sales'] >= 3)).sum()} priced)")
     return a
 
 
