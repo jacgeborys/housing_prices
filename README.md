@@ -45,6 +45,12 @@ travel times (r5py). All findings are associations within a district, not causal
   old transit file (`buildings_gates`), the new `buildings_modes` matches all. `--min-sales 1` (20,711): tags and
   district reputation barely move (Wilanów +4 -> +10 %: small 1-2-sale buildings, often split houses); kept at 3.
   Default transit source still `gates`: switching to `--transit modes` (+1,061 buildings) means rerunning the figures.
+- Building age twins (2026-10-25, `age_check.py` twins()): an undated building takes the decade of its identical-
+  footprint neighbours within 600 m (area, perimeter, rectangle sides within 3 %, height within 3 m; >= 2 dated twins,
+  >= 75 % agreeing): 54 buildings, 12 priced (e.g. al. Jana Pawła II 20 and Grzybowska 9, Za Żelazną Bramą, 1961-70).
+  161 dated buildings disagree with their twins (87 priced, 126 by one decade): flagged twin_conflict, decade kept,
+  list in output/analysis/age_twin_conflicts.csv for review. Not yet propagated: price_drivers.py and the figures
+  still need a rerun.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
 
