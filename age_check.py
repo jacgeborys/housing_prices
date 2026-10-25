@@ -18,6 +18,7 @@ whose outline the ~2020 map does not cover, take the completion decade (infill_n
 output/analysis/age_infill.csv). Flats on sale now in a developer price list (on_sale(), offers/): undated, or dated <= 1990 with no sale -> 2021+.
 BDOT10k creation date (bdot_new()): undated or newer_than_dated buildings first drawn in 2021+ -> new; undated
 buildings on neither GIS Expert's map nor in BDOT -> 2021+ (absent_new).
+Hand dating (manual(), manual/age_manual.gpkg, in git): `year` filled in by hand wins over everything.
 Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
 the same block) when >= 2 dated twins, >= 75 % of them, agree (twin_imputed); dated buildings whose twins disagree are listed for
 review (twin_conflict, decade kept).
@@ -64,6 +65,7 @@ INFILL_CSV = "output/analysis/age_infill.csv"
 OFFERS = "offers/data/offers_warszawa.gpkg"   # offers/: developer price lists (flats on sale now)
 BDOT_SHP = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only; X_DATAUTW = object created
 BDOT_NEW_YEAR = 2021                          # created in BDOT from this year: drawn in the 2022 update (built ~2018-22)
+MANUAL = "manual/age_manual.gpkg"             # hand-dated buildings (in git): fill `year`, applied last
 
 
 def flags():
@@ -91,6 +93,7 @@ def flags():
     a = on_sale(a)
     a = bdot_new(a)
     a = twins(a)
+    a = manual(a)
     a["label"] = np.where(a["decade_end"] == 2030, "2021+", np.where(a["decade_end"] < 0, "unknown", a["label"]))
     print(a["flag"].value_counts().to_string())
     priced = a["n_sales"] >= 3
@@ -279,6 +282,46 @@ def _sides(g):
     """Short and long side of the minimum rotated rectangle."""
     c = np.asarray(g.minimum_rotated_rectangle.exterior.coords)
     return sorted(np.hypot(*np.diff(c[:3], axis=0).T))
+
+
+def manual(a):
+    """Hand dating, applied last (wins over every rule). MANUAL holds one row per building: osm_id (key, don't edit),
+    address / district / n_sales / flag_before (for reference), year (fill in: the year the current building was
+    completed, or rebuilt after the war; empty = still unknown), note (optional, e.g. a source). Rows with a year
+    set decade_end (2021+ -> 2030) and flag manual. Each run appends the buildings that are still unknown and not in
+    the file yet, priced ones first; existing rows and edits are never overwritten. To fix a building that is not
+    listed, copy its feature from output/age_check.gpkg into the layer and fill year."""
+    m = gpd.read_file(MANUAL) if os.path.exists(MANUAL) else None
+    if m is not None and len(m):
+        m["year"] = pd.to_numeric(m["year"], errors="coerce")
+        yr = a["osm_id"].map(m.dropna(subset=["year"]).drop_duplicates("osm_id", keep="last").set_index("osm_id")["year"])
+        hit = yr.notna()
+        dec = pd.Series(_decade(yr), index=a.index)
+        a.loc[hit, "decade_end"] = dec[hit]
+        a.loc[hit, "label"] = [_label(d) for d in dec[hit]]
+        a.loc[hit, "flag"] = "manual"
+        print(f"manual: {hit.sum()} buildings hand-dated ({(hit & (a['n_sales'] >= 3)).sum()} priced)")
+    todo = a[(a["flag"] == "no_data") & ~(a["osm_id"].isin(m["osm_id"]) if m is not None else False)]
+    if len(todo):
+        d = gpd.read_file("data/districts.gpkg").to_crs(2180)
+        pts = gpd.GeoDataFrame(geometry=todo.geometry.representative_point(), crs=2180)
+        dist = gpd.sjoin(pts, d[["district", "geometry"]], predicate="within", how="left")
+        new = gpd.GeoDataFrame({
+            "osm_id": todo["osm_id"].to_numpy(),
+            "address": (todo["addr_street"].fillna("") + " " + todo["addr_housenumber"].fillna("")).str.strip().to_numpy(),
+            "district": dist[~dist.index.duplicated()]["district"].to_numpy(),
+            "n_sales": todo["n_sales"].fillna(0).astype(int).to_numpy(),
+            "flag_before": "no_data", "year": pd.array([pd.NA] * len(todo), dtype="Int64"), "note": None},
+            geometry=todo.geometry.to_numpy(), crs=2180).sort_values("n_sales", ascending=False)
+        out = new if m is None else pd.concat([m, new], ignore_index=True)
+        os.makedirs(os.path.dirname(MANUAL), exist_ok=True)
+        from shapely.geometry import MultiPolygon
+        out["geometry"] = [MultiPolygon([g]) if g.geom_type == "Polygon" else g for g in out.geometry]
+        out.to_file(MANUAL, layer="age_manual", driver="GPKG", schema={
+            "geometry": "MultiPolygon", "properties": {"osm_id": "int", "address": "str", "district": "str", "n_sales": "int",
+                                                  "flag_before": "str", "year": "int", "note": "str"}})
+        print(f"manual: {len(new)} still-unknown buildings added to {MANUAL} (fill `year`)")
+    return a
 
 
 def twins(a):
