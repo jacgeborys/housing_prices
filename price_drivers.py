@@ -44,12 +44,14 @@ TREES = "trees/output/tree_features.gpkg"   # trees/tree_features.py: canopy aro
 TREES_LIDAR = "trees/output/tree_features_lidar.gpkg"   # trees/lidar_features.py: 2025 LiDAR canopy (--trees lidar)
 AGE = "output/age_check.gpkg"              # age_check.py: GIS Expert decades corrected (2021+ = 2030, unknown = -1)
 TRANSIT = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_gates.gpkg"   # read only
-# --transit modes: TransitFrequency's 06_building_modes.py (read only): every building by osm_id; line5_all = the max_trips
+# default (--transit modes): TransitFrequency's 06_building_modes.py (read only): every building by osm_id; line5_all = the max_trips
 # rule on the newer isochrones (routing fixes, major roads and railways as barriers)
 TRANSIT_MODES = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_modes.gpkg"
-TRANSIT_SRC = "gates"
+TRANSIT_SRC = "modes"                 # default since 2026-10-25 (gates = the old file, matched 88 %)
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
 WALK = "output/walk_access.gpkg"    # walk_access.py: network walking distances
+JOBS = "access/output/access_am_peak.csv"   # access/travel_times.py: door-to-door transit, Wed 07-09 (r5py)
+JOBS = "access/output/access_am_peak.csv"   # access/travel_times.py: door-to-door transit, Wed 07-09 (r5py)
 BDOT_RAW = "D:/QGIS/mapy_warszawy_misc/BDOT10k/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only: Feb 2024 export, the only one with ZABYTEK
 NOISE = {s: f"data/noise_{s}_lden.tif" for s in ("road", "rail", "air")}   # fetch_noise.py
 NOISE_DB = np.array([45, 57, 62, 67, 72, 77])   # EEA band -> dB (0 = below 55, taken as 45)
@@ -60,6 +62,8 @@ OUT_PNG = "output/analysis/16_price_drivers.png"
 
 LABELS = {
     "log2_trips": "Bus/tram/train departures (×2)",
+    "log2_jobs_transit": "Jobs reachable by transit, morning peak (×2)",
+    "log2_jobs_transit": "Jobs reachable by transit, morning peak (×2)",
     "walk_metro_km": "Walk to metro (per km)",
     "walk_rail_km": "Walk to rail station (per km)",
     "walk_bus_km": "Walk to bus stop (per 100 m)",
@@ -221,6 +225,18 @@ def build_features():
         v[c] = np.log2(1 + v["osm_id"].map(am[c]).fillna(0).to_numpy())
     print(f"walking amenities: {', '.join(f'{c} median {np.median(2 ** v[c] - 1):.0f}' for c in AMENITY_LABELS)}")
 
+    # jobs reachable by public transport in the morning peak, each weighted by exp(-minutes / 15) (walk + wait + ride
+    # + transfers, door to door); 49 buildings without a result take the median
+    jobs = v["osm_id"].map(pd.read_csv(JOBS).drop_duplicates("osm_id").set_index("osm_id")["jobs_grav"])
+    v["log2_jobs_transit"] = np.log2(1 + jobs.fillna(jobs.median())).to_numpy()
+    print(f"jobs by transit: median {jobs.median():,.0f} (gravity-weighted), {jobs.isna().sum()} filled with the median")
+
+    # jobs reachable by public transport in the morning peak, each weighted by exp(-minutes / 15) (walk + wait + ride
+    # + transfers, door to door); buildings without a result take the median
+    jobs = v["osm_id"].map(pd.read_csv(JOBS).drop_duplicates("osm_id").set_index("osm_id")["jobs_grav"])
+    v["log2_jobs_transit"] = np.log2(1 + jobs.fillna(jobs.median())).to_numpy()
+    print(f"jobs by transit: median {jobs.median():,.0f} (gravity-weighted), {jobs.isna().sum()} filled with the median")
+
     if os.path.exists(TREES):
         tf = gpd.read_file(TREES, ignore_geometry=True).drop_duplicates("osm_id").set_index("osm_id")
         v["canopy_100"] = 100 * v["osm_id"].map(tf["canopy_100"]).fillna(0).to_numpy()
@@ -378,11 +394,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--index", choices=["city", "district"], default="city")
     ap.add_argument("--trees", choices=["copernicus", "lidar"], default="copernicus")
-    ap.add_argument("--transit", choices=["gates", "modes"], default="gates")
+    ap.add_argument("--transit", choices=["gates", "modes"], default="modes")
     ap.add_argument("--min-sales", type=int, default=MIN_SALES)
     args = ap.parse_args()
     TRANSIT_SRC, MIN_SALES = args.transit, args.min_sales
-    tag = ("_modes" if TRANSIT_SRC == "modes" else "") + (f"_min{MIN_SALES}" if MIN_SALES != 3 else "")
+    tag = ("_gates" if TRANSIT_SRC == "gates" else "") + (f"_min{MIN_SALES}" if MIN_SALES != 3 else "")
     if tag:                      # test runs: separate outputs
         OUT_GPKG, OUT_CSV, OUT_PNG = (OUT_GPKG.replace(".gpkg", tag + ".gpkg"), OUT_CSV.replace(".csv", tag + ".csv"),
                                       OUT_PNG.replace(".png", tag + ".png"))

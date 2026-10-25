@@ -3,7 +3,7 @@ Do trams count for more than buses? Per-building access by mode from TransitFreq
 (read only: walking minutes to the nearest stop of each mode, departures 06-22 within a 10-minute walk, each line and
 direction once; tram sections opened since 2015).
 
-1. Cross-section (output/price_drivers_modes.gpkg, price_drivers.py --transit modes): log typical-flat value 2025 on
+1. Cross-section (output/price_drivers.gpkg): log typical-flat value 2025 on
    every non-transit feature of price_drivers.py (rail/tram noise at the facade included, so "near the tracks" is not
    "loud") + per mode either
      bands     walking minutes to the nearest tram / bus stop in bands; metro and rail walking minutes linear
@@ -40,7 +40,7 @@ PRE, POST = (-5, -2), (1, 5)                                                    
 
 
 def load():
-    v = gpd.read_file("output/price_drivers_modes.gpkg")
+    v = gpd.read_file("output/price_drivers.gpkg")
     bv = gpd.read_file("output/price_model.gpkg", layer="building_value", ignore_geometry=True,
                        columns=["osm_id", "value_2025_raw"]).drop_duplicates("osm_id").set_index("osm_id")
     v["y"] = np.log(v["osm_id"].map(bv["value_2025_raw"]))
