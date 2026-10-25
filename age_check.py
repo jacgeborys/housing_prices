@@ -16,6 +16,7 @@ undated -> makscape, official date >= 20 years from GIS Expert's -> makscape_reb
 the year before the first one (dev_sale). New on an old plot (infill()): flagged newer_than_dated buildings sold whole by their developer, or
 whose outline the ~2020 map does not cover, take the completion decade (infill_new / infill_or_renovated, listed in
 output/analysis/age_infill.csv). Flats on sale now in a developer price list (on_sale(), offers/): undated, or dated <= 1990 with no sale -> 2021+.
+BDOT10k creation date (bdot_new()): undated or newer_than_dated buildings first drawn in 2021+ -> new.
 Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
 the same block) when >= 2 dated twins, >= 75 % of them, agree (twin_imputed); dated buildings whose twins disagree are listed for
 review (twin_conflict, decade kept).
@@ -60,6 +61,8 @@ MK_GAP = 20                                   # years: an official date this far
 INFILL_SHARE, INFILL_COVER = 0.5, 0.6         # new on an old plot: developer sold >= half the flats / outline covered
 INFILL_CSV = "output/analysis/age_infill.csv"
 OFFERS = "offers/data/offers_warszawa.gpkg"   # offers/: developer price lists (flats on sale now)
+BDOT_SHP = "D:/QGIS/bdot_basemap/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only; X_DATAUTW = object created
+BDOT_NEW_YEAR = 2021                          # created in BDOT from this year: drawn in the 2022 update (built ~2018-22)
 
 
 def flags():
@@ -85,6 +88,7 @@ def flags():
     a = dev_dates(a)
     a = infill(a)
     a = on_sale(a)
+    a = bdot_new(a)
     a = twins(a)
     a["label"] = np.where(a["decade_end"] == 2030, "2021+", np.where(a["decade_end"] < 0, "unknown", a["label"]))
     print(a["flag"].value_counts().to_string())
@@ -204,6 +208,29 @@ def infill(a):
                                             gisexpert_cover=gx[new].round(2))         .sort_values(["flag", "n_dev"], ascending=[True, False]).to_csv(INFILL_CSV, index=False)
     print(f"infill: {new.sum()} new buildings on old plots ({amb.sum()} of them new or gutted behind a pre-war outline) "
           f"-> {INFILL_CSV}")
+    return a
+
+
+def bdot_new(a):
+    """BDOT10k creation date (X_DATAUTW) of the footprint under the building's point: objects come in update batches
+    (2012 initial load, 2014, 2018, 2022); the 2022 batch is ~80 % buildings from 2011 on, but also old buildings
+    redrawn, so it only decides uncertain cases. Undated (no_data) -> 2021+; newer_than_dated -> completion decade
+    from the first developer sale (2021+ without one). Flag bdot_new."""
+    if not os.path.exists(BDOT_SHP):
+        return a
+    b = gpd.read_file(BDOT_SHP, columns=["X_DATAUTW"]).set_crs(2180, allow_override=True)
+    b["yr"] = pd.to_datetime(b["X_DATAUTW"], errors="coerce").dt.year
+    pt = gpd.GeoDataFrame({"osm_id": a["osm_id"]}, geometry=a.geometry.representative_point(), crs=2180)
+    yr = a["osm_id"].map(gpd.sjoin(pt, b[["yr", "geometry"]], predicate="within").drop_duplicates("osm_id")
+                         .set_index("osm_id")["yr"])
+    hit = a["flag"].isin(["no_data", "newer_than_dated"]) & (yr >= BDOT_NEW_YEAR)
+    dec = pd.Series(np.where(a["first_dev"].notna(), _decade(a["first_dev"] - 1), 2030), index=a.index)
+    dec[a["flag"] == "no_data"] = 2030
+    a.loc[hit, "decade_end"] = dec[hit]
+    a.loc[hit, "label"] = [_label(d) for d in dec[hit]]
+    a.loc[hit, "flag"] = "bdot_new"
+    print(f"BDOT creation date: {hit.sum()} uncertain buildings drawn in BDOT {BDOT_NEW_YEAR}+ dated as new "
+          f"({(hit & (a['n_sales'] >= 3)).sum()} priced)")
     return a
 
 
