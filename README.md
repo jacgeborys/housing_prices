@@ -74,6 +74,7 @@ Not in the report (kept in output/summary/): 02, 04, 05, 13, 19, 22, 25, 27, 28,
 | 32 | companion to 31: every building with >= 3 sales as a dot (price colour, size = sales), 2400x3000 | `price_points.py` |
 | 33-34 | what 1 million PLN buys (size of 0.9-1.1M resales 2024-26); room for a family (share of 70 m²+ resales, price of a 65-80 m² flat) | `family_flats.py` |
 | 36 | where the big flats are: median size and share of 4+ room flats, all sales since 2016, top MSI neighbourhoods | `family_flats.py` |
+| 37 | explainer (methods, not in the report): trees = correct for everything else then compare (Wola, as sold vs corrected); reputation = predict without the place then group (Żoliborz vs Praga-Północ) | `explain_comparison.py` |
 | 35 | house or flat: house sales (RCN budynki layer) vs flat resales by district, per m² and in total | `houses.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
