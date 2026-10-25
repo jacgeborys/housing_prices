@@ -32,6 +32,10 @@ travel times (r5py). All findings are associations within a district, not causal
 - Trees: 2025 LiDAR canopy (`trees/lidar_features.py`, `price_drivers.py --trees lidar`) doubles the measured cover
   round buildings but leaves the tree association where it was (~+1 % per 10 points within a district, not
   significant); Copernicus 2018 stays the default (trees/README.md).
+- Model choice (`ml_compare.py` -> output/analysis/ml_compare*): same features, spatial CV on 2 km blocks. Linear
+  regression 0.53, with district 0.61; random forest 0.56, gradient boosting 0.57, XGBoost 0.59, MLP 0.35, kNN 0.44;
+  boosting with coordinates 0.63 (learns places). Double ML tags agree with OLS: trees +1.3 % per 10 pp (OLS +0.9),
+  2011-20 vs prefab +26 % (+31), metro -2.2 %/km (-3.5), cafés +2.9 % per doubling (+2.7), road noise ~0.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
 
