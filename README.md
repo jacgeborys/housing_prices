@@ -49,7 +49,10 @@ travel times (r5py). All findings are associations within a district, not causal
   footprint neighbours within 600 m (area, perimeter, rectangle sides within 3 %, height within 3 m; >= 2 dated twins,
   >= 75 % agreeing): 54 buildings, 12 priced (e.g. al. Jana Pawła II 20 and Grzybowska 9, Za Żelazną Bramą, 1961-70).
   161 dated buildings disagree with their twins (87 priced, 126 by one decade): flagged twin_conflict, decade kept,
-  list in output/analysis/age_twin_conflicts.csv for review. Not yet propagated: price_drivers.py and the figures
+  list in output/analysis/age_twin_conflicts.csv for review. Before the twins, OSM construction-year tags
+  (`fetch_osm_dates.py` -> data/osm_building_dates.csv, 545 tagged buildings, 86 % same decade as GIS Expert) date 28
+  more (2 priced). 1,119 stay unknown (171 priced, mostly Praga-Południe and Śródmieście): GIS Expert's own map has
+  them in its "brak danych" layer (checked on the cached tiles, e.g. Nowy Świat 53), not a scraping gap. Not yet propagated: price_drivers.py and the figures
   still need a rerun.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).

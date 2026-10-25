@@ -10,7 +10,8 @@ Flags per building:
   newer_than_dated        dated <= 1990 but first developer sale 2016+ (renovated tenement or attic conversion
                           sold by a developer, or a new building where the map still shows the old one)
 
-Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
+OSM (osm_dates()): undated buildings with a construction year tagged in OSM (fetch_osm_dates.py) take its decade
+(osm_date). Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
 the same block) when >= 2 dated twins, >= 75 % of them, agree (twin_imputed); dated buildings whose twins disagree are listed for
 review (twin_conflict, decade kept).
 
@@ -22,6 +23,8 @@ genuinely old (renovations / attic conversions sold by developers).
 Outputs: output/age_check.gpkg (layer age_check, every dated or flagged building; open in QGIS over a basemap),
          output/analysis/age_check_centre.png (preview of the centre, 2400 x 3000)
 """
+import os
+
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,6 +47,7 @@ OVERRIDES = {   # osm_id: new building on an old plot, map still shows the old o
 FLAG_COL = {"likely_2021_plus": "#ffd400", "no_data": "#e01cd5"}
 TWIN_R, TWIN_TOL, TWIN_DH = 600, 0.03, 3       # twins: within 600 m, footprint within 3 %, height within 3 m
 TWIN_CSV = "output/analysis/age_twin_conflicts.csv"
+OSM_DATES = "data/osm_building_dates.csv"     # fetch_osm_dates.py
 
 
 def flags():
@@ -64,12 +68,31 @@ def flags():
     a["decade_gisexpert"] = a["decade_end"]
     a["decade_end"] = np.where(a["flag"].isin(["likely_2021_plus", "override_2021_plus"]), 2030,
                                np.where(a["flag"] == "no_data", -1, a["decade_end"]))
+    a = osm_dates(a)
     a = twins(a)
     a["label"] = np.where(a["decade_end"] == 2030, "2021+", np.where(a["decade_end"] < 0, "unknown", a["label"]))
     print(a["flag"].value_counts().to_string())
     priced = a["n_sales"] >= 3
     print("priced buildings (>= 3 sales):\n" + a.loc[priced, "flag"].value_counts().to_string())
     a.to_file("output/age_check.gpkg", layer="age_check", driver="GPKG")
+    return a
+
+
+def osm_dates(a):
+    """Undated buildings (no_data) with a construction year tagged in OSM (fetch_osm_dates.py) take its decade
+    (flag osm_date). Runs before twins(), so a tagged year wins over a look-alike neighbour."""
+    if not os.path.exists(OSM_DATES):
+        print(f"osm dates: {OSM_DATES} missing (python fetch_osm_dates.py), skipped")
+        return a
+    o = pd.read_csv(OSM_DATES).dropna(subset=["year"]).drop_duplicates("osm_id").set_index("osm_id")["year"]
+    yr = a["osm_id"].map(o)
+    hit = (a["flag"] == "no_data") & yr.notna()
+    dec = np.clip((yr - 1) // 10 * 10 + 10, 1900, None)
+    a.loc[hit, "decade_end"] = np.where(yr[hit] >= 2021, 2030, dec[hit])
+    a.loc[hit, "label"] = [("2021+" if d == 2030 else "before 1901" if d == 1900 else f"{int(d) - 9}–{int(d)}")
+                           for d in a.loc[hit, "decade_end"]]
+    a.loc[hit, "flag"] = "osm_date"
+    print(f"osm dates: {hit.sum()} undated buildings dated from OSM tags ({(hit & (a['n_sales'] >= 3)).sum()} priced)")
     return a
 
 
