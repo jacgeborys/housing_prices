@@ -13,7 +13,10 @@ Flags per building:
 OSM (osm_dates()): undated buildings with a construction year tagged in OSM (fetch_osm_dates.py) take its decade
 (osm_date), after Maksim Pashnin's dates (makscape(), fetch_makscape.py: heritage registers, project documents;
 undated -> makscape, official date >= 20 years from GIS Expert's -> makscape_rebuilt). Developer sales (dev_dates()): undated buildings with >= 5 developer sales take the decade of
-the year before the first one (dev_sale). Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
+the year before the first one (dev_sale). New on an old plot (infill()): flagged newer_than_dated buildings sold whole by their developer, or
+whose outline the ~2020 map does not cover, take the completion decade (infill_new / infill_or_renovated, listed in
+output/analysis/age_infill.csv). Flats on sale now in a developer price list (on_sale(), offers/): undated, or dated <= 1990 with no sale -> 2021+.
+Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
 the same block) when >= 2 dated twins, >= 75 % of them, agree (twin_imputed); dated buildings whose twins disagree are listed for
 review (twin_conflict, decade kept).
 
@@ -54,6 +57,9 @@ DEV_MIN = 5                                   # developer sales needed to date a
 MAKSCAPE = "data/makscape/makscape_dates.gpkg"  # fetch_makscape.py (Maksim Pashnin, warsaw.makscape.com; local only)
 MK_OFFICIAL = ["official-heritage", "official-address-date", "primary-source-date"]
 MK_GAP = 20                                   # years: an official date this far from GIS Expert's replaces it
+INFILL_SHARE, INFILL_COVER = 0.5, 0.6         # new on an old plot: developer sold >= half the flats / outline covered
+INFILL_CSV = "output/analysis/age_infill.csv"
+OFFERS = "offers/data/offers_warszawa.gpkg"   # offers/: developer price lists (flats on sale now)
 
 
 def flags():
@@ -77,6 +83,8 @@ def flags():
     a = makscape(a)
     a = osm_dates(a)
     a = dev_dates(a)
+    a = infill(a)
+    a = on_sale(a)
     a = twins(a)
     a["label"] = np.where(a["decade_end"] == 2030, "2021+", np.where(a["decade_end"] < 0, "unknown", a["label"]))
     print(a["flag"].value_counts().to_string())
@@ -139,6 +147,81 @@ def osm_dates(a):
                            for d in a.loc[hit, "decade_end"]]
     a.loc[hit, "flag"] = "osm_date"
     print(f"osm dates: {hit.sum()} undated buildings dated from OSM tags ({(hit & (a['n_sales'] >= 3)).sum()} priced)")
+    return a
+
+
+def gisexpert_cover(geoms, n=40, seed=0):
+    """Share of each footprint that GIS Expert's map (cached tiles, any decade layer) draws as a building: a new
+    outline on an old plot is often only partly covered by the building the ~2020 map still shows there."""
+    from PIL import Image
+    import fetch_building_age as fb
+    rng, tiles, out = np.random.default_rng(seed), {}, []
+    for g in geoms:
+        pts = gpd.GeoSeries(fb.sample_points(g, n, rng), crs=2180).to_crs(3857)
+        px, py = (pts.x + fb.ORIGIN) / fb.RES, (fb.ORIGIN - pts.y) / fb.RES
+        hit = 0
+        for x, y in zip(px, py):
+            for layer in fb.LAYERS:
+                k = (layer, int(x // 256), int(y // 256))
+                if k not in tiles:
+                    f = f"{fb.CACHE}/{layer}/{fb.Z}/{k[2]}/{k[1]}.png"
+                    tiles[k] = (np.array(Image.open(f).convert("RGBA"))[..., 3]
+                                if os.path.exists(f) and os.path.getsize(f) else None)
+                if tiles[k] is not None and tiles[k][int(y % 256), int(x % 256)] > 0:
+                    hit += 1
+                    break
+        out.append(hit / len(pts))
+    return np.array(out)
+
+
+def infill(a):
+    """New buildings on old plots among newer_than_dated (dated <= 1990 by the ~2020 map, developer sales 2016+): the
+    developer sold >= INFILL_SHARE of the estimated flats (coverage.py) with no resale before the first developer sale,
+    or the outline is < INFILL_COVER covered by the building the map shows, with >= DEV_MIN developer sales. They take
+    the completion decade (year before the first developer sale; 2021+ -> 2030): flag infill_new, or
+    infill_or_renovated when the map dates the plot before 1941 and still covers the outline (>= 90 %): new behind
+    an old outline or a gutted tenement, sold whole as new flats either way; listed in INFILL_CSV for review."""
+    c = a["flag"] == "newer_than_dated"
+    tx = gpd.read_file("output/price_model.gpkg", layer="transactions_adj", ignore_geometry=True,
+                       columns=["osm_id", "year", "market"])
+    tx = tx[tx["osm_id"].isin(a.loc[c, "osm_id"])]
+    tx = tx[(tx["market"] != "primary") & (tx["year"] < tx["osm_id"].map(a.set_index("osm_id")["first_dev"]))]
+    before = a["osm_id"].map(tx.groupby("osm_id").size()).fillna(0)
+    cov = gpd.read_file("output/coverage.gpkg", layer="building_coverage", ignore_geometry=True,
+                        columns=["osm_id", "est_flats"]).drop_duplicates("osm_id").set_index("osm_id")["est_flats"]
+    share = a["n_dev"] / a["osm_id"].map(cov)
+    gx = pd.Series(np.nan, index=a.index)
+    gx[c] = gisexpert_cover(a.loc[c, "geometry"])
+    new = c & (a["n_dev"] >= DEV_MIN) & (((share >= INFILL_SHARE) & (before == 0)) | (gx < INFILL_COVER))
+    amb = new & (a["decade_end"] <= 1940) & (gx >= 0.9)
+    dec = pd.Series(_decade(a["first_dev"] - 1), index=a.index)
+    for mask, flag in ((new & ~amb, "infill_new"), (amb, "infill_or_renovated")):
+        a.loc[mask, "decade_end"] = dec[mask]
+        a.loc[mask, "label"] = [_label(d) for d in dec[mask]]
+        a.loc[mask, "flag"] = flag
+    a.loc[new, ["osm_id", "addr_street", "addr_housenumber", "flag", "decade_gisexpert", "decade_end", "first_dev",
+                "n_dev", "n_sales"]].assign(est_flats=a.loc[new, "osm_id"].map(cov), resales_before_dev=before[new],
+                                            gisexpert_cover=gx[new].round(2))         .sort_values(["flag", "n_dev"], ascending=[True, False]).to_csv(INFILL_CSV, index=False)
+    print(f"infill: {new.sum()} new buildings on old plots ({amb.sum()} of them new or gutted behind a pre-war outline) "
+          f"-> {INFILL_CSV}")
+    return a
+
+
+def on_sale(a):
+    """Buildings with flats on sale in a developer's price list now (offers/, geocoded to the house number) are new or
+    under construction: 2021+ (flag on_sale) when undated, or when dated <= 1990 with no recorded sale (the ~2020
+    map still shows what stood on the plot)."""
+    if not os.path.exists(OFFERS):
+        return a
+    o = gpd.read_file(OFFERS).to_crs(2180)
+    o = o[o["geo"] == "number"]
+    hit_ids = gpd.sjoin(o[["geometry"]], a[["osm_id", "geometry"]], predicate="within")["osm_id"].unique()
+    hit = a["osm_id"].isin(hit_ids) & ((a["flag"] == "no_data")
+                                       | (a["flag"].isin(["ok", "twin_conflict"]) & (a["decade_end"] <= 1990)
+                                          & ~(a["n_sales"] > 0)))
+    a.loc[hit, ["decade_end", "label", "flag"]] = [2030, "2021+", "on_sale"]
+    print(f"on sale: {hit.sum()} buildings with flats in a developer price list dated 2021+ "
+          f"({(hit & (a['n_sales'] >= 3)).sum()} priced)")
     return a
 
 

@@ -57,7 +57,11 @@ travel times (r5py). All findings are associations within a district, not causal
   e.g. Nowy Świat 53 rebuilt 1950, Res Sacra Miser 1949), 4 re-dated where a register date is >= 20 years from GIS
   Expert's (Filharmonia 1953-55). Then undated buildings with >= 5 developer sales take the decade of the year before the first one
   (completion; 91 % same decade as GIS Expert where both exist): 19 priced (e.g. Górczewska 181, Rayskiego 3).
-  989 stay unknown (116 priced, mostly Praga-Południe and Śródmieście): GIS Expert's own map has
+  New on old plots (infill()): buildings the ~2020 map dates <= 1990 but whose developer sold >= half the flats with no
+  resale before, or whose outline the map does not cover, take the completion decade: 64, all priced (43 infill_new,
+  e.g. Zagłoby 16; 21 infill_or_renovated behind a pre-war outline, e.g. Kłopotowskiego 11), list in
+  output/analysis/age_infill.csv. Flats on sale in developer price lists (on_sale(), offers/): 36 more 2021+ (none
+  priced). 989 stay unknown (116 priced, mostly Praga-Południe and Śródmieście): GIS Expert's own map has
   them in its "brak danych" layer (checked on the cached tiles, e.g. Nowy Świat 53), not a scraping gap. Not yet propagated: price_drivers.py and the figures
   still need a rerun.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
