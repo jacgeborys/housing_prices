@@ -44,6 +44,10 @@ TREES = "trees/output/tree_features.gpkg"   # trees/tree_features.py: canopy aro
 TREES_LIDAR = "trees/output/tree_features_lidar.gpkg"   # trees/lidar_features.py: 2025 LiDAR canopy (--trees lidar)
 AGE = "output/age_check.gpkg"              # age_check.py: GIS Expert decades corrected (2021+ = 2030, unknown = -1)
 TRANSIT = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_gates.gpkg"   # read only
+# --transit modes: TransitFrequency's 06_building_modes.py (read only): every building by osm_id; line5_all = the max_trips
+# rule on the newer isochrones (routing fixes, major roads and railways as barriers)
+TRANSIT_MODES = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_modes.gpkg"
+TRANSIT_SRC = "gates"
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
 WALK = "output/walk_access.gpkg"    # walk_access.py: network walking distances
 BDOT_RAW = "D:/QGIS/mapy_warszawy_misc/BDOT10k/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only: Feb 2024 export, the only one with ZABYTEK
@@ -173,7 +177,11 @@ def build_features():
     xy = np.c_[pts.x, pts.y]
 
     # transit: own osm_id, else the transit footprint the building's point lies in
-    t = gpd.read_file(TRANSIT).to_crs(2180)
+    if TRANSIT_SRC == "modes":
+        t = gpd.read_file(TRANSIT_MODES, columns=["osm_id", "line5_all"]).to_crs(2180)
+        t = t.rename(columns={"line5_all": "max_trips"})
+    else:
+        t = gpd.read_file(TRANSIT).to_crs(2180)
     trips = v["osm_id"].map(t.drop_duplicates("osm_id").set_index("osm_id")["max_trips"])
     miss = trips.isna()
     j = gpd.sjoin_nearest(gpd.GeoDataFrame(geometry=v.geometry[miss], crs=2180), t[["max_trips", "geometry"]],
@@ -365,12 +373,19 @@ def plot(coef, importance, scores, v):
 
 
 def main():
-    global INDEX, TREES, OUT_GPKG, OUT_CSV, OUT_PNG
+    global INDEX, TREES, TRANSIT_SRC, MIN_SALES, OUT_GPKG, OUT_CSV, OUT_PNG
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--index", choices=["city", "district"], default="city")
     ap.add_argument("--trees", choices=["copernicus", "lidar"], default="copernicus")
+    ap.add_argument("--transit", choices=["gates", "modes"], default="gates")
+    ap.add_argument("--min-sales", type=int, default=MIN_SALES)
     args = ap.parse_args()
+    TRANSIT_SRC, MIN_SALES = args.transit, args.min_sales
+    tag = ("_modes" if TRANSIT_SRC == "modes" else "") + (f"_min{MIN_SALES}" if MIN_SALES != 3 else "")
+    if tag:                      # test runs: separate outputs
+        OUT_GPKG, OUT_CSV, OUT_PNG = (OUT_GPKG.replace(".gpkg", tag + ".gpkg"), OUT_CSV.replace(".csv", tag + ".csv"),
+                                      OUT_PNG.replace(".png", tag + ".png"))
     INDEX = args.index
     if args.trees == "lidar":    # comparison run: 2025 LiDAR canopy instead of Copernicus 2018, separate outputs
         TREES = TREES_LIDAR

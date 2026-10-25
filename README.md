@@ -36,6 +36,15 @@ travel times (r5py). All findings are associations within a district, not causal
   regression 0.53, with district 0.61; random forest 0.56, gradient boosting 0.57, XGBoost 0.59, MLP 0.35, kNN 0.44;
   boosting with coordinates 0.63 (learns places). Double ML tags agree with OLS: trees +1.3 % per 10 pp (OLS +0.9),
   2011-20 vs prefab +26 % (+31), metro -2.2 %/km (-3.5), cafés +2.9 % per doubling (+2.7), road noise ~0.
+- Trams vs buses (`tram_test.py` -> output/analysis/tram_test*; access by mode from TransitFrequency's
+  `buildings_modes.gpkg`, `price_drivers.py --transit modes`): no tram premium. Walking time to a tram or bus stop,
+  departures per mode within 10 min (OLS within district / neighbourhood, double ML): all within about ±1-3 %, none
+  holding up in both; metro still -1.4 % per 5 min. New tram lines (Bemowo 2015, Tarchomin 2017, Winnica 2021; 94
+  buildings vs 307 in the same districts): resales -0.2 % (-4..+4) vs the district. 2024-25 lines too recent.
+- Sample size (2026-10-25): 20,711 buildings have a recorded flat sale; 13,607 have >= 3, 12,546 of them matched the
+  old transit file (`buildings_gates`), the new `buildings_modes` matches all. `--min-sales 1` (20,711): tags and
+  district reputation barely move (Wilanów +4 -> +10 %: small 1-2-sale buildings, often split houses); kept at 3.
+  Default transit source still `gates`: switching to `--transit modes` (+1,061 buildings) means rerunning the figures.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
 
