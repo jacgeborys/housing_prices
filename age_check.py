@@ -11,7 +11,8 @@ Flags per building:
                           sold by a developer, or a new building where the map still shows the old one)
 
 OSM (osm_dates()): undated buildings with a construction year tagged in OSM (fetch_osm_dates.py) take its decade
-(osm_date). Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
+(osm_date). Developer sales (dev_dates()): undated buildings with >= 5 developer sales take the decade of
+the year before the first one (dev_sale). Twins (twins()): an undated building takes the decade of its identical-footprint neighbours (prefab estates repeat
 the same block) when >= 2 dated twins, >= 75 % of them, agree (twin_imputed); dated buildings whose twins disagree are listed for
 review (twin_conflict, decade kept).
 
@@ -48,6 +49,7 @@ FLAG_COL = {"likely_2021_plus": "#ffd400", "no_data": "#e01cd5"}
 TWIN_R, TWIN_TOL, TWIN_DH = 600, 0.03, 3       # twins: within 600 m, footprint within 3 %, height within 3 m
 TWIN_CSV = "output/analysis/age_twin_conflicts.csv"
 OSM_DATES = "data/osm_building_dates.csv"     # fetch_osm_dates.py
+DEV_MIN = 5                                   # developer sales needed to date a building by its first one
 
 
 def flags():
@@ -69,6 +71,7 @@ def flags():
     a["decade_end"] = np.where(a["flag"].isin(["likely_2021_plus", "override_2021_plus"]), 2030,
                                np.where(a["flag"] == "no_data", -1, a["decade_end"]))
     a = osm_dates(a)
+    a = dev_dates(a)
     a = twins(a)
     a["label"] = np.where(a["decade_end"] == 2030, "2021+", np.where(a["decade_end"] < 0, "unknown", a["label"]))
     print(a["flag"].value_counts().to_string())
@@ -93,6 +96,19 @@ def osm_dates(a):
                            for d in a.loc[hit, "decade_end"]]
     a.loc[hit, "flag"] = "osm_date"
     print(f"osm dates: {hit.sum()} undated buildings dated from OSM tags ({(hit & (a['n_sales'] >= 3)).sum()} priced)")
+    return a
+
+
+def dev_dates(a):
+    """Undated buildings sold by their developer (>= DEV_MIN developer sales, the first in 2007+, RCN starts in 2006)
+    take the decade of the year before that first sale: completion. Checked on dated buildings: same decade as GIS
+    Expert for 91 % (the sale year itself: 78 %). Flag dev_sale."""
+    hit = (a["flag"] == "no_data") & (a["first_dev"] >= 2007) & (a["n_dev"] >= DEV_MIN)
+    a.loc[hit, "decade_end"] = (a.loc[hit, "first_dev"] - 2) // 10 * 10 + 10
+    a.loc[hit, "label"] = [f"{int(d) - 9}–{int(d)}" for d in a.loc[hit, "decade_end"]]
+    a.loc[hit, "flag"] = "dev_sale"
+    print(f"developer sales: {hit.sum()} undated buildings dated from their first developer sale "
+          f"({(hit & (a['n_sales'] >= 3)).sum()} priced)")
     return a
 
 
