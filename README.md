@@ -2,7 +2,7 @@
 
 Spatial analysis of residential real estate transactions in Warsaw, combining official transaction records with building footprints, address points, and OpenStreetMap data.
 
-## Overview (2026-10-17)
+## Overview (2026-10-25)
 
 Twenty years of Warsaw flat sales (RCN, ~270K in-city flat deeds) attached to buildings, turned into a
 constant-quality price per building (`price_index.py`), then explained by location and building features
@@ -19,8 +19,9 @@ travel times (r5py). All findings are associations within a district, not causal
 - Location: -2..-5 % per km walked to the metro; reach to cafés, restaurants and culture +4..+9 % per doubling,
   about as informative as distance to PKiN + metro (fig. 04, 08, 25). Bus/tram frequency adds ~nothing once age
   is known (fig. 05); tram and train noise costs ~2 % per 10 dB, road noise much less (fig. 09).
-- Reputation: Żoliborz about +13 %, Praga-Północ about -18 % vs the prediction (fig. 06), unchanged when café and
-  amenity counts are dropped from the model; central areas are pulling
+- Reputation (since 2026-10-25 the model knows the river side): Praga-Północ about -13 %, Wola -6 %, Żoliborz about
+  +4.5 % vs the prediction (fig. 06; before the river side Żoliborz looked +15 %: part of it was just the left bank),
+  unchanged when café and amenity counts are dropped from the model; central areas are pulling
   away, the two Pragas gain most (fig. 14); estate-level extremes in fig. 15.
 - Market behaviour: flips are ~6 per 100 resales since 2021 with a +25 % net markup (fig. 16); new flats on offer ask
   about what a 5-15-year-old flat nearby sells for (fig. 26); 68 % of flats on offer never change price in a year,
@@ -69,6 +70,13 @@ travel times (r5py). All findings are associations within a district, not causal
   still need a rerun.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
+
+**Model state (2026-10-25)**: plain-language summary in `MODEL_EXPLAINED.md`. Transit from TransitFrequency's
+`buildings_modes.gpkg` (default; all buildings matched, 13,607 in the model), new features: right bank of the
+Vistula (-13.5 % city-wide, no within-district tag: districts never cross the river) and jobs reachable by transit in
+the morning peak (`access/`; +0.3 % per doubling within a district). Out-of-sample R² 0.600 (was 0.574); importance of
+distance to PKiN 42 -> 24 %. Ages: GIS Expert + Makscape + OSM + developer sales + infill + BDOT creation date + twins
++ `manual/age_manual.gpkg` (hand dating, 51 so far): 76 priced buildings still unknown. Full rebuild run 2026-10-25.
 
 **The report** (`report/`, the deliverable): 27 slides in story order -> `output/report/NN_*.png` +
 `output/report/warsaw_flats.pdf`. `python report/build_report.py` assembles it from built figures; `--rebuild` reruns

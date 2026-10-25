@@ -124,7 +124,7 @@ def legend_patches(ax, colours, labels, title, loc="upper right"):
 # 6 --------------------------------------------------------------------------------------------
 def cheaper_than_expected(v, d, w):
     fig = page("Reputation: what a place earns beyond its features",
-               wrap("What flats sell for vs what the model predicts from location, transit, amenities, noise "
+               wrap("What flats sell for vs what the model predicts from location, river side, transit, amenities, noise "
                     "and the building. The model never sees district names", 80),
                "Median residual per 600 m hexagon (≥ 5 buildings): actual value of a typical flat vs the "
                "out-of-sample prediction (gradient boosting, spatial 5-fold CV on 2 km blocks; the model "
@@ -161,9 +161,9 @@ def cheaper_than_expected(v, d, w):
             ax2.text(xi, val + (0.8 if val > 0 else -0.8), f"{val:+.0f}%", ha="center",
                      va="bottom" if val > 0 else "top", fontsize=9, color=style.INK)
     ax2.set_ylim(g.min() - 6, g.max() + 6)
-    fig.text(0.03, 0.885, wrap(f"Same location, transit, cafés, green and noise: a flat in Żoliborz still sells "
-                               f"{g.get('Żoliborz', 0):+.0f}% above the prediction, one in Praga-Północ "
-                               f"{g.get('Praga-Północ', 0):+.0f}% below.", 95),
+    fig.text(0.03, 0.885, wrap(f"Same location, river side, transit, cafés, green and noise: a flat in Żoliborz still "
+                               f"sells {abs(g.get('Żoliborz', 0)):.0f}% above the prediction, one in Praga-Północ "
+                               f"{abs(g.get('Praga-Północ', 0)):.0f}% below.", 95),
              fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
     save(fig, "06_cheaper_than_expected.png")
 

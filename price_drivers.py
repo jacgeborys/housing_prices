@@ -50,6 +50,8 @@ TRANSIT_MODES = "D:/QGIS/TransitFrequency/_data/warsaw/2026_10_04/buildings_mode
 TRANSIT_SRC = "modes"                 # default since 2026-10-25 (gates = the old file, matched 88 %)
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
 WALK = "output/walk_access.gpkg"    # walk_access.py: network walking distances
+RIGHT_BANK = ["Praga-Południe", "Praga-Północ", "Targówek", "Białołęka", "Rembertów", "Wawer", "Wesoła"]   # no district
+                                    # crosses the Vistula: right bank = these; constant within a district (no within tag)
 JOBS = "access/output/access_am_peak.csv"   # access/travel_times.py: door-to-door transit, Wed 07-09 (r5py)
 JOBS = "access/output/access_am_peak.csv"   # access/travel_times.py: door-to-door transit, Wed 07-09 (r5py)
 BDOT_RAW = "D:/QGIS/mapy_warszawy_misc/BDOT10k/Warszawa/PL.PZGiK.330.1465__OT_BUBD_A.shp"   # read only: Feb 2024 export, the only one with ZABYTEK
@@ -75,6 +77,7 @@ LABELS = {
     "noise_air_db": "Aircraft noise (per 10 dB)",
     "heritage": "Listed heritage building",
     "centre_km": "Distance to PKiN (per km)",
+    "right_bank": "Right bank of the Vistula",
     "river_km": "Distance to the Vistula (per km)",
     "green_ha_500": "Park/forest ≤ 500 m (per 10 ha)",
     "height_m": "Building height (per 10 m)",
@@ -229,6 +232,7 @@ def build_features():
     # + transfers, door to door); 49 buildings without a result take the median
     jobs = v["osm_id"].map(pd.read_csv(JOBS).drop_duplicates("osm_id").set_index("osm_id")["jobs_grav"])
     v["log2_jobs_transit"] = np.log2(1 + jobs.fillna(jobs.median())).to_numpy()
+    v["right_bank"] = v["district"].isin(RIGHT_BANK).astype(float).to_numpy()   # distance to PKiN is the same both ways
     print(f"jobs by transit: median {jobs.median():,.0f} (gravity-weighted), {jobs.isna().sum()} filled with the median")
 
     # jobs reachable by public transport in the morning peak, each weighted by exp(-minutes / 15) (walk + wait + ride
@@ -301,7 +305,10 @@ def linear_models(v, feats):
                      "pct_district_hi": 100 * (np.exp(b1[i] + 1.96 * s1[i]) - 1)})
     _, _, r_d = ols(D, y, v["cell_1km"].to_numpy())
     print(f"OLS R²: features {r0:.3f}, district only {r_d:.3f}, features + district {r1:.3f}")
-    return pd.DataFrame(rows), {"ols": r0, "district": r_d, "ols_district": r1}
+    out = pd.DataFrame(rows)
+    # constant within a district (absorbed by the district dummies): no within-district tag
+    out.loc[out["feature"] == "right_bank", ["pct_district", "pct_district_lo", "pct_district_hi"]] = np.nan
+    return out, {"ols": r0, "district": r_d, "ols_district": r1}
 
 
 def gbm(seed):
