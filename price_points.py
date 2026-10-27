@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 
+from house_cells import M2 as HOUSE_M2, year_index
 from price_ridgelines import BG, CMAP_HI, CMAP_LO, INK, LABELS, MUTED, priced_buildings
 from summary_charts import FIG, OUT
 
@@ -42,6 +43,14 @@ def main():
     norm = Normalize(CMAP_LO, CMAP_HI)
     ax.scatter(pts.x, pts.y, s=0.25 + 0.55 * np.sqrt(np.minimum(bv["n"], 200)), c=bv["value"], cmap=RAMP,
                norm=norm, lw=0, zorder=3, rasterized=True)
+    # houses (2026-10-27): one diamond per sale, price per m2 of living space (plot included) in 2025 prices; outlined so
+    # they stand out on the dark map (most are below the 12K end of the ramp)
+    hs = gpd.read_file("output/houses.gpkg")
+    hs = hs[hs["price_m2"].between(*HOUSE_M2) & (hs["year"] >= 2017)].copy()
+    hs["adj"] = hs["price_m2"] * np.exp(-hs["year"].astype(int).map(year_index(hs)))
+    hs = hs.sort_values("adj")
+    ax.scatter(hs.geometry.x, hs.geometry.y, s=4.0, c=hs["adj"], cmap=RAMP, norm=norm, marker="D", lw=0.25,
+               edgecolors="#cfd3e6", zorder=3.5, rasterized=True)
     ax.set_xlim(x0 - 500, x1 + 500)
     ax.set_ylim(y0 - 300, y1 + 2600)
     ax.set_aspect("equal")
@@ -52,11 +61,11 @@ def main():
         ax.text(pt.x, pt.y, name, color=INK, fontsize=8.5, ha="center", zorder=10, fontweight="semibold",
                 path_effects=[pe.withStroke(linewidth=2.5, foreground=BG)])
 
-    fig.text(0.05, 0.955, "Where the flats sold", color=INK, fontsize=30, fontweight="bold", va="top")
-    fig.text(0.05, 0.905, f"{len(bv):,} buildings with {int(bv['n'].sum()):,} recorded flat sales, 2006–2026. "
-                          "Colour: what a\ntypical flat there costs per m² in 2025; bigger dot = more sales. "
-                          "Dark grey: other buildings.", color=MUTED, fontsize=12.5, va="top", linespacing=1.4)
-    cax = fig.add_axes([0.66, 0.075, 0.28, 0.012])
+    fig.text(0.05, 0.955, "Where flats and houses sold", color=INK, fontsize=30, fontweight="bold", va="top")
+    fig.text(0.05, 0.905, f"Dots: {len(bv):,} buildings with {int(bv['n'].sum()):,} flat sales 2006–2026 (bigger = more sales).\n"
+                          f"Diamonds: {len(hs):,} house sales 2017–2026. Colour: PLN per m² in 2025. Dark grey: other buildings.",
+             color=MUTED, fontsize=12.5, va="top", linespacing=1.4)
+    cax = fig.add_axes([0.66, 0.098, 0.28, 0.012])
     cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=RAMP), cax=cax, orientation="horizontal")
     cb.outline.set_visible(False)
     cb.set_ticks([12000, 16000, 20000, 24000])
@@ -65,7 +74,8 @@ def main():
     cax.set_title("PLN per m²", color=MUTED, fontsize=9, loc="left")
     fig.text(0.05, 0.022, f"Hedonic value of a typical 2-room resale flat, 2025, per building (date, floor and size removed; "
                           f"{int(bv['few'].sum()):,} buildings with 1-2 sales included, obvious outliers removed).\n"
-                          "Cooperative-right flats are not in the register (fig. 23).\n"
+                          "Cooperative-right flats are not in the register (fig. 23). Houses: price per m² of living space, plot included, brought to\n"
+                          "2025 with a house price index; area from the deed or estimated from the building outline and floors (typical miss 14 %).\n"
                           "Source: GUGiK Rejestr Cen Nieruchomości (RCN) 2006–2026, OSM, BDOT10k.",
              color=MUTED, fontsize=7.5, va="bottom")
     path = f"{OUT}/32_price_points.png"
