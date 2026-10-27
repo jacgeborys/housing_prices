@@ -72,68 +72,68 @@ def houses(d):
     return h
 
 
+def curves(ax, house, flat, ticks, labels, xlabel):
+    """Two overlapping density curves on a log axis, medians marked."""
+    from scipy.stats import gaussian_kde
+    lo, hi = np.log10(ticks[0] * 0.8), np.log10(ticks[-1] * 1.25)
+    x = np.linspace(lo, hi, 400)
+    for vals, colr, lab in ((flat, "#9a968b", "Resold flat"), (house, "#2a6b35", "House (with plot)")):
+        v = np.log10(vals.dropna())
+        y = gaussian_kde(v, bw_method=0.18)(x)
+        ax.fill_between(10 ** x, y, color=colr, alpha=0.45, lw=0)
+        ax.plot(10 ** x, y, color=colr, lw=1.6, label=lab)
+        m = np.median(vals.dropna())
+        ax.axvline(m, color=colr, lw=1.2, ls=(0, (4, 3)))
+        ax.text(m, y.max() * 1.07, labels(m), color=colr, ha="center", va="bottom", fontsize=10, fontweight="bold",
+                bbox=dict(boxstyle="round,pad=0.15", fc=style.SURFACE, ec="none", alpha=0.85))
+    ax.set_xscale("log")
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([labels(t) for t in ticks])
+    ax.minorticks_off()
+    ax.set_xlim(10 ** lo, 10 ** hi)
+    ax.set_yticks([])
+    for sp in ("top", "right", "left"):
+        ax.spines[sp].set_visible(False)
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.12)
+    ax.set_xlabel(xlabel, fontsize=9)
+
+
 def main():
     v, d, w = load()
     h = houses(d)
     r = h[h["year"].between(*RECENT)]
     t = gpd.read_file("output/price_model.gpkg", layer="transactions_adj", ignore_geometry=True)
     f = t[t["year"].between(*RECENT) & (t["market"] == "secondary")]
-    g = r.groupby("district").agg(n=("price", "size"), house=("price", "median"), house_m2=("price_m2", "median"),
-                                  n_m2=("price_m2", "count"), usable=("usable_all", "median"), plot=("plot_m2", "median"))
-    g = g.join(f.groupby("district").agg(flat=("price", "median"), flat_m2=("price_m2", "median")))
-    g = g[(g["n"] >= MIN_HOUSES) & (g["n_m2"] >= MIN_WITH_AREA)].sort_values("house_m2")
-    print(g.round(0).to_string())
-    k = g["n"].idxmax()                                   # the district with the most house sales
-    cheaper = g.index[g["house_m2"] < g["flat_m2"]]
+    n_by = r.groupby("district").size()
+    keep = n_by[n_by >= MIN_HOUSES].index                       # districts with enough house sales; flats from the same ones
+    r, f = r[r["district"].isin(keep)], f[f["district"].isin(keep)]
+    hp, fp = r["price"], f["price"]
+    hm2, fm2 = r["price_m2"].where(r["price_m2"].between(2000, 40000)), f["price_m2"].where(f["price_m2"].between(2000, 40000))
+    tot_x, m2_x = hp.median() / fp.median(), hm2.median() / fm2.median()
+    print(f"{len(r):,} houses, {len(f):,} flats in {len(keep)} districts; median house {hp.median():,.0f} vs flat "
+          f"{fp.median():,.0f} ({tot_x:.2f}x); per m2 {hm2.median():,.0f} vs {fm2.median():,.0f} ({m2_x:.2f}x)")
 
-    fig = page("House or flat?",
-               f"Houses and resold flats sold {RECENT[0]}–{RECENT[1]}, price per m² of living space",
-               f"Houses: {len(r):,} sales of a single-family house with its plot (RCN, full ownership, one house per "
-               f"deed). Price per m² of the house INCLUDING the plot; living area from the deed where recorded "
+    fig = page(f"A house costs {tot_x:.1f}x a flat, a square metre {1 - m2_x:.0%} less",
+               f"Houses and resold flats sold {RECENT[0]}–{RECENT[1]} in the {len(keep)} districts with at least {MIN_HOUSES} "
+               "house sales",
+               f"Houses: {len(r):,} sales of a single-family house with its plot (RCN, full ownership, one house per deed; "
+               f"recorded from 2017); flats: {len(f):,} RCN resales in the same districts and years, prices as paid. Price per "
+               f"m² of living space, the house INCLUDING its plot; the house's area is the deed's own where recorded "
                f"({(r['area_source'] == 'deed').mean():.0%}), else estimated from the building outline and floors "
-               f"(BDOT10k; typical miss 14 % per house). Flats: RCN resales in the same years. "
-               f"Medians; districts with ≥ {MIN_HOUSES} house sales. Terraced and "
-               "semi-detached houses on their own plot count as houses. The register records houses from 2017. "
-               + style.SOURCE)
-    where = ("In every district with enough house sales" if len(cheaper) == len(g)
-             else f"In {len(cheaper)} of {len(g)} districts" if len(cheaper) > 3
-             else "In " + ", ".join(cheaper[:-1]) + " and " + cheaper[-1])
-    fig.text(0.03, 0.885, wrap(f"{where}, a house costs less per m² than a flat, plot included: "
-                               f"in {k} {g.loc[k, 'house_m2'] / 1000:.1f}K vs {g.loc[k, 'flat_m2'] / 1000:.1f}K, with a "
-                               f"median {g.loc[k, 'plot']:.0f} m² of land. The catch is the total: a median house there "
-                               f"has {g.loc[k, 'usable']:.0f} m² and costs {g.loc[k, 'house'] / 1e6:.1f} million, a flat "
-                               f"{g.loc[k, 'flat'] / 1e6:.2f} million.", 100), fontsize=10.5, fontweight="semibold", va="top")
-
-
-    a2 = fig.add_axes([0.16, 0.47, 0.78, 0.33])
-    y = np.arange(len(g))
-    a2.barh(y + 0.19, g["house_m2"], height=0.36, color="#2a6b35", label="House (with plot)")
-    a2.barh(y - 0.19, g["flat_m2"], height=0.36, color=style.CONTEXT, label="Resold flat")
-    for yi, (hm, fm) in enumerate(zip(g["house_m2"], g["flat_m2"])):
-        a2.text(hm, yi + 0.19, f" {hm / 1000:.1f}K", va="center", fontsize=7.5)
-        a2.text(fm, yi - 0.19, f" {fm / 1000:.1f}K", va="center", fontsize=7.5, color=style.INK_2)
-    a2.set_yticks(y)
-    a2.set_yticklabels(g.index, fontsize=8.5)
-    a2.set_xlim(0, g["house_m2"].max() * 1.25)
-    a2.set_xticks([])
-    for sp in ("top", "right", "bottom"):
-        a2.spines[sp].set_visible(False)
-    a2.legend(loc="upper left", bbox_to_anchor=(0, -0.01), fontsize=8, frameon=False, ncol=2)
-    a2.set_title("Price per m² of living space, median", fontsize=10.5, loc="left")
-
-    a3 = fig.add_axes([0.10, 0.12, 0.86, 0.25])
-    x = np.arange(len(g))
-    a3.bar(x - 0.2, g["house"] / 1e6, width=0.4, color="#2a6b35", label="House")
-    a3.bar(x + 0.2, g["flat"] / 1e6, width=0.4, color=style.CONTEXT, label="Resold flat")
-    for xi, (hv, fv, u) in enumerate(zip(g["house"], g["flat"], g["usable"])):
-        a3.text(xi - 0.2, hv / 1e6, f"{hv / 1e6:.1f}\n{u:.0f} m²", ha="center", va="bottom", fontsize=7)
-    a3.set_xticks(x)
-    a3.set_xticklabels(g.index, fontsize=8.5, rotation=40, ha="right")
-    a3.set_ylabel("million PLN")
-    a3.set_ylim(0, g["house"].max() / 1e6 * 1.3)
-    style.hgrid_only(a3)
-    a3.legend(loc="upper left", fontsize=8, frameon=False, ncol=2)
-    a3.set_title("What you pay in total (median; house size under the bar label)", fontsize=10.5, loc="left")
+               "(BDOT10k; typical miss 14 % per house). Dashed lines: medians. " + style.SOURCE)
+    mil = lambda m: f"{m / 1e6:.2g} M" if m >= 1e6 else f"{m / 1e6:.2f} M"
+    k = lambda m: f"{m / 1000:.0f}K"
+    fig.text(0.03, 0.885, wrap(f"In total a median house costs {mil(hp.median())} and a flat {mil(fp.median())}. Per m² it flips: "
+                               f"{k(hm2.median())} for a house, plot included, {k(fm2.median())} for a flat. A house buys "
+                               "much more space, and the land comes with it.", 100),
+             fontsize=10.5, fontweight="semibold", va="top")
+    a1 = fig.add_axes([0.06, 0.52, 0.90, 0.29])
+    curves(a1, hp, fp, [0.3e6, 0.5e6, 1e6, 2e6, 4e6], mil, "price paid, PLN")
+    a1.legend(loc="upper right", frameon=False, fontsize=9.5)
+    a1.set_title("What you pay in total", fontsize=11.5, loc="left")
+    a2 = fig.add_axes([0.06, 0.135, 0.90, 0.29])
+    curves(a2, hm2, fm2, [4000, 6000, 10000, 15000, 25000], k, "price per m² of living space, PLN")
+    a2.set_title("What a square metre costs", fontsize=11.5, loc="left")
     save(fig, "35_house_or_flat.png")
 
 
