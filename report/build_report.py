@@ -33,7 +33,7 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     ("src", "r02_sizes"), ("src", "r03_new_resale"), ("summary", "29_flat_sizes"),
     # 3 prices
     ("summary", "01_prices_over_time"), ("summary", "33_what_1m_buys"), ("summary", "34_family_flats"),
-    ("summary", "35_house_or_flat"),
+    ("summary", "38_house_map"), ("summary", "35_house_or_flat"),
     # 4 what goes with price
     ("summary", "03_what_drives_price"), ("summary", "18_building_age"), ("summary", "21_infill"),
     ("summary", "08_cafes"), ("summary", "09_noise"), ("summary", "20_trees"), ("summary", "11_transit_x_price"),
@@ -50,7 +50,7 @@ SLIDES = [   # (source folder, file stem); sections as in the README
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
     "reputation_time.py", "estates.py", "infill.py", "flips.py", "building_age_story.py", "flat_sizes.py",
-    "offers/offers_story.py", "access/access_preview.py", "houses.py", "family_flats.py", "price_ridgelines.py",
+    "offers/offers_story.py", "access/access_preview.py", "houses.py", "house_map.py", "family_flats.py", "price_ridgelines.py",
     "price_points.py", "report/descriptive.py",
 ]
 
