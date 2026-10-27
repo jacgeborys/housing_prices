@@ -74,7 +74,7 @@ travel times (r5py). All findings are associations within a district, not causal
   ownership share, 1,380 of them, now count as 1/1): 6,913 clean house sales (was 5,483) vs 251,896 flat sales. Living
   area is the deed's own where recorded (~15 %), else BDOT10k outline x floors (ratios 1.2 / 1.52 / 1.97 for 1 / 2 / 3
   floors, fitted on 1,115 deeds with both; typical miss 14 % per house, 18 % with one ratio): fig. 35 now covers 14
-  districts, Wesoła included (57 sales 2023-26). Ideas not yet done: group nearby houses in 300 m cells (84 % of sales
+  districts, Wesoła included (57 sales 2023-26). Fig. 35 is now overlapping curves (house 1.6 M vs flat 0.73 M in total, 9.9K vs 15.0K per m²), fig. 38 maps every house sale. Not yet done: group nearby houses in 300 m cells (84 % of sales
   in groups of >= 3), house map + overlapping total-price curves.
 - Wesoła (2026-10-27): the register holds ~700 unit sales there (517 in the model, 101 buildings, 38 with >= 3 sales,
   80 % of its sales); nothing is lost in matching (46K records outside every district are 1-5 km beyond the city
@@ -99,14 +99,14 @@ now includes `right_bank` and `log2_jobs_transit`; fig. 10 groups: distance to t
 green, river & quiet (distance to the Vistula). Ages: GIS Expert + Makscape + OSM + developer sales + infill + BDOT creation date + twins
 + `manual/age_manual.gpkg` (hand dating, 51 so far): 76 priced buildings still unknown. Full rebuild run 2026-10-25.
 
-**The report** (`report/`, the deliverable): 27 slides in story order -> `output/report/NN_*.png` +
+**The report** (`report/`, the deliverable): 28 slides in story order -> `output/report/NN_*.png` +
 `output/report/warsaw_flats.pdf`. `python report/build_report.py` assembles it from built figures; `--rebuild` reruns
 the figure scripts first (pipeline order, ~1 h). Principles: one question per slide, title = the answer, at most two
 panels, describe before explaining, no model internals on slides (they go to the methods page).
 - Opening: 31 price ridgelines, 32 every priced building as a dot
 - 1 What's in the data: r01 sales per year / district (new, resale), 23 blind spot
 - 2 Sizes: r02 size categories by district + share over time, r03 new vs resale (price as paid, sizes), 29 smaller flats
-- 3 Prices: 01 over time, 33 what 1 million buys, 34 room for a family, 35 house or flat
+- 3 Prices: 01 over time, 33 what 1 million buys, 34 room for a family, 38 where houses sell, 35 house or flat
 - 4 What goes with price: 03, 18 age, 21 infill, 08 cafés, 09 noise, 20 trees, 11 transit x price, 12 compass, 24 jobs
 - 5 Reputation: 10 district anatomy, 06 reputation map, 15 estates, 14 over time
 - 6 Market: 16 flippers, 26 new flats on offer; end: r99 how to read these charts (yardstick flat, sources, limits)
@@ -134,12 +134,12 @@ Not in the report (kept in output/summary/): 02, 04, 05, 13, 19, 22, 25, 27, 28,
 | 26-28 | new flats on offer, asking prices over time, projects map | `offers/offers_story.py`, `offers/history_story.py`, `offers/projects_map.py` |
 | 29 | flat sizes and rooms | `flat_sizes.py` |
 | 30 | forward test: reputation 2010-14 vs 2021-25, what moved prices | `forward_test.py` |
-| 31 | opening map: price ridgelines (dark, "Unknown Pleasures") | `price_ridgelines.py` |
-| 32 | companion to 31: every building with >= 3 sales as a dot (price colour, size = sales), 2400x3000 | `price_points.py` |
+| 31 | opening map: price ridgelines (dark, "Unknown Pleasures"); since 2026-10-27 includes buildings with 1-2 sales | `price_ridgelines.py` |
+| 32 | companion to 31: every building with a recorded sale as a dot (price colour, size = sales; since 2026-10-27 20,231 buildings: 1-2 sale ones use their unshrunk value, 480 obvious outliers dropped = more than 65 % above or 40 % below the median of the 8 nearest well-sold buildings within 1 km, `priced_buildings()` in price_ridgelines.py), 2400x3000 | `price_points.py` |
 | 33-34 | what 1 million PLN buys (size of 0.9-1.1M resales 2024-26); room for a family (share of 70 m²+ resales, price of a 65-80 m² flat) | `family_flats.py` |
 | 36 | where the big flats are: median size and share of 4+ room flats, all sales since 2016, top MSI neighbourhoods | `family_flats.py` |
 | 37 | explainer (methods, not in the report): trees = correct for everything else then compare (Wola, as sold vs corrected); reputation = predict without the place then group (Żoliborz vs Praga-Północ) | `explain_comparison.py` |
-| 35 | house or flat: house sales (RCN budynki layer) vs flat resales by district, per m² and in total | `houses.py` |
+| 35 | house or flat (redone 2026-10-27): overlapping curves of total price and of price per m², houses vs resold flats in the districts with >= 40 house sales, 2023-26 | `houses.py` |
 | 38 | where houses sell: every house sale (green) over every building with a flat sale (grey), sales per year with the register's blind spots (flats 2017-20, houses before 2017) | `house_map.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
