@@ -71,7 +71,8 @@ travel times (r5py). All findings are associations within a district, not causal
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
 
-**Model state (2026-10-25)**: plain-language summary in `MODEL_EXPLAINED.md`. Transit from TransitFrequency's
+**Model state (2026-10-25)**: plain-language summary in `MODEL_EXPLAINED.md`; next task (what lies under distance to
+PKiN) planned in `PLAN_CENTRALITY.md`. Fig. 32 uses plasma (colour-blind safe) since 2026-10-27. Transit from TransitFrequency's
 `buildings_modes.gpkg` (default; all buildings matched, 13,607 in the model), new features: right bank of the
 Vistula (-13.5 % city-wide, no within-district tag: districts never cross the river) and jobs reachable by transit in
 the morning peak (`access/`; +0.3 % per doubling within a district). Out-of-sample R² 0.600 (was 0.574); importance of
