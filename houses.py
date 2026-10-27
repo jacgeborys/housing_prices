@@ -25,6 +25,26 @@ RECENT = (2023, 2026)
 MIN_HOUSES = 40
 MIN_WITH_AREA = 25
 USABLE = (50, 400)
+FLOOR_RATIO = {1: 1.2, 2: 1.52, 3: 1.97, 4: 2.4}
+
+
+def estimate_area(h):
+    """Usable area for every house: the deed's own figure where it records one (about 1 deed in 6), else the BDOT10k
+    outline x a ratio by number of floors. Ratios = median recorded usable area / outline on the 1,115 deeds that have
+    both (1 floor 1.2, 2 floors 1.52, 3 floors 1.97, 4+ guessed 2.4); typical miss 14 % per house (18 % with one ratio
+    for all), so fine for medians over hundreds of sales, not for a single house."""
+    bd = gpd.read_file("data/bdot_buildings.gpkg", columns=["n_floors"]).to_crs(2180)
+    bd["outline_m2"] = bd.geometry.area
+    j = gpd.sjoin(h, bd[["n_floors", "outline_m2", "geometry"]], predicate="within", how="left")
+    j = j[~j.index.duplicated()].drop(columns="index_right")
+    ratio = j["n_floors"].fillna(2).clip(1, 4).map(FLOOR_RATIO)
+    est = (j["outline_m2"] * ratio).where(lambda s: s.between(*USABLE))
+    j["usable_est"] = est
+    j["usable_all"] = j["usable_m2"].fillna(est)
+    j["area_source"] = np.where(j["usable_m2"].notna(), "deed", np.where(est.notna(), "estimated", "none"))
+    j["price_m2"] = j["price"] / j["usable_all"]
+    print("area source:", j["area_source"].value_counts().to_dict())
+    return j
 
 
 def houses(d):
@@ -42,11 +62,11 @@ def houses(d):
     h = b[(b["BUD_RODZAJ"] == "mieszkalny") & (b["TRAN_RODZAJ_TRANS"] == "wolnyRynek") & full
           & (b["price"] > 100_000)].copy()
     h["usable_m2"] = h["usable_m2"].where(h["usable_m2"].between(*USABLE))
-    h["price_m2"] = h["price"] / h["usable_m2"]
     h["market"] = np.where(h["TRAN_RODZAJ_RYNKU"] == "rynekPierwotny", "primary", "secondary")
-    h = gpd.GeoDataFrame(h[["year", "price", "usable_m2", "plot_m2", "price_m2", "market", "BUD_ADRES"]],
+    h = gpd.GeoDataFrame(h[["year", "price", "usable_m2", "plot_m2", "market", "BUD_ADRES"]],
                          geometry=h.geometry.to_crs(2180).representative_point().values, crs=2180)
     h = gpd.sjoin(h, d[["district", "geometry"]], predicate="within").drop(columns="index_right")
+    h = estimate_area(h)
     print(f"clean house sales: {len(h):,}; by year:\n" + h["year"].value_counts().sort_index().to_string())
     h.to_file("output/houses.gpkg", layer="houses", driver="GPKG")
     return h
@@ -59,7 +79,7 @@ def main():
     t = gpd.read_file("output/price_model.gpkg", layer="transactions_adj", ignore_geometry=True)
     f = t[t["year"].between(*RECENT) & (t["market"] == "secondary")]
     g = r.groupby("district").agg(n=("price", "size"), house=("price", "median"), house_m2=("price_m2", "median"),
-                                  n_m2=("price_m2", "count"), usable=("usable_m2", "median"), plot=("plot_m2", "median"))
+                                  n_m2=("price_m2", "count"), usable=("usable_all", "median"), plot=("plot_m2", "median"))
     g = g.join(f.groupby("district").agg(flat=("price", "median"), flat_m2=("price_m2", "median")))
     g = g[(g["n"] >= MIN_HOUSES) & (g["n_m2"] >= MIN_WITH_AREA)].sort_values("house_m2")
     print(g.round(0).to_string())
@@ -69,12 +89,14 @@ def main():
     fig = page("House or flat?",
                f"Houses and resold flats sold {RECENT[0]}–{RECENT[1]}, price per m² of living space",
                f"Houses: {len(r):,} sales of a single-family house with its plot (RCN, full ownership, one house per "
-               f"deed). Price per m² of the house INCLUDING the plot, from the {r['price_m2'].notna().sum():,} deeds that "
-               f"record the usable area (about one in three); totals from all. Flats: RCN resales in the same years. "
+               f"deed). Price per m² of the house INCLUDING the plot; living area from the deed where recorded "
+               f"({(r['area_source'] == 'deed').mean():.0%}), else estimated from the building outline and floors "
+               f"(BDOT10k; typical miss 14 % per house). Flats: RCN resales in the same years. "
                f"Medians; districts with ≥ {MIN_HOUSES} house sales. Terraced and "
                "semi-detached houses on their own plot count as houses. The register records houses from 2017. "
                + style.SOURCE)
     where = ("In every district with enough house sales" if len(cheaper) == len(g)
+             else f"In {len(cheaper)} of {len(g)} districts" if len(cheaper) > 3
              else "In " + ", ".join(cheaper[:-1]) + " and " + cheaper[-1])
     fig.text(0.03, 0.885, wrap(f"{where}, a house costs less per m² than a flat, plot included: "
                                f"in {k} {g.loc[k, 'house_m2'] / 1000:.1f}K vs {g.loc[k, 'flat_m2'] / 1000:.1f}K, with a "
@@ -106,7 +128,7 @@ def main():
     for xi, (hv, fv, u) in enumerate(zip(g["house"], g["flat"], g["usable"])):
         a3.text(xi - 0.2, hv / 1e6, f"{hv / 1e6:.1f}\n{u:.0f} m²", ha="center", va="bottom", fontsize=7)
     a3.set_xticks(x)
-    a3.set_xticklabels(g.index, fontsize=9)
+    a3.set_xticklabels(g.index, fontsize=8.5, rotation=40, ha="right")
     a3.set_ylabel("million PLN")
     a3.set_ylim(0, g["house"].max() / 1e6 * 1.3)
     style.hgrid_only(a3)

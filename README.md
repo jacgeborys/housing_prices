@@ -70,6 +70,24 @@ travel times (r5py). All findings are associations within a district, not causal
   still need a rerun.
 - Blind spot: 19 % of flats are in buildings with no recorded sale, mostly cooperative-right flats that RCN
   does not record (fig. 23).
+- Houses (2026-10-27, `houses.py`): the 2021-22 "register gap" for houses was our filter (deeds with an empty
+  ownership share, 1,380 of them, now count as 1/1): 6,913 clean house sales (was 5,483) vs 251,896 flat sales. Living
+  area is the deed's own where recorded (~15 %), else BDOT10k outline x floors (ratios 1.2 / 1.52 / 1.97 for 1 / 2 / 3
+  floors, fitted on 1,115 deeds with both; typical miss 14 % per house, 18 % with one ratio): fig. 35 now covers 14
+  districts, Wesoła included (57 sales 2023-26). Ideas not yet done: group nearby houses in 300 m cells (84 % of sales
+  in groups of >= 3), house map + overlapping total-price curves.
+- Wesoła (2026-10-27): the register holds ~700 unit sales there (517 in the model, 101 buildings, 38 with >= 3 sales,
+  80 % of its sales); nothing is lost in matching (46K records outside every district are 1-5 km beyond the city
+  limits). `build_viz.py` address fallback ignored the district (key street|number): 43 sales city-wide; now an address
+  match must lie within 300 m of the sale's point (takes effect at the next rebuild, untested end to end).
+- Flat gap 2017-2020 (2026-10-27): the `budynki` layer holds ~30-36K flat-type deeds a year then (lokale layer: 840-4,361),
+  prices equal the lokale layer's for 99 % of 86K deeds in both. But BUD_POW_UZYT there is the whole building's area
+  (median 6,200 m², 5 % filled), and there is no flat size, floor or function (garages are in too), so no price per m²:
+  not usable in the price model. Possible use: deed counts per building and year only.
+- Centrality test (2026-10-27, scratch: R² over 3 fold seeds, sd 0.01): dropping `centre_km` loses nothing (0.589 ->
+  0.600); jobs + leisure reach + pre-war fabric + density + amenities give 0.610. But the Praga-Północ gap depends on it:
+  -12..-13 % with `centre_km`, -4..-8 % without; Żoliborz +6 -> +2.5 %. Wesoła stays +6..7 % on 38 buildings: shrink or
+  grey districts under ~100 buildings. Not adopted yet.
 
 **Model state (2026-10-25)**: plain-language summary in `MODEL_EXPLAINED.md`; next task (what lies under distance to
 PKiN) planned in `PLAN_CENTRALITY.md`. Fig. 31 keeps its original blue-cream-orange-pink ramp (chosen 2026-10-27 over plasma and 10 blue-red-gold variants); fig. 32 uses blue - coral - gold (chosen from five variants; colour-blind safe, brightness rises with price). Transit from TransitFrequency's
