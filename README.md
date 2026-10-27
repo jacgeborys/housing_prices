@@ -72,7 +72,7 @@ travel times (r5py). All findings are associations within a district, not causal
   does not record (fig. 23).
 
 **Model state (2026-10-25)**: plain-language summary in `MODEL_EXPLAINED.md`; next task (what lies under distance to
-PKiN) planned in `PLAN_CENTRALITY.md`. Figs 31-32 use plasma (colour-blind safe) since 2026-10-27; the old ramp is RAMP_OLD in price_ridgelines.py. Transit from TransitFrequency's
+PKiN) planned in `PLAN_CENTRALITY.md`. Fig. 31 keeps its original blue-cream-orange-pink ramp (chosen 2026-10-27 over plasma and 10 blue-red-gold variants); fig. 32 uses the same blue-sky-sand family ending in gold (colour-blind safe, brightness rises with price). Transit from TransitFrequency's
 `buildings_modes.gpkg` (default; all buildings matched, 13,607 in the model), new features: right bank of the
 Vistula (-13.5 % city-wide, no within-district tag: districts never cross the river) and jobs reachable by transit in
 the morning peak (`access/`; +0.3 % per doubling within a district). Out-of-sample R² 0.600 (was 0.574); importance of

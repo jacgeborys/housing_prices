@@ -9,16 +9,16 @@ import geopandas as gpd
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import ListedColormap, Normalize
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 
 from price_ridgelines import BG, CMAP_HI, CMAP_LO, INK, LABELS, MIN_SALES, MUTED
 from summary_charts import FIG, OUT
 
 DPI = 300
 OTHER = "#3a3d55"
-# plasma (perceptually uniform, brightness rises with price, readable with colour-vision deficiency), from indigo so the
-# cheapest buildings stay visible on the dark background; fig. 31 keeps its own ramp
-RAMP = ListedColormap(plt.cm.plasma(np.linspace(0.18, 0.97, 256)), name="price_plasma")
+# fig. 31's calm blue-sky-sand family, ending in gold instead of pink: brightness rises steadily with price (L* 35 -> 91),
+# so it reads for red-green colour-blind viewers too (2026-10-27; plasma felt too aggressive)
+RAMP = LinearSegmentedColormap.from_list("calm", ["#34508f", "#4277b8", "#7aaacb", "#c2bf9b", "#ecc060", "#ffe470"])
 
 
 def main():
