@@ -89,6 +89,8 @@ travel times (r5py). All findings are associations within a district, not causal
   -12..-13 % with `centre_km`, -4..-8 % without; Żoliborz +6 -> +2.5 %. Wesoła stays +6..7 % on 38 buildings: shrink or
   grey districts under ~100 buildings. Not adopted yet.
 
+**Next (planned 2026-10-27):** final iteration of the report in `PLAN_FINAL.md` (drop the river side from the model, small-district guards, shorter footnotes, one rebuild).
+
 **Model state (2026-10-25)**: plain-language summary in `MODEL_EXPLAINED.md`; next task (what lies under distance to
 PKiN) planned in `PLAN_CENTRALITY.md`. Fig. 31 keeps its original blue-cream-orange-pink ramp (chosen 2026-10-27 over plasma and 10 blue-red-gold variants); fig. 32 uses blue - coral - gold (chosen from five variants; colour-blind safe, brightness rises with price). Transit from TransitFrequency's
 `buildings_modes.gpkg` (default; all buildings matched, 13,607 in the model), new features: right bank of the

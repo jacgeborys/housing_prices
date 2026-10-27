@@ -1,3 +1,5 @@
+> **Resolved 2026-10-27**: the horse race was run (README, 2026-10-27 centrality test) and `centre_km` stays; see `PLAN_FINAL.md`.
+
 # Next task: what lies under "distance to the Palace of Culture"?
 
 *Written 2026-10-27 to resume in a new conversation. Read `MODEL_EXPLAINED.md` first (plain-language model), then
