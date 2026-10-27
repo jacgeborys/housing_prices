@@ -140,6 +140,7 @@ Not in the report (kept in output/summary/): 02, 04, 05, 13, 19, 22, 25, 27, 28,
 | 36 | where the big flats are: median size and share of 4+ room flats, all sales since 2016, top MSI neighbourhoods | `family_flats.py` |
 | 37 | explainer (methods, not in the report): trees = correct for everything else then compare (Wola, as sold vs corrected); reputation = predict without the place then group (Żoliborz vs Praga-Północ) | `explain_comparison.py` |
 | 35 | house or flat: house sales (RCN budynki layer) vs flat resales by district, per m² and in total | `houses.py` |
+| 38 | where houses sell: every house sale (green) over every building with a flat sale (grey), sales per year with the register's blind spots (flats 2017-20, houses before 2017) | `house_map.py` |
 
 Rerun order after new data: `fetch_rcn.py` / `fetch_geodata.py` -> `price_index.py` -> `walk_access.py` ->
 `price_drivers.py` -> figure scripts -> `contact_sheet.py`. Subprojects have their own READMEs or headers:
