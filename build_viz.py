@@ -36,6 +36,7 @@ OUTPUT_PATH = os.path.join("output", "warsaw_prices_viz.gpkg")
 
 FLOOR_HEIGHT_M = 3.0
 NEAR_BUFFER_M = 25
+ADDRESS_MAX_M = 300  # an address-only match must lie this close to the sale's own coordinates
 
 
 def load_transactions():
@@ -320,6 +321,13 @@ def address_match(transactions, buildings, address_points):
     txn_with_addr = unmatched[unmatched["addr_norm"].notna()].copy()
     matched_bldg = txn_with_addr["addr_norm"].map(addr_to_bldg)
     matched_bldg = matched_bldg.dropna().astype(int)
+    # the key is street|number only, so Fabryczna 5 in Wesoła also finds Fabryczna 5 in Ursus (and sales just outside
+    # the city find a Warsaw street of the same name): keep a match only if the building is near the sale's own point
+    gap = transactions.geometry.loc[matched_bldg.index].reset_index(drop=True).distance(
+        buildings.geometry.loc[matched_bldg.values].reset_index(drop=True))
+    far = gap.to_numpy() > ADDRESS_MAX_M
+    print(f"  Address matches more than {ADDRESS_MAX_M} m from the sale's point, dropped: {far.sum():,}")
+    matched_bldg = matched_bldg[~far]
     print(f"  Transactions matched via address: {len(matched_bldg):,}")
 
     # Update match status

@@ -3,11 +3,11 @@ House or flat? Single-family house sales from the RCN "budynki" layer (fetch_rcn
 resales in the same district.
 
 House sale = Warsaw (TERYT 1465), built-up land in full ownership (nieruchomoscGruntowaZabudowana, share 1/1),
-free market, one residential building per deed (deeds with several buildings repeat the total price on every one),
-any size. Year from the notarial deed number ("4660/2023"): the layer has no date. Price per m²
+free market (an empty share field counts as 1/1: most 2021-22 deeds), one residential building per deed (deeds with
+several buildings repeat the total price on every one), any size. Year from the notarial deed number ("4660/2023"): the layer has no date. Price per m²
 is per m² of the house INCLUDING its plot, and only where the deed records the usable area (50-400 m²): about one
 deed in three (2023-26); where recorded it is ~1.6x the footprint, so plausible. Totals use every deed. RCN records
-houses from 2017; 2021-22 are nearly empty (register gap).
+houses from 2017.
 
 Outputs: output/houses.gpkg (clean house sales, for QGIS), output/summary/35_house_or_flat.png (two bar charts)
 """
@@ -36,7 +36,10 @@ def houses(d):
     b["usable_m2"] = pd.to_numeric(b["BUD_POW_UZYT"], errors="coerce")
     b["price"] = pd.to_numeric(b["NIER_CENA_BRUTTO"], errors="coerce")
     b["plot_m2"] = pd.to_numeric(b["NIER_POW_GRUNTU"], errors="coerce")
-    h = b[(b["BUD_RODZAJ"] == "mieszkalny") & (b["TRAN_RODZAJ_TRANS"] == "wolnyRynek") & (b["NIER_UDZIAL"] == "1/1")
+    # 2021-22 deeds mostly leave the ownership share empty (1,380 of them look like 1/1 sales: same price and plot
+    # as 1/1 deeds in 2020 and 2023), so an empty share counts as full ownership
+    full = (b["NIER_UDZIAL"] == "1/1") | b["NIER_UDZIAL"].isna()
+    h = b[(b["BUD_RODZAJ"] == "mieszkalny") & (b["TRAN_RODZAJ_TRANS"] == "wolnyRynek") & full
           & (b["price"] > 100_000)].copy()
     h["usable_m2"] = h["usable_m2"].where(h["usable_m2"].between(*USABLE))
     h["price_m2"] = h["price"] / h["usable_m2"]
