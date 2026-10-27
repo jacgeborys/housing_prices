@@ -12,7 +12,7 @@ import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
-from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap, Normalize
 from scipy.ndimage import distance_transform_edt, gaussian_filter
 from shapely import contains_xy
 
@@ -28,8 +28,10 @@ ROW_M = 250                   # spacing of the lines
 BASE, PER_1K = 12000, 230     # height: metres of line per 1,000 PLN/m² above BASE
 CMAP_LO, CMAP_HI = 11000, 26000
 BG, INK, MUTED = "#0d0e17", "#f1ede4", "#8c8a99"
-RAMP = LinearSegmentedColormap.from_list("ridge", ["#3d4a7a", "#5b7fb8", "#8fb7c9", "#e8d9a8", "#f2a65a",
-                                                   "#e8604c", "#c2306b"])
+RAMP_OLD = LinearSegmentedColormap.from_list("ridge", ["#3d4a7a", "#5b7fb8", "#8fb7c9", "#e8d9a8", "#f2a65a",
+                                                       "#e8604c", "#c2306b"])   # until 2026-10-27
+# plasma like fig. 32 (colour-blind safe, brightness rises with price), from indigo so low prices show on the dark ground
+RAMP = ListedColormap(plt.cm.plasma(np.linspace(0.18, 0.97, 256)), name="price_plasma")
 LABELS = {"Śródmieście": (0, 1500), "Żoliborz": (-600, 900), "Mokotów": (300, 500), "Wilanów": (1600, -300),
           "Praga-Północ": (900, -200), "Białołęka": (0, 0), "Ursynów": (-500, 0), "Bemowo": (-900, 0),
           "Wawer": (0, 0), "Ursus": (0, 0), "Targówek": (500, 0)}
