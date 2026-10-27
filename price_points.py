@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 
-from price_ridgelines import BG, CMAP_HI, CMAP_LO, INK, LABELS, MIN_SALES, MUTED
+from price_ridgelines import BG, CMAP_HI, CMAP_LO, INK, LABELS, MUTED, priced_buildings
 from summary_charts import FIG, OUT
 
 DPI = 300
@@ -25,8 +25,7 @@ def main():
     d = gpd.read_file("data/districts.gpkg").to_crs(2180)
     city = d.unary_union
     x0, y0, x1, y1 = city.bounds
-    bv = gpd.read_file("output/price_model.gpkg", layer="building_value")
-    bv = bv[bv["n"] >= MIN_SALES].sort_values("value_2025")         # dearest drawn last, on top
+    bv = priced_buildings().sort_values("value")                    # dearest drawn last, on top
     pts = bv.geometry.representative_point()
     allb = gpd.read_file("output/warsaw_prices_viz.gpkg", layer="buildings_all", columns=["osm_id"])
     ab = gpd.GeoDataFrame(geometry=allb.geometry.representative_point(), crs=allb.crs)
@@ -41,7 +40,7 @@ def main():
     d.boundary.plot(ax=ax, color="#3a3c50", lw=0.5, zorder=1)
     ax.scatter(ab.x, ab.y, s=0.15, color=OTHER, lw=0, zorder=2, rasterized=True)
     norm = Normalize(CMAP_LO, CMAP_HI)
-    ax.scatter(pts.x, pts.y, s=0.25 + 0.55 * np.sqrt(np.minimum(bv["n"], 200)), c=bv["value_2025"], cmap=RAMP,
+    ax.scatter(pts.x, pts.y, s=0.25 + 0.55 * np.sqrt(np.minimum(bv["n"], 200)), c=bv["value"], cmap=RAMP,
                norm=norm, lw=0, zorder=3, rasterized=True)
     ax.set_xlim(x0 - 500, x1 + 500)
     ax.set_ylim(y0 - 300, y1 + 2600)
@@ -64,8 +63,9 @@ def main():
     cb.set_ticklabels(["12K", "16K", "20K", "24K+"])
     cax.tick_params(colors=MUTED, labelsize=9, length=0)
     cax.set_title("PLN per m²", color=MUTED, fontsize=9, loc="left")
-    fig.text(0.05, 0.022, f"Hedonic value of a typical 2-room resale flat, 2025, per building (≥ {MIN_SALES} sales; "
-                          "date, floor and size removed). Cooperative-right flats are not in the register (fig. 23).\n"
+    fig.text(0.05, 0.022, f"Hedonic value of a typical 2-room resale flat, 2025, per building (date, floor and size removed; "
+                          f"{int(bv['few'].sum()):,} buildings with 1-2 sales included, obvious outliers removed).\n"
+                          "Cooperative-right flats are not in the register (fig. 23).\n"
                           "Source: GUGiK Rejestr Cen Nieruchomości (RCN) 2006–2026, OSM, BDOT10k.",
              color=MUTED, fontsize=7.5, va="bottom")
     path = f"{OUT}/32_price_points.png"

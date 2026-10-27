@@ -1,6 +1,6 @@
 """
 Opening map: Warsaw's flat prices as ridgelines ("Unknown Pleasures"). Every line is an east-west slice of the city;
-it rises with the price of a typical flat in 2025 (hedonic value_2025, buildings with >= MIN_SALES sales), smoothed
+it rises with the price of a typical flat in 2025 (hedonic value_2025; buildings with 1-2 sales use their own unshrunk value, obvious outliers dropped), smoothed
 with a Gaussian kernel. Lines are drawn north to south, each filled with the background so southern peaks hide the
 lines behind them. Outside the city the line stops; the Vistula breaks it; where no flats sell it stays flat.
 
@@ -18,7 +18,9 @@ from shapely import contains_xy
 
 from summary_charts import DPI, FIG, save
 
-MIN_SALES = 3
+MIN_SALES = 3                 # buildings with at least this many sales keep their model value (shrunk toward the district)
+OUTLIER_LOG = 0.5             # a 1-2 sale building is dropped if its value is > 65 % above / 40 % below the median of its
+                              # 8 nearest well-sold buildings within 1 km (ln 1.65 = 0.5): obvious outliers only
 CELL = 50                     # m, sampling grid
 SIGMA_M = 350                 # Gaussian smoothing of the price surface
 FULL_BUILDINGS = 4            # priced buildings (kernel-weighted) for a peak to reach full height; fewer: it fades,
@@ -37,13 +39,40 @@ LABELS = {"Śródmieście": (0, 1500), "Żoliborz": (-600, 900), "Mokotów": (30
           "Wawer": (0, 0), "Ursus": (0, 0), "Targówek": (500, 0)}
 
 
+def priced_buildings():
+    """Every building with a recorded flat sale. >= MIN_SALES sales: model value (value_2025). 1-2 sales: the unshrunk
+    value (the standardised price of those one or two flats; shrinking would pull a lone sale to its district's
+    average), minus obvious outliers against well-sold buildings nearby. Column `value` is what to draw, `few` marks
+    the 1-2 sale buildings (added 2026-10-27; before, only >= 3 sales were drawn)."""
+    from scipy.spatial import cKDTree
+    bv = gpd.read_file("output/price_model.gpkg", layer="building_value").drop_duplicates("osm_id").reset_index(drop=True)
+    bv["few"] = bv["n"] < MIN_SALES
+    bv["value"] = np.where(bv["few"], bv["value_2025_raw"], bv["value_2025"])
+    pts = bv.geometry.representative_point()
+    xy = np.c_[pts.x, pts.y]
+    core = ~bv["few"].to_numpy()
+    tree = cKDTree(xy[core])
+    lv = np.log(bv.loc[core, "value_2025"].to_numpy())
+    _, idx = tree.query(xy[~core], k=8, distance_upper_bound=1000)
+    near = np.where(idx < core.sum(), lv[np.minimum(idx, core.sum() - 1)], np.nan)
+    with np.errstate(all="ignore"):
+        ref = np.nanmedian(near, axis=1)                                # NaN: nothing well-sold within 1 km, keep
+    dev = np.log(bv.loc[~core, "value"].to_numpy()) - ref
+    drop = np.zeros(len(bv), bool)
+    drop[np.flatnonzero(~core)] = np.abs(dev) > OUTLIER_LOG
+    drop |= bv["value"].isna().to_numpy()
+    print(f"priced buildings: {core.sum():,} with >= {MIN_SALES} sales, {int((~core).sum() - drop[~core].sum()):,} with "
+          f"1-2 sales kept, {int(drop.sum()):,} outliers dropped")
+    return bv[~drop].reset_index(drop=True)
+
+
 def surface(bv, x0, y0, nx, ny):
     pts = bv.geometry.representative_point()
     ix = ((pts.x - x0) // CELL).astype(int).clip(0, nx - 1)
     iy = ((pts.y - y0) // CELL).astype(int).clip(0, ny - 1)
     w = np.minimum(bv["n"].to_numpy(float), 20) ** 0.5      # busy buildings count more, but not overwhelmingly
     s = np.zeros((ny, nx)); c = np.zeros((ny, nx)); nb = np.zeros((ny, nx))
-    np.add.at(s, (iy, ix), w * np.log(bv["value_2025"].to_numpy()))
+    np.add.at(s, (iy, ix), w * np.log(bv["value"].to_numpy()))
     np.add.at(c, (iy, ix), w)
     np.add.at(nb, (iy, ix), 1.0)
     sig = SIGMA_M / CELL
@@ -56,8 +85,7 @@ def surface(bv, x0, y0, nx, ny):
 
 
 def main():
-    bv = gpd.read_file("output/price_model.gpkg", layer="building_value")
-    bv = bv[bv["n"] >= MIN_SALES]
+    bv = priced_buildings()
     d = gpd.read_file("data/districts.gpkg").to_crs(2180)
     city = d.unary_union
     w = gpd.read_file("D:/QGIS/mapy_warszawy_misc/data/osm/water.gpkg").to_crs(2180)
@@ -122,8 +150,9 @@ def main():
     cb.set_ticklabels(["12K", "16K", "20K", "24K+"])
     cax.tick_params(colors=MUTED, labelsize=9, length=0)
     cax.set_title("PLN per m²", color=MUTED, fontsize=9, loc="left")
-    fig.text(0.05, 0.022, "Hedonic value of a typical 2-room resale flat, 2025, per building (≥ 3 sales), smoothed over "
-                          f"~{SIGMA_M} m; lines fade to grey where few flats sell.\nLine spacing {ROW_M} m; peak height grows "
+    fig.text(0.05, 0.022, "Hedonic value of a typical 2-room resale flat, 2025, per building (1-2 sale buildings "
+                          f"included, obvious outliers removed),\n"
+                          f"smoothed over ~{SIGMA_M} m; lines fade to grey where few flats sell.\nLine spacing {ROW_M} m; peak height grows "
                           f"{PER_1K} m per 1,000 PLN/m². Source: GUGiK Rejestr Cen Nieruchomości (RCN) 2006–2026, "
                           "OSM, BDOT10k.", color=MUTED, fontsize=7.5, va="bottom")
     mpl.rcParams["savefig.facecolor"] = BG      # summary_charts.save() would use the light page colour
