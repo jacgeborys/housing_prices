@@ -57,7 +57,7 @@ def main():
     v["eve_ratio"] = v["osm_id"].map(acc["evening"]["jobs_30"] / acc["am_peak"]["jobs_30"].replace(0, np.nan))
 
     # model test (OLS with district fixed effects): does access replace distance to PKiN and the metro?
-    base = [f for f in FEATURES]
+    base = [f for f in FEATURES if f != "log2_jobs_transit"]   # reach is what this script tests
     r_base, _ = within_r2(v, base)
     r_add, c_add = within_r2(v, base + ["log_grav"])
     swap = [f for f in base if f not in ("centre_km", "walk_metro_km")] + ["log_grav"]

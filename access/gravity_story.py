@@ -45,7 +45,7 @@ def main():
         b, *_ = np.linalg.lstsq(X, y, rcond=None)
         e = y - X @ b
         return 1 - e.var() / y.var(), b[-1]
-    base = list(FEATURES)
+    base = [f for f in FEATURES if f != "log2_jobs_transit"]   # reach is what this script tests
     nocent = [f for f in base if f not in ("centre_km", "walk_metro_km")]
     r_base, _ = fit(base)
     r_noc, _ = fit(nocent)

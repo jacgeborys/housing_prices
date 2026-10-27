@@ -24,13 +24,14 @@ from summary_maps import FEATURES, basemap, load, outlines
 style.apply()
 
 GROUPS = {   # feature group -> features (fixed order = fixed colour)
-    "Centrality & the river": ["centre_km", "river_km"],
+    "Distance to the centre & jobs": ["centre_km", "log2_jobs_transit"],
+    "Side of the river": ["right_bank"],
     "Metro & rail lines": ["walk_metro_km", "walk_rail_km"],
     "Buses & trams": ["log2_trips", "walk_tram_km", "walk_bus_km"],
     "Cafés, shops & schools": ["walk7_food_drink", "walk7_grocery", "walk7_zabka", "walk7_schools",
                                "walk7_health", "walk7_sport_play", "walk_school_km"],
-    "Green & quiet": ["green_ha_500", "walk_park_km", "canopy_100", "noise_road_db", "noise_rail_db",
-                      "noise_air_db"],
+    "Green, river & quiet": ["green_ha_500", "walk_park_km", "canopy_100", "river_km", "noise_road_db",
+                             "noise_rail_db", "noise_air_db"],
     "Building age": ["age_prewar", "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20",
                      "age_2021_plus", "age_unknown"],
     "Building form": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage"],
@@ -55,11 +56,11 @@ def district_anatomy(v):
     c = c.loc[total.sort_values().index]
     tot = total.loc[c.index] * 100
 
-    cols = style.CAT[:7] + ["#9a9890"]
+    cols = style.CAT[:8] + ["#9a9890"]
     fig = page("Why a district is expensive",
                "Each district's price gap to the city average, split into what goes with it",
-               "Linear regression of log price on all features (no district variable), 12.7K buildings with "
-               "≥ 3 sales. Building age = construction decade (GIS Expert) vs 1961–90; building form = height, footprint, "
+               f"Linear regression of log price on all features (no district variable), {len(v) / 1000:.1f}K buildings with "
+               "≥ 3 sales. Building age = construction decade (GIS Expert and other sources) vs 1961–90; side of the river = right bank; building form = height, footprint, "
                "heritage listing, share of developer sales. A group's bar = its coefficients × how far the district's "
                "buildings are from the city "
                "average on those features; 'unexplained' = the district's mean residual. Values are log points "
@@ -246,7 +247,7 @@ def shape_of_value(v):
                                       l2_regularization=1.0, random_state=0).fit(X, y)
     fig = page("The shape of value",
                "How price responds to each feature, everything else held as it is",
-               "Gradient boosting on all features (12.7K buildings). Thick line: average effect (partial dependence); "
+               f"Gradient boosting on all features ({len(v) / 1000:.1f}K buildings). Thick line: average effect (partial dependence); "
                "thin lines: 120 individual buildings (ICE), all centred on the median building. Ticks: deciles "
                "of the feature. Effects in % of price. " + style.SOURCE)
     gs = fig.add_gridspec(4, 2, left=0.09, right=0.97, top=0.86, bottom=0.12, hspace=0.62, wspace=0.22)

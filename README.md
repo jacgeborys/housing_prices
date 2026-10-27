@@ -76,7 +76,9 @@ PKiN) planned in `PLAN_CENTRALITY.md`. Fig. 31 keeps its original blue-cream-ora
 `buildings_modes.gpkg` (default; all buildings matched, 13,607 in the model), new features: right bank of the
 Vistula (-13.5 % city-wide, no within-district tag: districts never cross the river) and jobs reachable by transit in
 the morning peak (`access/`; +0.3 % per doubling within a district). Out-of-sample R² 0.600 (was 0.574); importance of
-distance to PKiN 42 -> 24 %. Ages: GIS Expert + Makscape + OSM + developer sales + infill + BDOT creation date + twins
+distance to PKiN 42 -> 24 %. The shared feature list (`summary_maps.FEATURES`, used by figs 05, 06, 08-13, 20, the tram test and model comparison)
+now includes `right_bank` and `log2_jobs_transit`; fig. 10 groups: distance to the centre & jobs, side of the river,
+green, river & quiet (distance to the Vistula). Ages: GIS Expert + Makscape + OSM + developer sales + infill + BDOT creation date + twins
 + `manual/age_manual.gpkg` (hand dating, 51 so far): 76 priced buildings still unknown. Full rebuild run 2026-10-25.
 
 **The report** (`report/`, the deliverable): 27 slides in story order -> `output/report/NN_*.png` +
