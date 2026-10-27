@@ -15,10 +15,10 @@ from price_ridgelines import BG, CMAP_HI, CMAP_LO, INK, LABELS, MIN_SALES, MUTED
 from summary_charts import FIG, OUT
 
 DPI = 300
-OTHER = "#3a3d55"
-# fig. 31's calm blue-sky-sand family, ending in gold instead of pink: brightness rises steadily with price (L* 35 -> 91),
-# so it reads for red-green colour-blind viewers too (2026-10-27; plasma felt too aggressive)
-RAMP = LinearSegmentedColormap.from_list("calm", ["#34508f", "#4277b8", "#7aaacb", "#c2bf9b", "#ecc060", "#ffe470"])
+OTHER = "#33354b"          # other buildings, a step darker (2026-10-27; was #3a3d55)
+# blue - coral - gold (chosen 2026-10-27 from five variants): brightness rises steadily with price (L* 35 -> 91), so it
+# reads for red-green colour-blind viewers too; plasma felt too aggressive
+RAMP = LinearSegmentedColormap.from_list("calm", ["#34508f", "#5a6fb0", "#a9789d", "#e3876f", "#f2b45a", "#ffe37a"])
 
 
 def main():
