@@ -48,7 +48,7 @@ def main():
     hs = hs[hs["price_m2"].between(*HOUSE_M2) & (hs["year"] >= 2017)].copy()
     hs["adj"] = hs["price_m2"] * np.exp(-hs["year"].astype(int).map(year_index(hs)))
     hs = hs.sort_values("adj")
-    ax.scatter(hs.geometry.x, hs.geometry.y, s=3.4, c=hs["adj"], cmap=RAMP, norm=norm, lw=0,
+    ax.scatter(hs.geometry.x, hs.geometry.y, s=2.2, c=hs["adj"], cmap=RAMP, norm=norm, lw=0,
                zorder=3.5, rasterized=True)
     ax.set_xlim(x0 - 500, x1 + 500)
     ax.set_ylim(y0 - 300, y1 + 2600)
