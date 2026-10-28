@@ -69,7 +69,7 @@ def main():
     old = v["decade_end"].between(1961, 1990)
     pts = v.geometry.representative_point()
     ax = basemap(fig, d, w)
-    ax.set_position([0.03, 0.08, 0.60, 0.44])
+    ax.set_position([0.02, 0.06, 0.64, 0.47])
     kw = dict(gridsize=(19, 17), extent=(*ax.get_xlim(), *ax.get_ylim()), reduce_C_function=np.median)
     hn = ax.hexbin(pts.x[new], pts.y[new], C=v.loc[new, "lv"], mincnt=3, **kw)
     ho = ax.hexbin(pts.x[old], pts.y[old], C=v.loc[old, "lv"], mincnt=3, **kw)
@@ -80,7 +80,7 @@ def main():
     hn.remove()
     ho.remove()
     # breaks around the hexagons' own spread (median ~ +34 %); one hue, clearly separated lightness steps
-    cmap = ListedColormap(["#e6effa", "#b9d3f3", "#83b2ea", "#4c8bd9", "#2461b0", "#0d3670"])
+    cmap = ListedColormap(["#fde3d2", "#f9b08a", "#f0705a", "#d8365f", "#9b1f6b", "#561460"])   # warm: new = hot (was blue, 2026-10-28)
     bounds = [-100, 20, 27, 34, 42, 60, 1000]
     norm = BoundaryNorm(bounds, cmap.N)
     xy = np.array(both)
@@ -98,8 +98,8 @@ def main():
     dist = dist[(dist["nn"] >= 10) & (dist["no"] >= 10)]
     dist["prem"] = 100 * (np.exp(dist["new"] - dist["old"]) - 1)
     dist = dist.sort_values("prem")
-    a3 = fig.add_axes([0.80, 0.10, 0.17, 0.40])
-    a3.barh(np.arange(len(dist)), dist["prem"], color=style.BLUE, height=0.65)
+    a3 = fig.add_axes([0.81, 0.09, 0.16, 0.42])
+    a3.barh(np.arange(len(dist)), dist["prem"], color="#d8365f", height=0.65)
     a3.set_yticks(np.arange(len(dist)))
     a3.set_yticklabels(dist.index, fontsize=8.5)
     for yi, val in enumerate(dist["prem"]):
@@ -112,11 +112,9 @@ def main():
     a3.set_title("By district", fontsize=10)
     prewar = pct.loc[[k for k in pct.index if k <= 1930]].median()
     prefab = pct.loc[[k for k in (1970, 1980, 1990) if k in pct.index]]
-    fig.text(0.03, 0.885, wrap(f"A U-shape: pre-war tenements sell {prewar:+.0f}% vs their district's median building, "
-                               f"prefab estates of 1961–90 {prefab.min():+.0f} to {prefab.max():+.0f}%, buildings of "
-                               f"2011–20 {pct.get(2020, np.nan):+.0f}%. A new building's lead over a prefab one is "
-                               f"biggest in the centre ({dist.index[-1]} {dist['prem'].iloc[-1]:+.0f}%) and smallest on "
-                               f"the edges ({dist.index[0]} {dist['prem'].iloc[0]:+.0f}%).", 100),
+    fig.text(0.03, 0.885, wrap(f"Two flats a few streets apart: one in a 2011–20 building, one in a 1961–90 prefab block. "
+                               f"The new one sells for about {np.median(prem):.0f}% more per m²: {dist['prem'].iloc[-1]:+.0f}% in "
+                               f"{dist.index[-1]}, only {dist['prem'].iloc[0]:+.0f}% in {dist.index[0]}.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "18_building_age.png")
     print(dist.round(1).to_string())
