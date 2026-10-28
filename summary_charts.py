@@ -69,22 +69,24 @@ def prices_over_time():
 
     n13 = q.loc[q["year"] == 2013, "nominal"].mean()
     n25 = q.loc[q["year"] == REF_YEAR, "nominal"].mean()
+    r13 = q.loc[q["year"] == 2013, "real"].mean()
     r08 = q.loc[est & (q["year"] <= 2012), "real"].max()
     r25 = q.loc[q["year"] == REF_YEAR, "real"].mean()
 
-    fig = page("Warsaw flats: 2.2× dearer than in 2013,\nbut no dearer than in 2008",
+    fig = page(f"Warsaw flats cost {n25 / n13:.1f}× what they did in 2013,\nbut only {r25 / r13:.1f}× after inflation",
                "", "Constant-quality index: the same kind of flat each quarter (hedonic model, 258K sales, "
                    "within-building comparisons).\nReal = deflated with GUS CPI to 2025 PLN. Dashed: RCN gap "
                    "2017–20, interpolated. " + style.SOURCE)
     ax = fig.add_axes([0.13, 0.17, 0.80, 0.62])
-    for col, colr, lab in (("nominal", style.BLUE, "Price as paid (nominal)"),
-                           ("real", style.ORANGE, "In today's money (real, 2025 PLN)")):
-        ax.plot(q["t"], q[col].where(est), color=colr, lw=2.4, label=lab)
+    for col, colr, lab, lw, al in (("nominal", style.BLUE, "Price as paid (nominal)", 1.8, 0.8),
+                                   ("real", style.ORANGE, "In today's money (real, 2025 PLN)", 3.2, 1.0)):
+        ax.plot(q["t"], q[col].where(est), color=colr, lw=lw, alpha=al, label=lab)
         ax.annotate(lab, (2009.5, q.loc[q["year"] == 2010, col].mean()), xytext=(0, 12 if col == "real" else -18),
                     textcoords="offset points", fontsize=10, color=colr, fontweight="semibold")
         gap = ~est & (q["year"] >= 2016)
         ax.plot(q["t"], q[col].where(gap | gap.shift(1, fill_value=False) | gap.shift(-1, fill_value=False)),
                 color=colr, lw=1.4, ls=(0, (2, 2)), alpha=0.7)
+    ax.axhline(r08, color=style.ORANGE, lw=1, ls=(0, (4, 3)), alpha=0.55, zorder=1)
     style.shade_gap(ax)
     style.pln(ax)
     style.hgrid_only(ax)
@@ -95,20 +97,21 @@ def prices_over_time():
     ax.legend(loc="lower right")
     last = q[est].iloc[-1]
     pk = q["real"].where(est & (q["year"] <= 2012)).idxmax()
-    ax.annotate(f"2008 peak {style.fmt_int(r08)}", (q.loc[pk, "t"], r08), xytext=(12, 2),
+    ax.annotate(f"2008 peak, in today's money: {style.fmt_int(r08)}", (q.loc[pk, "t"], r08), xytext=(12, 2),
                 textcoords="offset points", fontsize=9.5, color=style.INK_2, va="bottom")
     for col in ("nominal", "real"):
         ax.annotate(style.fmt_int(last[col]), (last["t"], last[col]), xytext=(6, 0), textcoords="offset points",
                     va="center", fontsize=10, color=style.INK_2)
+    ax.text(last["t"] + 0.1, ax.get_ylim()[0], "mid-2026", fontsize=8.5, color=style.MUTED, ha="right", va="bottom")
 
-    # hero numbers
-    for x, big, small in ((0.05, f"×{n25 / n13:.1f}", "nominal price\n2013 → 2025"),
-                          (0.40, "≈ 2008", f"in today's money: {100 * (r25 / r08 - 1):+.0f}%\nvs the 2008 peak"),
-                          (0.72, style.fmt_int(n25), "PLN/m², typical\nflat in 2025")):
+    # hero numbers: nominal, real, and where real sits against the 2008 peak
+    for x, big, small in ((0.05, f"×{n25 / n13:.1f}", "price as paid\n2013 → 2025"),
+                          (0.36, f"×{r25 / r13:.1f}", "after inflation\n(today's money), 2013 → 2025"),
+                          (0.72, f"{100 * (r25 / r08 - 1):+.0f}%", "vs the 2008 peak,\nin today's money")):
         fig.text(x, 0.885, big, fontsize=30, fontweight="bold", color=style.INK, va="top")
         fig.text(x, 0.835, small, fontsize=10.5, color=style.INK_2, va="top")
-    fig.text(0.05, 0.105, wrap("Raw medians mix cheap old flats with new ones and studios with family flats. "
-                               "The index compares like with like: the same buildings, floors and sizes over time.",
+    fig.text(0.05, 0.105, wrap(f"A typical flat cost {style.fmt_int(n25)} PLN/m² in 2025. Raw medians mix cheap old flats "
+                               "with new ones; the index compares like with like: the same buildings, floors and sizes over time.",
                                95), fontsize=10.5, color=style.INK_2, va="top")
     save(fig, "01_prices_over_time.png")
 
@@ -167,14 +170,15 @@ def drivers():
     c = pd.read_csv("output/analysis/price_drivers_coefficients.csv").set_index("feature")
     rows = [(lab, *c.loc[f, ["pct_district", "pct_district_lo", "pct_district_hi"]]) for f, lab in PLAIN]
     d = pd.DataFrame(rows, columns=["label", "pct", "lo", "hi"]).sort_values("pct")
-    gv = gpd.read_file("output/price_drivers.gpkg", ignore_geometry=True, columns=["osm_id"])
+    gv = gpd.read_file("output/price_drivers.gpkg", ignore_geometry=True, columns=["osm_id", "value_2025"])
+    base = float(gv["value_2025"].median()) * 50            # a 50 m² flat at the median building's price
     r2 = pd.read_csv("output/analysis/price_drivers_scores.csv", index_col=0)["r2"]
 
-    fig = page("What moves the price of a Warsaw flat",
-               "Effect of each feature, comparing buildings within the same district",
-               f"{len(gv):,} buildings with ≥ 3 flat sales; typical flat (date, floor, size removed). Regression with district effects, "
-               f"bars = 95 % CI; the features explain {r2['gbm']:.0%} of price differences out of sample. " + style.SOURCE)
-    ax = fig.add_axes([0.47, 0.13, 0.46, 0.74])
+    fig = page("What goes with the price of a Warsaw flat",
+               "Buildings compared within the same district: how much more or less per m²",
+               f"{len(gv):,} buildings with ≥ 3 flat sales; typical flat (date, floor, size removed); lines = 95 % range. "
+               f"Złoty: % × the median building's price, 50 m². The features explain {r2['gbm']:.0%} of price differences. " + style.SOURCE)
+    ax = fig.add_axes([0.44, 0.12, 0.38, 0.66])
     lim = 8.0
     y = np.arange(len(d))
     for yi, (_, r) in zip(y, d.iterrows()):
@@ -182,13 +186,18 @@ def drivers():
         shown = np.clip(r["pct"], -lim, lim)
         ax.barh(yi, shown, height=0.62, color=colr)
         if abs(r["pct"]) <= lim:
-            ax.plot([r["lo"], min(r["hi"], lim)], [yi, yi], color=style.INK, lw=1.2)
+            ax.plot([r["lo"], min(r["hi"], lim)], [yi, yi], color=style.INK_2, lw=0.9, alpha=0.7)
         if abs(r["pct"]) > lim:     # off scale: value inside the bar
             ax.text(shown - 0.3, yi, f"{r['pct']:+.0f}%  (off scale)", va="center", ha="right", fontsize=10.5,
                     color="white", fontweight="bold")
-            continue
-        ax.text(shown + (0.25 if r["pct"] >= 0 else -0.25), yi + 0.33, f"{r['pct']:+.1f}%", va="center",
-                ha="left" if r["pct"] >= 0 else "right", fontsize=10, color=style.INK, fontweight="semibold")
+        else:
+            ax.text(shown + (0.25 if r["pct"] >= 0 else -0.25), yi + 0.33, f"{r['pct']:+.1f}%", va="center",
+                    ha="left" if r["pct"] >= 0 else "right", fontsize=10, color=style.INK, fontweight="semibold")
+        zl = base * r["pct"] / 100
+        ax.text(1.04, yi, f"{'+' if zl >= 0 else '−'}{abs(zl) / 1000:.0f}k zł", transform=ax.get_yaxis_transform(),
+                va="center", ha="left", fontsize=10.5, color=colr, fontweight="semibold")
+    ax.text(1.04, len(d) - 0.1, "≈ on a\n50 m² flat", transform=ax.get_yaxis_transform(), va="bottom", ha="left",
+            fontsize=9, color=style.MUTED)
     ax.axvline(0, color=style.AXIS, lw=1)
     ax.set_yticks(y)
     ax.set_yticklabels([wrap(t, 30) for t in d["label"]], fontsize=10.5)
@@ -196,6 +205,12 @@ def drivers():
     style.pct(ax, "x")
     style.vgrid_only(ax)
     ax.set_xlabel("Change in price per m²")
+    new_pct = float(c.loc["age_2001_10", "pct_district"])
+    fig.text(0.03, 0.885, wrap(f"Take two flats of the same size on the same floor, in the same district. One is in a "
+                               f"2001–10 building, the other in a 1961–90 prefab block: the newer one costs about "
+                               f"{new_pct:.0f}% more per m², roughly {base * new_pct / 100 / 1000:.0f}k zł on a 50 m² flat. "
+                               f"Every bar below is a comparison like that.", 92),
+             fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
     save(fig, "03_what_drives_price.png")
 
 
