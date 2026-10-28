@@ -77,22 +77,22 @@ def main():
                f"Same buildings, {EARLY[0]}–{str(EARLY[1])[2:]} vs {LATE[0]}–{str(LATE[1])[2:]}: "
                "price change relative to Warsaw as a whole",
                f"Resales only, buildings that existed before 2006; prices net of the city-wide index (0 % = moved with the city). Map: 600 m "
-               f"hexagons. Scatter: MSI neighbourhoods with ≥ {MIN_BUILDINGS} buildings; reputation = fig. 06. " + style.SOURCE)
+               f"hexagons. Scatter: neighbourhoods with ≥ {MIN_BUILDINGS} buildings. " + style.SOURCE)
     ax = basemap(fig, d, w)
-    ax.set_position([0.03, 0.47, 0.94, 0.40])
+    ax.set_position([0.02, 0.41, 0.96, 0.46])
     p = ch.geometry.representative_point()
     norm = TwoSlopeNorm(vmin=-20, vcenter=0, vmax=20)
-    hb = ax.hexbin(p.x, p.y, C=ch["change_pct"].clip(-50, 50), gridsize=(48, 42), reduce_C_function=np.median,
+    hb = ax.hexbin(p.x, p.y, C=ch["change_pct"].clip(-50, 50), gridsize=(40, 35), reduce_C_function=np.median,
                    mincnt=3, cmap=style.DIV_CMAP, norm=norm, linewidths=0.3, edgecolors=style.SURFACE, zorder=3,
                    extent=(*ax.get_xlim(), *ax.get_ylim()))
     outlines(ax, d)
-    cax = fig.add_axes([0.80, 0.69, 0.02, 0.13])
+    cax = fig.add_axes([0.86, 0.60, 0.02, 0.15])
     cb = fig.colorbar(hb, cax=cax, ticks=[-20, -10, 0, 10, 20])
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8.5, length=0)
     cb.ax.set_yticklabels(["−20%", "−10%", "with\nthe city", "+10%", "+20%"])
 
-    a2 = fig.add_axes([0.14, 0.12, 0.80, 0.28])
+    a2 = fig.add_axes([0.14, 0.09, 0.80, 0.25])
     a2.scatter(area["reputation"], area["change"], s=np.sqrt(area["n"]) * 9, color=style.BLUE, alpha=0.55,
                edgecolor=style.SURFACE, lw=0.8, zorder=3)
     xs = np.linspace(area["reputation"].min(), area["reputation"].max(), 10)

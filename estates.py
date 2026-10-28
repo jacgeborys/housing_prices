@@ -59,7 +59,7 @@ def main():
                f"MSI neighbourhoods with ≥ {MIN_BUILDINGS} priced buildings. Value = average gap between a building's typical-flat price and "
                "the out-of-sample prediction, shrunk toward 0 for small areas; bars = 95 % interval. " + style.SOURCE)
     ax = basemap(fig, d, w)
-    ax.set_position([0.10, 0.52, 0.66, 0.36])
+    ax.set_position([0.04, 0.43, 0.76, 0.47])
     norm = TwoSlopeNorm(vmin=-15, vcenter=0, vmax=15)
     m = msi.merge(g[["name", "shrunk_pct"]], on="name", how="left")
     m[m["shrunk_pct"].isna()].plot(ax=ax, color=style.CONTEXT, edgecolor=style.SURFACE, linewidth=0.4, zorder=3)
@@ -67,14 +67,14 @@ def main():
                                           edgecolor=style.SURFACE, linewidth=0.4, zorder=3)
     d.boundary.plot(ax=ax, color=style.INK_2, linewidth=0.6, zorder=4)
     sm = plt.cm.ScalarMappable(norm=norm, cmap=style.DIV_CMAP)
-    cax = fig.add_axes([0.80, 0.58, 0.02, 0.22])
+    cax = fig.add_axes([0.84, 0.57, 0.02, 0.22])
     cb = fig.colorbar(sm, cax=cax, ticks=[-15, -10, -5, 0, 5, 10, 15])
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8.5, length=0)
     cb.ax.set_yticklabels(["−15%", "−10%", "−5%", "as\npredicted", "+5%", "+10%", "+15%"])
 
     sel = pd.concat([g.head(TOP), g.tail(TOP)])
-    ax2 = fig.add_axes([0.36, 0.12, 0.58, 0.37])
+    ax2 = fig.add_axes([0.36, 0.09, 0.58, 0.31])
     y = np.arange(len(sel))
     colr = [style.DIV_CMAP(norm(x)) for x in sel["shrunk_pct"]]
     ax2.hlines(y, 0, sel["shrunk_pct"], color=colr, lw=3)

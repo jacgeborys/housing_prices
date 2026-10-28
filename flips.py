@@ -125,19 +125,15 @@ def main():
     v, d, w = load()
     n_r, med, med_net = len(recent_f), recent_f["markup"].median(), recent_f["markup_net"].median()
     fig = page("The flippers",
-               "Flats resold within a year of being bought: where, how often, and for how much",
+               "Flats resold within a year of purchase: where, how often, and for how much",
                f"One flat = the land-register flat id. Flip = resold {MIN_DAYS}–{MAX_DAYS} days after the previous sale; markup net of the "
                "city-wide price index. Map: 2021–25, hexagons with ≥ 40 resales. " + style.SOURCE)
-    fig.text(0.03, 0.885, wrap(f"2021–25: {n_r:,} flips, {100 * n_r / len(recent_s):.1f} per 100 resales. "
-                               f"Median markup {med:+.0f}% ({med_net:+.0f}% beyond what the market did), before renovation, tax and fees, "
-                               f"median holding {recent_f['days'].median():.0f} days. The markup sticks: flipped flats that sold again "
-                               f"later went for {held['after_net'].median():+.0f}% vs the flipper's price, net of the "
-                               f"market ({len(held)} flats). Flipping is busiest where "
-                               f"prices gained most on the city since 2010–14 (correlation {r:+.2f} across "
-                               f"{len(both)} neighbourhoods).", 95),
+    fig.text(0.03, 0.885, wrap(f"2021–25: {n_r:,} flats were resold within a year of purchase ({100 * n_r / len(recent_s):.0f} in 100 "
+                               f"resales), at a median markup of {med:+.0f}%, or {med_net:+.0f}% beyond the market, before "
+                               f"renovation, tax and fees.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     ax = basemap(fig, d, w)
-    ax.set_position([0.03, 0.46, 0.60, 0.36])
+    ax.set_position([0.02, 0.38, 0.62, 0.45])
     kw = dict(gridsize=(40, 35), extent=(*ax.get_xlim(), *ax.get_ylim()))
     hf = ax.hexbin(recent_f.geometry.x, recent_f.geometry.y, **kw)
     hs = ax.hexbin(recent_s.geometry.x, recent_s.geometry.y, **kw)
@@ -158,7 +154,7 @@ def main():
         framealpha=0.9, edgecolor="none")
 
     top = area.sort_values("share", ascending=False).head(10).iloc[::-1]
-    a3 = fig.add_axes([0.80, 0.50, 0.17, 0.33])
+    a3 = fig.add_axes([0.80, 0.44, 0.17, 0.36])
     a3.barh(np.arange(len(top)), top["share"], color="#c4521f", height=0.65)
     a3.set_yticks(np.arange(len(top)))
     a3.set_yticklabels(top.index, fontsize=8.5)
@@ -169,7 +165,7 @@ def main():
     a3.tick_params(axis="x", labelsize=8)
     a3.set_title("Top neighbourhoods", fontsize=10)
 
-    a1 = fig.add_axes([0.10, 0.12, 0.38, 0.27])
+    a1 = fig.add_axes([0.10, 0.09, 0.38, 0.24])
     yy = by_year[(by_year.index >= 2006) & (by_year["resales"] > 2000)]["share"].reindex(range(2006, 2027))
     a1.plot(yy.index, yy.values, "-o", color="#c4521f", lw=2, ms=5, mec=style.SURFACE)   # NaN years break the line
     style.shade_gap(a1)
@@ -178,18 +174,18 @@ def main():
     a1.set_title("Flips per 100 resales, by year", fontsize=10.5)
     a1.tick_params(labelsize=8.5)
 
-    a2 = fig.add_axes([0.58, 0.12, 0.38, 0.27])
+    a2 = fig.add_axes([0.58, 0.09, 0.38, 0.24])
     bins = np.arange(-30, 81, 5)
-    a2.hist(recent_f["markup"].clip(-30, 80), bins=bins, color="#f08a4b", edgecolor=style.SURFACE, lw=1,
-            label="Nominal")
-    a2.hist(recent_f["markup_net"].clip(-30, 80), bins=bins, histtype="step", color=style.INK, lw=1.6,
-            label="Net of the market")
+    a2.hist(recent_f["markup"].clip(-30, 80), bins=bins, color="#f08a4b", edgecolor=style.SURFACE, lw=1)
     a2.axvline(0, color=style.AXIS, lw=1)
+    a2.axvline(med, color=style.INK, lw=1.4, ls=(0, (4, 3)))
+    a2.set_ylim(0, a2.get_ylim()[1] * 1.14)
+    a2.text(med + 1.5, a2.get_ylim()[1] * 0.99, f"median {med:+.0f}%", fontsize=9, color=style.INK, va="top")
     a2.set_xticks([-20, 0, 20, 40, 60, 80])
     a2.set_xticklabels(["−20%", "0%", "+20%", "+40%", "+60%", "+80%+"])
+    a2.set_yticks([])
     style.hgrid_only(a2)
-    a2.legend(fontsize=8.5, loc="upper right")
-    a2.set_title("Markup on resale, 2021–25 (flips)", fontsize=10.5)
+    a2.set_title("Markup on resale, as paid (2021–25)", fontsize=10.5)
     a2.tick_params(labelsize=8.5)
     save(fig, "16_flippers.png")
 

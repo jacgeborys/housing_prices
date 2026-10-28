@@ -76,12 +76,12 @@ def main():
                "timetable (7.10.2026, median of departures 07–09). Minutes: median over the district's priced buildings. " + style.SOURCE)
     # 1 destinations
     ax1 = basemap(fig, d, w)
-    ax1.set_position([0.01, 0.42, 0.48, 0.36])
+    ax1.set_position([0.04, 0.37, 0.46, 0.41])
     dest = gpd.read_file(os.path.join(HERE, "data", "destinations.gpkg")).to_crs(2180)
     dest = dest[dest["jobs"] > 50]
-    cm1 = ListedColormap(["#fde4cf", "#f9b98a", "#f08a4b", "#c4521f", "#7a2a08"])
+    cm1 = ListedColormap(["#fdd9b5", "#f8a45c", "#ee6a2a", "#c42d1c", "#6e0f12"])
     nb1 = BoundaryNorm([50, 500, 1500, 4000, 10000, 1e9], 5)
-    ax1.scatter(dest.geometry.x, dest.geometry.y, c=dest["jobs"], cmap=cm1, norm=nb1, s=4, marker="s", lw=0,
+    ax1.scatter(dest.geometry.x, dest.geometry.y, c=dest["jobs"], cmap=cm1, norm=nb1, s=7, marker="s", lw=0,
                 zorder=3)
     from pyproj import Transformer
     t = Transformer.from_crs(4326, 2180, always_xy=True)
@@ -124,11 +124,11 @@ def main():
 
     # 2 jobs within 30 min
     ax2 = basemap(fig, d, w)
-    ax2.set_position([0.51, 0.42, 0.48, 0.36])
-    cm2 = ListedColormap(["#e6effa", "#b9d3f3", "#83b2ea", "#4c8bd9", "#2461b0", "#0d3670"])
+    ax2.set_position([0.51, 0.37, 0.47, 0.41])
+    cm2 = ListedColormap(["#d4e6f9", "#9cc8f1", "#5aa0e6", "#2a6fcf", "#183f93", "#0a1f5c"])
     nb2 = BoundaryNorm([0, 25e3, 75e3, 150e3, 300e3, 500e3, 2e6], 6)
     pts = v.geometry.representative_point()
-    ax2.scatter(pts.x, pts.y, c=v["jobs_30"], cmap=cm2, norm=nb2, s=3, lw=0, zorder=3)
+    ax2.scatter(pts.x, pts.y, c=v["jobs_30"], cmap=cm2, norm=nb2, s=6, lw=0, zorder=3)
     outlines(ax2, d, labels=False)
     legend_patches(ax2, [cm2(i) for i in range(6)], ["< 25k", "25–75k", "75–150k", "150–300k", "300–500k", "500k+"],
                    "Jobs within 30 min")
@@ -137,7 +137,7 @@ def main():
     # 3 minutes to the centre (PKiN), median per district; > 60 min (no route within the hour) counted as 61
     tc = v["osm_id"].map(acc["am_peak"]["t_centrum"]).fillna(61)
     mins = tc.groupby(v["district"]).median().sort_values()
-    ax3 = fig.add_axes([0.20, 0.09, 0.74, 0.27])
+    ax3 = fig.add_axes([0.20, 0.07, 0.74, 0.25])
     y = np.arange(len(mins))
     ax3.barh(y, mins.values, color=style.BLUE, height=0.66)
     for yi, m in zip(y, mins.values):

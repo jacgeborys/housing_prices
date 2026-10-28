@@ -73,7 +73,7 @@ def main():
                f"typical-flat value of priced 2011–2020 buildings within {COMP_M / 1000:g} km. Resales: RCN 2024–26. " + style.SOURCE)
     # 1 supply map
     ax1 = basemap(fig, d, w)
-    ax1.set_position([0.01, 0.46, 0.48, 0.31])
+    ax1.set_position([0.0, 0.39, 0.50, 0.38])
     cm1 = ListedColormap(["#fde4cf", "#f9b98a", "#f08a4b", "#d4602a", "#a33f14", "#6e2508"])
     b1 = [0, 13000, 15000, 17000, 20000, 25000, 1e6]
     ax1.scatter(inv.geometry.x, inv.geometry.y, s=inv["flats"].clip(upper=600) * 0.9 + 6, c=inv["ask"], cmap=cm1,
@@ -85,13 +85,13 @@ def main():
 
     # 2 premium map
     ax2 = basemap(fig, d, w)
-    ax2.set_position([0.51, 0.46, 0.48, 0.31])
+    ax2.set_position([0.50, 0.39, 0.50, 0.38])
     p = inv.dropna(subset=["premium"])
     norm = TwoSlopeNorm(vmin=-20, vcenter=0, vmax=40)
     ax2.scatter(p.geometry.x, p.geometry.y, s=p["flats"].clip(upper=600) * 0.9 + 6, c=p["premium"].clip(-20, 40),
                 cmap=style.DIV_CMAP, norm=norm, edgecolor=style.INK_2, lw=0.4, zorder=4)
     outlines(ax2, d, labels=False)
-    cax = fig.add_axes([0.94, 0.61, 0.013, 0.13])
+    cax = fig.add_axes([0.93, 0.55, 0.013, 0.13])
     cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=style.DIV_CMAP), cax=cax, ticks=[-20, 0, 20, 40])
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8, length=0)
@@ -99,7 +99,7 @@ def main():
     ax2.set_title("Asking vs a nearly new flat nearby", fontsize=10.5)
 
     # 3 by district
-    a3 = fig.add_axes([0.20, 0.12, 0.34, 0.27])
+    a3 = fig.add_axes([0.20, 0.08, 0.34, 0.24])
     dist = o.groupby("district").agg(flats=("price_m2", "size"), ask=("price_m2", "median"))
     dist["resale"] = v.groupby("district")["value_2025"].median()
     dist = dist[dist["flats"] >= 30].sort_values("flats")
@@ -124,7 +124,7 @@ def main():
     a3.set_title("By district: supply (bars) and price per m² (dots)", fontsize=10, pad=24)
 
     # 4 size mix
-    a4 = fig.add_axes([0.66, 0.12, 0.31, 0.23])
+    a4 = fig.add_axes([0.66, 0.08, 0.31, 0.20])
     t = gpd.read_file(os.path.join(ROOT, "output", "price_model.gpkg"), layer="transactions_adj",
                       ignore_geometry=True, columns=["year", "market", "area"])
     t = t[(t["year"] >= 2024) & (t["market"] == "secondary")]

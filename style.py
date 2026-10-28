@@ -38,7 +38,7 @@ PRICE_CMAP = ListedColormap(plt.cm.magma_r(np.linspace(0.10, 0.72, 256)), name="
 
 # --- Polarity / change -------------------------------------------------------
 DIV_CMAP = LinearSegmentedColormap.from_list(
-    "div", ["#104281", "#3987e5", "#b7d3f6", "#f0efec", "#f4b9b3", "#e34948", "#8f1d1d"])
+    "div", ["#0a3a8a", "#2f7fe0", "#a9cdf5", "#f1efea", "#f6b3a8", "#e8423f", "#8a1010"])
 
 CPI_NOTE = "Real prices deflated with GUS annual CPI (2025 PLN)."
 SOURCE = "Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k."
