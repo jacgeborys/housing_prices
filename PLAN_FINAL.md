@@ -16,6 +16,13 @@ is resolved by the test below. One model rerun is expected; the whole thing is a
 | 2017-2020 flat gap | Label it (done on 23, 38), no recovery. | The `budynki` layer has the deeds (prices match 99 %) but no flat size, floor or function |
 | Footnotes | Two lines at most on every slide; anything longer goes to the methods page (r99). | "Nobody will read that much" |
 
+## Update 2026-10-28
+
+The full rerun on complete data is done (README, 2026-10-28): Wesoła is no longer an outlier (171 buildings, about 0 %),
+R² 0.616. River side on the new data: with it Praga-Północ -4.8 / Żoliborz +4.8, without it -12.0 / +12.7 (3 fold splits);
+the no-river version is the stable one (barely moved with the data), so dropping `right_bank` stays the recommendation.
+Steps 2-6 below still apply; the rebuild now takes about 1 h 40 (data steps are not needed again).
+
 ## Steps
 
 1. **Model.** Remove `right_bank` from `FEATURES` (summary_maps.py) and from price_drivers.py (the `RIGHT_BANK` list,

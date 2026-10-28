@@ -62,7 +62,7 @@ def main():
 
     fig.text(0.05, 0.955, "Where flats and houses sold", color=INK, fontsize=30, fontweight="bold", va="top")
     fig.text(0.05, 0.905, f"Flats: {len(bv):,} buildings with {int(bv['n'].sum()):,} flat sales 2006–2026 (bigger = more sales).\n"
-                          f"Houses: {len(hs):,} sales 2017–2026, one dot each. Colour: PLN per m² in 2025. Dark grey: other buildings.",
+                          f"Houses: {len(hs):,} sales 2017–2026. Colour: PLN per m², 2025. Dark grey: other buildings.",
              color=MUTED, fontsize=12.5, va="top", linespacing=1.4)
     cax = fig.add_axes([0.66, 0.075, 0.28, 0.012])
     cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=RAMP), cax=cax, orientation="horizontal")

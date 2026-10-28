@@ -89,6 +89,19 @@ travel times (r5py). All findings are associations within a district, not causal
   -12..-13 % with `centre_km`, -4..-8 % without; Żoliborz +6 -> +2.5 %. Wesoła stays +6..7 % on 38 buildings: shrink or
   grey districts under ~100 buildings. Not adopted yet.
 
+**Full rerun 2026-10-28 on complete data.** The RCN download used a box that stopped at 21.22 E (city edge 21.27 E): half of
+Wesoła and the east of Wawer were missing, and STARTINDEX paging lost and duplicated records. `fetch_rcn.py` now cuts the
+(widened) box into cells of <= 4,500 records (one request each), parses nested deed dates (they came back empty before),
+and the old files are kept as `output/rcn_*_before_east.gpkg`. Result: 393,565 flat-layer and 393,440 building-layer
+records; 265,490 flat sales (was 251,896), 21,337 priced buildings (was 20,711), 14,018 with >= 3 sales (was 13,607);
+Wesoła 388 buildings / 171 with >= 3 sales / 2,110 sales (was 101 / 38 / 513). Everything from `build_viz.py` on was rerun
+(price index needs its cache `output/cache/model_input.pkl` deleted, it does not notice new data; `access/travel_times.py`
+skips when its csv exists: remove or rename `access_am_peak.csv`, it resumes per cell). Out-of-sample R² 0.616 (was 0.600).
+Reputation with the river side (single split): Praga-Północ -6, Wola -6, Żoliborz +5, Mokotów +5, Wesoła +0.4. River side
+on/off (3 fold splits, medians, new data): with Praga-Północ -4.8, Żoliborz +4.8, Wesoła +1.6, R² 0.611; without Praga-Północ
+-12.0, Żoliborz +12.7, Wesoła -0.2, R² 0.596; the no-river numbers hardly moved with the data update (-15 / +14.5 before),
+the with-river ones did (-12 / +6 before). Older bullets below that quote reputation numbers predate this rerun.
+
 **Next (planned 2026-10-27):** final iteration of the report in `PLAN_FINAL.md` (drop the river side from the model, small-district guards, shorter footnotes, one rebuild).
 
 **Model state (2026-10-25)**: plain-language summary in `MODEL_EXPLAINED.md`; next task (what lies under distance to
