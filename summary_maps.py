@@ -160,13 +160,14 @@ def cheaper_than_expected(v, d, w):
     style.pct(ax2)
     style.hgrid_only(ax2)
     ax2.set_title("Median building vs prediction, by district: the part no feature explains", fontsize=11)
+    gr = v.groupby("district")["resid_pct_river"].median().reindex(g.index) if "resid_pct_river" in v else None
     for xi, val in zip(x, g.values):
         if abs(val) >= 4:
-            ax2.text(xi, val + (0.8 if val > 0 else -0.8), f"{val:+.0f}%", ha="center",
+            edge = max(val, gr.values[xi]) if val > 0 and gr is not None else min(val, gr.values[xi]) if gr is not None else val
+            ax2.text(xi, edge + (1.0 if val > 0 else -1.0), f"{val:+.0f}%", ha="center",
                      va="bottom" if val > 0 else "top", fontsize=9, color=style.INK)
     lo, hi = g.min(), g.max()
-    if "resid_pct_river" in v:
-        gr = v.groupby("district")["resid_pct_river"].median().reindex(g.index)
+    if gr is not None:
         ax2.scatter(x, gr.values, s=14, color=style.INK, zorder=5, label="if the river side counted as a feature")
         ax2.legend(loc="upper left", frameon=False, fontsize=8.5, handletextpad=0.2)
         lo, hi = min(lo, gr.min()), max(hi, gr.max())
@@ -246,7 +247,7 @@ def cafes(v, d, w):
 def noise(v, d, w):
     fig = page("Where Warsaw is loud",
                "EU strategic noise map: road, tram and train, day-evening-night level (Lden)",
-               "EEA noise data (round 4, 2026), 10 m grid; the louder of road and rail (rail includes trams). Bars: typical-flat price net "
+               "EEA noise data (2026), the louder of road and rail (rail includes trams). Bars: typical-flat price net "
                "of district and other features, by tram & train noise at the façade; road noise: −0.5 % per 10 dB. " + style.SOURCE)
     ax = basemap(fig, d, w)
     arrs = []
@@ -280,7 +281,7 @@ def trees(v, d, w):
     greens = ["#dcedc8", "#aed581", "#7cb342", "#4f8f2f", "#2e6b1f", "#16461a"]
     fig = page("Trees: lovely, barely priced",
                "Only the leafiest surroundings (30 %+ tree cover) add about 2 %; parks nearby matter more",
-               "Tree cover density 2018 (Copernicus), shown from 10 %. Bars: typical-flat price net of district and other features, by tree "
+               "Tree cover 2018 (Copernicus). Bars: typical-flat price net of district and other features, by tree "
                "cover within 100 m: +0.3 % per 10 points, not significant. 10 ha of park within 500 m: +2.7 %. " + style.SOURCE)
     ax = basemap(fig, d, w)
     with rasterio.open("trees/data/tree_density_warsaw_10m.tif") as src:

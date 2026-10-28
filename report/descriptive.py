@@ -61,8 +61,8 @@ def data_overview(t):
         n_houses = None
     fig = page("What's in the data",
                f"Every flat sale in Warsaw's official price register, {t['year'].min()}–{t['year'].max()}",
-               "Notarial deeds of flats in full ownership, cleaned. New = sold by the developer (deed at completion, a year or two after the "
-               "price was agreed). 2017–20 are nearly empty in the register; cooperative flats never enter it; 2026 is partial. " + style.SOURCE)
+               "Deeds of flats in full ownership. New = sold by the developer (price agreed a year or two before the deed). "
+               "2017–20 are nearly empty; cooperative flats never enter the register; 2026 is partial. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"{len(t):,} flat sales: {per_year.get('secondary', 0).sum():,} resales and "
                                f"{per_year.get('primary', 0).sum():,} from developers"
                                + (f", plus {n_houses:,} house sales (recorded from 2017)" if n_houses else "")

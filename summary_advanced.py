@@ -66,7 +66,7 @@ def district_anatomy(v):
     cols = style.CAT[:8] + ["#9a9890"]
     fig = page("Why a district is expensive",
                "Each district's price gap to the city average, split into what goes with it",
-               f"Regression on all features, no district variable ({len(v) / 1000:.1f}K buildings); bars = coefficient × the district's "
+               f"Regression on all features, no district variable ({len(v) / 1000:.1f}K buildings); bars = coefficient × "
                f"distance from the city average. Right-bank flats sell ~{abs(river_pct()):.0f} % below left-bank ones: not counted (mostly reputation). " + style.SOURCE)
     ax = fig.add_axes([0.24, 0.20, 0.72, 0.67])
     yy = np.arange(len(c))

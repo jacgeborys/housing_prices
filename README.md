@@ -97,12 +97,9 @@ records; 265,490 flat sales (was 251,896), 21,337 priced buildings (was 20,711),
 Wesoła 388 buildings / 171 with >= 3 sales / 2,110 sales (was 101 / 38 / 513). Everything from `build_viz.py` on was rerun
 (price index needs its cache `output/cache/model_input.pkl` deleted, it does not notice new data; `access/travel_times.py`
 skips when its csv exists: remove or rename `access_am_peak.csv`, it resumes per cell). Out-of-sample R² 0.616 (was 0.600).
-Reputation with the river side (single split): Praga-Północ -6, Wola -6, Żoliborz +5, Mokotów +5, Wesoła +0.4. River side
-on/off (3 fold splits, medians, new data): with Praga-Północ -4.8, Żoliborz +4.8, Wesoła +1.6, R² 0.611; without Praga-Północ
--12.0, Żoliborz +12.7, Wesoła -0.2, R² 0.596; the no-river numbers hardly moved with the data update (-15 / +14.5 before),
-the with-river ones did (-12 / +6 before). Older bullets below that quote reputation numbers predate this rerun.
+**The river side is no longer a model feature** (2026-10-28 evening): right-bank flats sell about 13 % (-16..-10) below similar left-bank ones, but that gap is largely the right bank's reputation, and as a feature it made reputation numbers swing with the data (Praga-Północ -12 -> -5 %) while without it they hardly moved. `price_drivers.py` fits both (`resid_pct` = main, no river side; `resid_pct_river` = with the flag; `output/analysis/river_side.csv`), averaging three block splits. Final reputation (median per district, main / if river side counted): Praga-Północ -10.7 / -4.4, Wola -5.5 / -6.9, Białołęka -4.7 / -1.4, Targówek -4.3 / -1.0, Wesoła (171 buildings) +0.3 / +1.5, Żoliborz +12.0 / +4.7, Wilanów +4.0, Wawer +3.8, Mokotów +3.7; out-of-sample R² 0.616 / 0.633. Fig. 06 shows the with-river numbers as dots. Older bullets below that quote reputation numbers predate this rerun.
 
-**Next (planned 2026-10-27):** final iteration of the report in `PLAN_FINAL.md` (drop the river side from the model, small-district guards, shorter footnotes, one rebuild).
+**Done 2026-10-28** (plan in `PLAN_FINAL.md`): river side out of the model, thin districts marked in fig. 06, every report footnote at two lines (the audit prints `LONG FOOTNOTE` lines when a script runs), methods page updated, a 15-slide cut `output/report/warsaw_flats_short.pdf` next to the full 29-slide PDF. Still open: slide count decision, a house model (parked).
 
 **Model state (2026-10-25)**: plain-language summary in `MODEL_EXPLAINED.md`; next task (what lies under distance to
 PKiN) planned in `PLAN_CENTRALITY.md`. Fig. 31 keeps its original blue-cream-orange-pink ramp (chosen 2026-10-27 over plasma and 10 blue-red-gold variants); fig. 32 uses blue - coral - gold (chosen from five variants; colour-blind safe, brightness rises with price). Transit from TransitFrequency's

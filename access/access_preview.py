@@ -72,8 +72,8 @@ def main():
 
     fig = page("Where is the centre, and who can reach it?",
                "Jobs reachable by public transport, door to door: walking, waiting, riding, changing",
-               "Jobs = floor area (BDOT10k footprint x storeys) by building category, 250 m cells. Door-to-door routing on the Warsaw "
-               "timetable (Wed 7.10.2026, median of departures 07–09). Minutes: median over the district's priced buildings; 60+ if no route. " + style.SOURCE)
+               "Jobs = floor area (BDOT10k) by building category, 250 m cells. Door-to-door routing on the Warsaw "
+               "timetable (7.10.2026, median of departures 07–09). Minutes: median over the district's priced buildings. " + style.SOURCE)
     # 1 destinations
     ax1 = basemap(fig, d, w)
     ax1.set_position([0.01, 0.42, 0.48, 0.36])

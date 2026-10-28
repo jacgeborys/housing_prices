@@ -16,6 +16,8 @@ is resolved by the test below. One model rerun is expected; the whole thing is a
 | 2017-2020 flat gap | Label it (done on 23, 38), no recovery. | The `budynki` layer has the deeds (prices match 99 %) but no flat size, floor or function |
 | Footnotes | Two lines at most on every slide; anything longer goes to the methods page (r99). | "Nobody will read that much" |
 
+## Status 2026-10-28 evening: steps 1-6 done (see README); open: slide count, parked items
+
 ## Update 2026-10-28
 
 The full rerun on complete data is done (README, 2026-10-28): Wesoła is no longer an outlier (171 buildings, about 0 %),
