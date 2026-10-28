@@ -71,7 +71,7 @@ FEATURES = ["log2_trips", "walk_metro_km", "walk_rail_km", "walk_tram_km", "walk
             "height_m", "pct_primary", "new_build", "log_footprint", "walk7_food_drink", "walk7_grocery",
             "walk7_zabka", "walk7_schools", "walk7_health", "walk7_sport_play", "canopy_100",
             "age_prewar", "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20", "age_2021_plus", "age_unknown",
-            "right_bank", "log2_jobs_transit"]   # side of the Vistula and transit job access (price_drivers.py, 2026-10-25)
+            "log2_jobs_transit"]   # transit job access (price_drivers.py). The river side is not a feature since 2026-10-28
 
 
 def adjusted(v, focus):
@@ -125,13 +125,10 @@ def legend_patches(ax, colours, labels, title, loc="upper right"):
 # 6 --------------------------------------------------------------------------------------------
 def cheaper_than_expected(v, d, w):
     fig = page("Reputation: what a place earns beyond its features",
-               wrap("What flats sell for vs what the model predicts from location, river side, transit, amenities, noise "
+               wrap("What flats sell for vs what the model predicts from location, transit, amenities, noise "
                     "and the building. The model never sees district names", 80),
-               "Median residual per 600 m hexagon (≥ 5 buildings): actual value of a typical flat vs the "
-               "out-of-sample prediction (gradient boosting, spatial 5-fold CV on 2 km blocks; the model "
-               "never saw the block it predicts; no district variable). Residuals capture what the data can't see: "
-               "reputation, condition, finish, views. A blue hexagon is not a bargain by itself. The pattern holds when café and "
-               "amenity counts are left out of the model (they may follow reputation rather than cause it). " + style.SOURCE)
+               "Median per 600 m hexagon (≥ 5 buildings): actual vs out-of-sample predicted value of a typical flat "
+               "(spatial CV, no district variable). It holds reputation, condition, finish and views. " + style.SOURCE)
     ax = basemap(fig, d, w)
     pts = v.geometry.representative_point()
     norm = TwoSlopeNorm(vmin=-15, vcenter=0, vmax=15)
@@ -145,15 +142,21 @@ def cheaper_than_expected(v, d, w):
     cb.ax.set_yticklabels(["−15%", "−10%", "−5%", "as\nexpected", "+5%", "+10%", "+15%"])
     cb.set_label("vs prediction", fontsize=9, color=style.INK_2)
 
-    # bottom: residual by district (median), as bars
+    # bottom: residual by district (median), as bars; dots = the same if the river side were counted as a feature
     ax2 = fig.add_axes([0.14, 0.15, 0.80, 0.16])
     g = v.groupby("district")["resid_pct"].median().sort_values()
+    cnt = v.groupby("district").size().reindex(g.index)
     x = np.arange(len(g))
+    few = (cnt < 200).to_numpy()                      # thin districts: pale bars, count in the label
     ax2.bar(x, g.values, width=0.65, color=[style.DIV_CMAP(norm(val)) for val in g.values],
-            edgecolor=style.INK_2, linewidth=0.3)
+            edgecolor=style.INK_2, linewidth=0.3, alpha=1.0)
+    for xi, f in zip(x, few):
+        if f:
+            ax2.bar(xi, g.values[xi], width=0.65, color=style.SURFACE, alpha=0.55, zorder=3)
     ax2.axhline(0, color=style.AXIS, lw=1)
     ax2.set_xticks(x)
-    ax2.set_xticklabels(g.index, rotation=55, ha="right", fontsize=8.5)
+    ax2.set_xticklabels([f"{n} ({c})" if f else n for n, c, f in zip(g.index, cnt, few)], rotation=55, ha="right",
+                        fontsize=8.5)
     style.pct(ax2)
     style.hgrid_only(ax2)
     ax2.set_title("Median building vs prediction, by district: the part no feature explains", fontsize=11)
@@ -161,10 +164,20 @@ def cheaper_than_expected(v, d, w):
         if abs(val) >= 4:
             ax2.text(xi, val + (0.8 if val > 0 else -0.8), f"{val:+.0f}%", ha="center",
                      va="bottom" if val > 0 else "top", fontsize=9, color=style.INK)
-    ax2.set_ylim(g.min() - 6, g.max() + 6)
-    fig.text(0.03, 0.885, wrap(f"Same location, river side, transit, cafés, green and noise: a flat in Żoliborz still "
+    lo, hi = g.min(), g.max()
+    if "resid_pct_river" in v:
+        gr = v.groupby("district")["resid_pct_river"].median().reindex(g.index)
+        ax2.scatter(x, gr.values, s=14, color=style.INK, zorder=5, label="if the river side counted as a feature")
+        ax2.legend(loc="upper left", frameon=False, fontsize=8.5, handletextpad=0.2)
+        lo, hi = min(lo, gr.min()), max(hi, gr.max())
+    ax2.set_ylim(lo - 6, hi + 6)
+    extra = ""
+    if "resid_pct_river" in v:
+        pn = v.loc[v["district"] == "Praga-Północ", "resid_pct_river"].median()
+        extra = f" Counting the river side as a feature would shrink Praga-Północ's gap to {abs(pn):.0f}%."
+    fig.text(0.03, 0.885, wrap(f"Same location, transit, cafés, green and noise: a flat in Żoliborz still "
                                f"sells {abs(g.get('Żoliborz', 0)):.0f}% above the prediction, one in Praga-Północ "
-                               f"{abs(g.get('Praga-Północ', 0)):.0f}% below.", 95),
+                               f"{abs(g.get('Praga-Północ', 0)):.0f}% below.{extra}", 95),
              fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
     save(fig, "06_cheaper_than_expected.png")
 

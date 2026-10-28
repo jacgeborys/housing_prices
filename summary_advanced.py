@@ -25,7 +25,6 @@ style.apply()
 
 GROUPS = {   # feature group -> features (fixed order = fixed colour)
     "Distance to the centre & jobs": ["centre_km", "log2_jobs_transit"],
-    "Side of the river": ["right_bank"],
     "Metro & rail lines": ["walk_metro_km", "walk_rail_km"],
     "Buses & trams": ["log2_trips", "walk_tram_km", "walk_bus_km"],
     "Cafés, shops & schools": ["walk7_food_drink", "walk7_grocery", "walk7_zabka", "walk7_schools",
@@ -37,6 +36,14 @@ GROUPS = {   # feature group -> features (fixed order = fixed colour)
     "Building form": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage"],
 }
 REPUTATION = "Unexplained (reputation)"
+
+
+def river_pct():
+    """Right-bank discount (OLS tag with all other features, price_drivers.py -> river_side.csv); not a model feature."""
+    try:
+        return float(pd.read_csv("output/analysis/river_side.csv")["pct"].iloc[0])
+    except (OSError, KeyError, IndexError):
+        return -13.0
 
 
 # 10 -------------------------------------------------------------------------------------------
@@ -59,12 +66,9 @@ def district_anatomy(v):
     cols = style.CAT[:8] + ["#9a9890"]
     fig = page("Why a district is expensive",
                "Each district's price gap to the city average, split into what goes with it",
-               f"Linear regression of log price on all features (no district variable), {len(v) / 1000:.1f}K buildings with "
-               "≥ 3 sales. Building age = construction decade (GIS Expert and other sources) vs 1961–90; side of the river = right bank; building form = height, footprint, "
-               "heritage listing, share of developer sales. A group's bar = its coefficients × how far the district's "
-               "buildings are from the city "
-               "average on those features; 'unexplained' = the district's mean residual. Values are log points "
-               "(≈ %), so bars add up to the dot. " + style.SOURCE)
+               f"Linear regression on all features, no district variable ({len(v) / 1000:.1f}K buildings, ≥ 3 sales); "
+               "bars = coefficients × the district's distance from the city average. Right-bank flats sell "
+               f"about {abs(river_pct()):.0f} % below left-bank ones; not counted (mostly reputation). " + style.SOURCE)
     ax = fig.add_axes([0.24, 0.20, 0.72, 0.67])
     yy = np.arange(len(c))
     left_pos, left_neg = np.zeros(len(c)), np.zeros(len(c))

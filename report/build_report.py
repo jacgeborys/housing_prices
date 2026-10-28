@@ -47,6 +47,10 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     ("src", "r99_methods"),
 ]
 
+SHORT = ["31_price_ridgelines", "32_price_points", "r01_data", "23_blind_spot", "01_prices_over_time",
+         "33_what_1m_buys", "38_house_map", "35_house_or_flat", "03_what_drives_price", "18_building_age", "08_cafes",
+         "24_transit_access", "06_cheaper_than_expected", "10_district_anatomy", "r99_methods"]   # the LinkedIn cut (2026-10-28)
+
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
     "reputation_time.py", "estates.py", "infill.py", "flips.py", "building_age_story.py", "flat_sizes.py",
@@ -73,16 +77,23 @@ def assemble():
     missing = [f"{d}/{s}.png" for d, s in SLIDES if not os.path.exists(os.path.join(folders[d], f"{s}.png"))]
     if missing:
         sys.exit("missing slides (run with --rebuild): " + ", ".join(missing))
-    with PdfPages(PDF) as pdf:
-        for i, (d, stem) in enumerate(SLIDES, 1):
-            src = os.path.join(folders[d], f"{stem}.png")
-            shutil.copyfile(src, os.path.join(OUT, f"{i:02d}_{stem}.png"))
-            fig = plt.figure(figsize=(8, 10), dpi=150)
-            ax = fig.add_axes([0, 0, 1, 1])
-            ax.imshow(Image.open(src).convert("RGB"), interpolation="antialiased")
-            ax.axis("off")
-            pdf.savefig(fig, dpi=300 if stem == "32_price_points" else 150)
-            plt.close(fig)
+    def write_pdf(path, items):
+        with PdfPages(path) as pdf:
+            for d, stem in items:
+                src = os.path.join(folders[d], f"{stem}.png")
+                fig = plt.figure(figsize=(8, 10), dpi=150)
+                ax = fig.add_axes([0, 0, 1, 1])
+                ax.imshow(Image.open(src).convert("RGB"), interpolation="antialiased")
+                ax.axis("off")
+                pdf.savefig(fig, dpi=300 if stem == "32_price_points" else 150)
+                plt.close(fig)
+
+    for i, (d, stem) in enumerate(SLIDES, 1):
+        shutil.copyfile(os.path.join(folders[d], f"{stem}.png"), os.path.join(OUT, f"{i:02d}_{stem}.png"))
+    write_pdf(PDF, SLIDES)
+    by_stem = {stem: (d, stem) for d, stem in SLIDES}
+    write_pdf(PDF.replace(".pdf", "_short.pdf"), [by_stem[x] for x in SHORT])
+    print(f"short deck: {len(SHORT)} slides -> {PDF.replace('.pdf', '_short.pdf')}")
     print(f"{len(SLIDES)} slides -> {OUT}, {PDF} ({os.path.getsize(PDF) / 1e6:.1f} MB)")
 
 

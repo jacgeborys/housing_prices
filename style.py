@@ -90,6 +90,9 @@ def header(fig, title, subtitle=None, y=0.995):
 
 
 def footer(fig, text=SOURCE, y=0.005):
+    n = text.count("\n") + 1
+    if n > 2:                       # footnotes: two lines at most (2026-10-28), the rest belongs on the methods page
+        print(f"LONG FOOTNOTE ({n} lines): {text[:70]!r}")
     fig.text(0.01, y, text, fontsize=8.5, color=MUTED, va="bottom", ha="left")
 
 

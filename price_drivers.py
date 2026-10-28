@@ -418,7 +418,7 @@ def main():
         OUT_GPKG, OUT_CSV = OUT_GPKG.replace(".gpkg", "_district_index.gpkg"), OUT_CSV.replace(".csv", "_district_index.csv")
         OUT_PNG = OUT_PNG.replace(".png", "_district_index.png")
     v = build_features()
-    feats = list(LABELS) + [f for f in AMENITY_LABELS if f in v] + [f for f in AGE_LABELS if f in v]         + [f for f in TREE_LABELS if f in v]
+    feats = [f for f in LABELS if f != "right_bank"] + [f for f in AMENITY_LABELS if f in v] + [f for f in AGE_LABELS if f in v]         + [f for f in TREE_LABELS if f in v]
     LABELS.update(AMENITY_LABELS)
     LABELS.update(TREE_LABELS)
     LABELS.update(AGE_LABELS)
@@ -428,6 +428,17 @@ def main():
     scores["gbm"] = r2
     v["pred_2025"] = np.exp(pred)
     v["resid_pct"] = 100 * (np.exp(resid) - 1)
+    # River side (2026-10-28): NOT a model feature. The right bank's discount is mostly reputation (the image of Praga and
+    # the right bank), and as a feature it moved Praga-Północ's gap between -12 and -5 % when the data were completed.
+    # Kept as a sensitivity: the same boosting with the flag (resid_pct_river) and its OLS tag.
+    with_rb = feats + ["right_bank"]
+    _, resid_rb, r2_rb, _ = boosted(v, with_rb, importance=False)
+    v["resid_pct_river"] = 100 * (np.exp(resid_rb) - 1)
+    scores["gbm_with_river_side"] = r2_rb
+    coef_rb, _ = linear_models(v, with_rb)
+    rb = coef_rb[coef_rb["feature"] == "right_bank"].iloc[0]
+    pd.DataFrame([{"pct": rb["pct"], "pct_lo": rb["pct_lo"], "pct_hi": rb["pct_hi"], "r2_without": r2, "r2_with": r2_rb}]
+                 ).round(3).to_csv(OUT_CSV.replace("price_drivers_coefficients", "river_side"), index=False)
     # Robustness: reputation without the amenity counts (cafés etc. partly follow reputation, so they may absorb it)
     no_amen = [f for f in feats if f not in AMENITY_LABELS]
     _, resid_na, r2_na, _ = boosted(v, no_amen, importance=False)
@@ -442,7 +453,7 @@ def main():
     print(coef.round(1).to_string(index=False))
     print("Importance:\n" + (importance / importance.sum()).round(3).to_string())
     keep = ["osm_id", "name", "addr_street", "addr_housenumber", "district", "n", "value_2025", "pred_2025",
-            "resid_pct", "resid_pct_no_amen", "trips"] + (["decade_end"] if "decade_end" in v else []) + feats + ["geometry"]
+            "resid_pct", "resid_pct_no_amen", "resid_pct_river", "right_bank", "trips"] + (["decade_end"] if "decade_end" in v else []) + feats + ["geometry"]
     v[keep].to_file(OUT_GPKG, layer="building_drivers", driver="GPKG")
     print(f"Saved {OUT_GPKG}, {OUT_CSV}")
     plot(coef, importance, scores, v)
