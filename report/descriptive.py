@@ -34,7 +34,7 @@ SIZE_COL = ["#d7263d", "#f46036", "#f8b24a", "#c9d66b", "#4aa37b", "#1d5f8a"]
 
 def save(fig, name):
     os.makedirs(OUT, exist_ok=True)
-    fig.savefig(f"{OUT}/{name}", dpi=150)
+    fig.savefig(f"{OUT}/{name}", dpi=300)
     plt.close(fig)
     print(f"Saved {OUT}/{name}")
 

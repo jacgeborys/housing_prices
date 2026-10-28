@@ -111,7 +111,7 @@ now includes `right_bank` and `log2_jobs_transit`; fig. 10 groups: distance to t
 green, river & quiet (distance to the Vistula). Ages: GIS Expert + Makscape + OSM + developer sales + infill + BDOT creation date + twins
 + `manual/age_manual.gpkg` (hand dating, 51 so far): 76 priced buildings still unknown. Full rebuild run 2026-10-25.
 
-**The report** (`report/`, the deliverable): 29 slides in story order -> `output/report/NN_*.png` +
+**The report** (`report/`, the deliverable): 29 slides in story order -> `output/report/NN_*.png` (all 2400 x 3000 px, 300 dpi since 2026-10-28, so a viewer fills the screen with every one) +
 `output/report/warsaw_flats.pdf`. `python report/build_report.py` assembles it from built figures; `--rebuild` reruns
 the figure scripts first (pipeline order, ~1 h). Principles: one question per slide, title = the answer, at most two
 panels, describe before explaining, no model internals on slides (they go to the methods page).

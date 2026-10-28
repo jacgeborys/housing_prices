@@ -24,7 +24,7 @@ style.apply()
 
 OUT = "output/summary"
 FIG = (8, 10)            # 4:5 portrait
-DPI = 150                # -> 1200 x 1500 px
+DPI = 300                # -> 2400 x 3000 px (was 150 / 1200 x 1500 until 2026-10-28: viewers do not enlarge small images, so only the 300 dpi fig. 32 filled the screen)
 REF_YEAR = 2025
 
 
