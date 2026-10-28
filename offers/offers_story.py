@@ -85,13 +85,13 @@ def main():
 
     # 2 premium map
     ax2 = basemap(fig, d, w)
-    ax2.set_position([0.50, 0.39, 0.50, 0.38])
+    ax2.set_position([0.49, 0.39, 0.46, 0.38])
     p = inv.dropna(subset=["premium"])
     norm = TwoSlopeNorm(vmin=-20, vcenter=0, vmax=40)
     ax2.scatter(p.geometry.x, p.geometry.y, s=p["flats"].clip(upper=600) * 0.9 + 6, c=p["premium"].clip(-20, 40),
                 cmap=style.DIV_CMAP, norm=norm, edgecolor=style.INK_2, lw=0.4, zorder=4)
     outlines(ax2, d, labels=False)
-    cax = fig.add_axes([0.93, 0.55, 0.013, 0.13])
+    cax = fig.add_axes([0.955, 0.55, 0.012, 0.13])
     cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=style.DIV_CMAP), cax=cax, ticks=[-20, 0, 20, 40])
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8, length=0)

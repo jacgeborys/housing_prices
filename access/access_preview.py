@@ -120,7 +120,7 @@ def main():
     outlines(ax1, d, labels=False)
     legend_patches(ax1, [cm1(i) for i in range(5)], ["50–500", "500–1.5k", "1.5–4k", "4–10k", "10k+"],
                    "Jobs per 250 m cell")
-    ax1.set_title("Where the jobs are (bold: office cores, dashed: smaller centres)", fontsize=9.5)
+    ax1.set_title("Where the jobs are (circles: office cores)", fontsize=9.5)
 
     # 2 jobs within 30 min
     ax2 = basemap(fig, d, w)
