@@ -172,11 +172,8 @@ def drivers():
 
     fig = page("What moves the price of a Warsaw flat",
                "Effect of each feature, comparing buildings within the same district",
-               f"{len(gv):,} buildings with ≥ 3 flat sales; price of a typical flat (date, floor, size removed). "
-               "Regression on log price with district\neffects, all features at once; bars = 95 % CI, SEs "
-               f"clustered by 1 km cell. Features also explain {r2['gbm']:.0%} of price differences\nout of sample "
-               "(gradient boosting, spatial cross-validation). Noise: EEA Lden. Transit: TransitFrequency. "
-               + style.SOURCE)
+               f"{len(gv):,} buildings with ≥ 3 flat sales; typical flat (date, floor, size removed). Regression with district effects, "
+               f"bars = 95 % CI; the features explain {r2['gbm']:.0%} of price differences out of sample. " + style.SOURCE)
     ax = fig.add_axes([0.47, 0.13, 0.46, 0.74])
     lim = 8.0
     y = np.arange(len(d))
@@ -212,9 +209,8 @@ def blind_spot():
     fig = page("The price register's blind spot",
                wrap("Cooperative-right sales (spółdzielcze własnościowe prawo) never enter RCN, "
                     "and rented city blocks rarely sell", 80),
-               "Flats estimated from building footprint × storeys (BDOT10k / OSM), calibrated on new builds. "
-               "Few sales = under 25 % of the city's\nusual sales per flat (2006–26). Only flats in full "
-               "ownership (odrębna własność) are registered. " + style.SOURCE)
+               "Flats estimated from building footprint × storeys (BDOT10k / OSM). Few sales = under 25 % of the city's usual sales per flat. "
+               "Only flats in full ownership are registered. " + style.SOURCE)
     fig.text(0.05, 0.885, f"1 in {round(1 / none_share)}", fontsize=30, fontweight="bold", va="top")
     fig.text(0.05, 0.835, "flats sits in a building with\nno recorded sale at all", fontsize=10.5,
              color=style.INK_2, va="top")

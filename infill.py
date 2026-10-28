@@ -79,11 +79,8 @@ def main():
 
     fig = page("New among the old",
                "Infill buildings (plomby) vs new buildings in new estates",
-               f"Buildings of 2001 or later (construction decade: GIS Expert, mapy.gis-expert.pl; 2021+ from RCN developer sales). Infill: ≥ {SHARE:.0%} "
-               f"of dated buildings within {NEAR_M} m built before 1961 (≥ {MIN_NEIGH} neighbours); new estate: ≥ "
-               f"{SHARE:.0%} built 2001 or later. Price: typical-flat value 2025 (≥ 3 sales); vs prediction = model "
-               "residual (location, amenities, noise, age); vs old neighbours = median of priced pre-1961 buildings "
-               f"within {NEAR_M} m. " + style.SOURCE)
+               f"Age: GIS Expert and others. Infill: ≥ {SHARE:.0%} of dated buildings within {NEAR_M} m built before 1961; new estate: ≥ {SHARE:.0%} built "
+               f"2001 or later. Vs old neighbours = median of priced pre-1961 buildings within {NEAR_M} m. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.03, 0.40, 0.60, 0.46])
     col = {"infill": style.MAGENTA, "new estate": style.BLUE, "mixed": "#b9b7ae"}

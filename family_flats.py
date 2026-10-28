@@ -56,10 +56,8 @@ def what_1m_buys(t, d, w):
     lo, hi = g.idxmin(), g.idxmax()
     fig = page("What 1 million złoty buys",
                f"Size of flats resold for {BUDGET[0] / 1e6:.1f}–{BUDGET[1] / 1e6:.1f} million PLN, {RECENT[0]}–{RECENT[1]}",
-               f"{len(r):,} resales (full ownership) recorded in RCN at {BUDGET[0]:,}–{BUDGET[1]:,} PLN, "
-               f"{RECENT[0]}–{RECENT[1]}. Price as paid, without fees or renovation. Map: median size per hexagon "
-               f"(≥ 8 sales); bars: districts with ≥ {MIN_DISTRICT} such sales. Developer sales left out: their "
-               "deeds carry prices agreed 1–2 years earlier. " + style.SOURCE)
+               f"{len(r):,} resales at {BUDGET[0]:,}–{BUDGET[1]:,} PLN, {RECENT[0]}–{RECENT[1]}; price as paid. Map: hexagons with ≥ 8 sales; "
+               f"bars: districts with ≥ {MIN_DISTRICT} such sales. Developer sales left out (prices agreed 1–2 years earlier). " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"The same million buys a {g[lo]:.0f} m² flat in {lo} and a {g[hi]:.0f} m² one in {hi}: "
                                f"{g[hi] / g[lo]:.1f}× the space. Across the river or out past the ring roads, the "
                                "budget of a city-centre two-room flat becomes a family flat.", 100),
@@ -90,10 +88,8 @@ def family_flats(t, d, w):
     lo, hi = cost.idxmin(), cost.idxmax()
     fig = page("Room for a family",
                f"Where flats of {FAMILY_M2} m² or more are resold, and what a {FAMILY_BAND[0]}–{FAMILY_BAND[1]} m² flat costs",
-               f"RCN resales (full ownership). Map: share of resales {r['year'].min()}–{r['year'].max()} that are "
-               f"{FAMILY_M2} m² or more, hexagons with ≥ 30 resales. Bars: median price as paid for a "
-               f"{FAMILY_BAND[0]}–{FAMILY_BAND[1]} m² resale, {RECENT[0]}–{RECENT[1]}, districts with ≥ {MIN_DISTRICT} "
-               "sales. Size, not rooms: the register counts a separate kitchen as a room. " + style.SOURCE)
+               f"Map: share of resales {r['year'].min()}–{r['year'].max()} that are {FAMILY_M2} m² or more, hexagons with ≥ 30 resales. "
+               f"Bars: median price as paid for a {FAMILY_BAND[0]}–{FAMILY_BAND[1]} m² resale, {RECENT[0]}–{RECENT[1]}, districts with ≥ {MIN_DISTRICT} sales. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"Only {100 * (r['area'] >= FAMILY_M2).mean():.0f} % of flats resold since 2021 have "
                                f"{FAMILY_M2} m² or more. A {FAMILY_BAND[0]}–{FAMILY_BAND[1]} m² flat costs "
                                f"{cost[lo] / 1e6:.2f} million in {lo} and {cost[hi] / 1e6:.2f} million in {hi}.", 100),
@@ -134,10 +130,8 @@ def big_flats(d, w):
     many_small = nb[(nb["many"] >= 0.35) & (nb["med"] < 55)].sort_values("med")      # many rooms, little space
     fig = page("Where the big flats are",
                f"All flat sales since 2016 (developer and resale): size and number of rooms",
-               f"{len(t):,} RCN flat sales 2016–{int(t['year'].max())} in Warsaw (full ownership). Hexagons with ≥ 40 "
-               "sales. Rooms = the register's 'izby': a separate kitchen counts as a room, a kitchen annex does not. "
-               "Lists: the city's MSI neighbourhoods with ≥ 300 sales. Terraced houses sold as flats are included "
-               "(Las, Wawer). " + style.SOURCE)
+               f"{len(t):,} flat sales 2016–{int(t['year'].max())}. Hexagons with ≥ 40 sales; lists: MSI neighbourhoods with ≥ 300 sales. "
+               "Rooms = the register's 'izby' (a separate kitchen counts as a room). " + style.SOURCE)
     ex = many_small.index[0] if len(many_small) else None
     fig.text(0.03, 0.885, wrap("Space and rooms are not the same thing. The biggest flats sell in Wawer, on the Saska "
                                "Kępa riverside and around Stegny and Wyględów"

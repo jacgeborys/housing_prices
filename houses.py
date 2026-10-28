@@ -116,11 +116,8 @@ def main():
     fig = page(f"A house costs {tot_x:.1f}x a flat, a square metre {1 - m2_x:.0%} less",
                f"Houses and resold flats sold {RECENT[0]}–{RECENT[1]} in the {len(keep)} districts with at least {MIN_HOUSES} "
                "house sales",
-               f"Houses: {len(r):,} sales of a single-family house with its plot (RCN, full ownership, one house per deed; "
-               f"recorded from 2017); flats: {len(f):,} RCN resales in the same districts and years, prices as paid. Price per "
-               f"m² of living space, the house INCLUDING its plot; the house's area is the deed's own where recorded "
-               f"({(r['area_source'] == 'deed').mean():.0%}), else estimated from the building outline and floors "
-               "(BDOT10k; typical miss 14 % per house). Dashed lines: medians. " + style.SOURCE)
+               f"Houses: {len(r):,} sales with plot (RCN, from 2017); flats: {len(f):,} resales, same districts and years. House area: "
+               f"the deed's ({(r['area_source'] == 'deed').mean():.0%}) or estimated from the building outline and floors. " + style.SOURCE)
     mil = lambda m: f"{m / 1e6:.2g} M" if m >= 1e6 else f"{m / 1e6:.2f} M"
     k = lambda m: f"{m / 1000:.0f}K"
     fig.text(0.03, 0.885, wrap(f"In total a median house costs {mil(hp.median())} and a flat {mil(fp.median())}. Per m² it flips: "

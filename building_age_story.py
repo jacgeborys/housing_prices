@@ -42,11 +42,8 @@ def main():
 
     fig = page("Old, older, newest",
                "What a building's age does to the price of its flats",
-               "Construction decade: GIS Expert, mapy.gis-expert.pl/zabudowa-warszawy (based on City of Warsaw and "
-               "GUGiK data, ~2020), majority of 5 points per footprint; 2021+ = no date on that map, developer sales "
-               "from 2019 (RCN). Price: typical-flat value 2025 (hedonic model, "
-               f"≥ 3 sales), relative to the median building of the same district; decades with ≥ 30 buildings. Map: "
-               "2011–20 vs 1961–90 buildings in the same 1.5 km hexagon (≥ 3 of each). " + style.SOURCE)
+               "Construction decade: GIS Expert (mapy.gis-expert.pl) and others. Price: typical-flat value 2025 (≥ 3 sales) vs the district's "
+               "median building. Map: 2011–20 vs 1961–90 buildings per 1.5 km hexagon. " + style.SOURCE)
     a1 = fig.add_axes([0.10, 0.59, 0.86, 0.21])
     labs = dict(ORDER)
     x = np.arange(len(pct))

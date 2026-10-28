@@ -72,12 +72,8 @@ def main():
 
     fig = page("Where is the centre, and who can reach it?",
                "Jobs reachable by public transport, door to door: walking, waiting, riding, changing",
-               "Jobs = floor area (BDOT10k footprint x storeys) per m² per job by building category of the SimCity map "
-               "(offices 18, public offices 25, retail & hospitals 40, schools 50...); 250 m cells. Travel: R5 routing on the Warsaw GTFS (ZTM, KM, WKD, timetable of Wed "
-               "7.10.2026) and OSM paths, median over every departure minute 07–09. Office clusters: "
-               "neighbouring cells with ≥ 4,000 office job equivalents (smaller centres: ≥ 1,500). Minutes: median over the "
-               "district's priced buildings; no route within 60 min counted as 60+. "
-               + style.SOURCE)
+               "Jobs = floor area (BDOT10k footprint x storeys) by building category, 250 m cells. Door-to-door routing on the Warsaw "
+               "timetable (Wed 7.10.2026, median of departures 07–09). Minutes: median over the district's priced buildings; 60+ if no route. " + style.SOURCE)
     # 1 destinations
     ax1 = basemap(fig, d, w)
     ax1.set_position([0.01, 0.42, 0.48, 0.36])

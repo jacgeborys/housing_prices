@@ -56,10 +56,8 @@ def main():
 
     fig = page("Warsaw's over- and under-achievers",
                "Neighbourhoods that sell furthest above or below what their location, amenities and buildings predict",
-               f"City's official MSI neighbourhoods with ≥ {MIN_BUILDINGS} priced buildings. Value = average gap between "
-               "a building's typical-flat price and the model's out-of-sample prediction (no district variable), "
-               "shrunk toward 0 for small areas (empirical Bayes); bars = 95 % interval. The gap is what the data "
-               "can't see: reputation, building condition and standard, views, community. " + style.SOURCE)
+               f"MSI neighbourhoods with ≥ {MIN_BUILDINGS} priced buildings. Value = average gap between a building's typical-flat price and "
+               "the out-of-sample prediction, shrunk toward 0 for small areas; bars = 95 % interval. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.10, 0.52, 0.66, 0.36])
     norm = TwoSlopeNorm(vmin=-15, vcenter=0, vmax=15)

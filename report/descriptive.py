@@ -61,10 +61,8 @@ def data_overview(t):
         n_houses = None
     fig = page("What's in the data",
                f"Every flat sale in Warsaw's official price register, {t['year'].min()}–{t['year'].max()}",
-               "GUGiK Rejestr Cen Nieruchomości (RCN): notarial deeds of flats in full ownership, cleaned (shares of a flat "
-               "and deeds selling several flats at once removed). New = sold by the developer: the deed is signed at "
-               "completion, a year or two after the price was agreed. 2017–20: the register is nearly empty for Warsaw. "
-               "Cooperative flats (spółdzielcze prawo) never enter the register. 2026: only the sales registered by late September (deeds reach the register months later). " + style.SOURCE)
+               "Notarial deeds of flats in full ownership, cleaned. New = sold by the developer (deed at completion, a year or two after the "
+               "price was agreed). 2017–20 are nearly empty in the register; cooperative flats never enter it; 2026 is partial. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"{len(t):,} flat sales: {per_year.get('secondary', 0).sum():,} resales and "
                                f"{per_year.get('primary', 0).sum():,} from developers"
                                + (f", plus {n_houses:,} house sales (recorded from 2017)" if n_houses else "")
@@ -154,9 +152,8 @@ def new_vs_resale(t):
     recent = t[t["year"] >= 2021]
     fig = page("New or resale?",
                "Price per m² as paid, and the size of flats each market sells",
-               "RCN flat sales in full ownership, prices as paid (not inflation-adjusted), medians. New = sold by the "
-               "developer: the deed is signed at completion, so its price was agreed a year or two earlier. Years with "
-               "fewer than 300 sales of a kind left out. " + style.SOURCE)
+               "Prices as paid (not inflation-adjusted), medians. New = sold by the developer: the deed is signed at completion, so its price "
+               "was agreed a year or two earlier. Years with fewer than 300 sales of a kind left out. " + style.SOURCE)
     last = med.dropna().index.max()
     fig.text(0.03, 0.885, wrap(f"For years a resold flat cost more per m² in the register than a new one (2024: "
                                f"{med.loc[2024, 'secondary']:,.0f} vs {med.loc[2024, 'primary']:,.0f} PLN): developer "
@@ -194,10 +191,10 @@ def methods():
     fig = plt.figure(figsize=(8, 10))
     style.header(fig, "How to read these charts", "What the data is, what we compared, and what it can't tell", y=0.985)
     blocks = [
-        ("The data", "Every notarial deed of a flat sale in Warsaw recorded in the official price register (GUGiK RCN), "
-         "2006–2026: about 250,000 sales with price, size, floor and date. House sales come from the same register "
-         "(from 2017). Locations, buildings, transit, noise and greenery come from OpenStreetMap, BDOT10k, the EU noise "
-         "maps and Warsaw's timetables."),
+        ("The data", "Every notarial deed of a flat sale in Warsaw in the official price register (GUGiK RCN), 2006–2026: "
+         "about 265,000 sales with price, size, floor and date. Locations, buildings, transit, noise and greenery come "
+         "from OpenStreetMap, BDOT10k, the EU noise maps and Warsaw's timetables; building ages from GIS Expert's map "
+         "of Warsaw's development and other sources."),
         ("The yardstick flat", "Flats differ, so most comparisons use one yardstick: a ~50 m² flat on the 2nd floor, "
          "resold (not new), priced in 2025. For each building we ask what that flat would sell for there, using every "
          "sale since 2006 and what we learned from flats in the same building about size, floor and the year of sale. "
@@ -205,19 +202,24 @@ def methods():
         ("\"Within the same district\"", "When we say cafés or noise go with a price difference, we compare buildings "
          "against others in the same district, so that 'Mokotów is expensive' does not pass for 'cafés are expensive'."),
         ("Reputation", "What a place sells for beyond what its location, transport, amenities, noise and buildings "
-         "predict. The model never sees district names. It also holds what the data can't see: condition, finish, views."),
+         "predict. The model never sees district names. It also holds what the data can't see: condition, finish, "
+         "views. The side of the river is not a feature: right-bank flats sell about 13 % below similar left-bank ones, "
+         "but that gap is largely the right bank's reputation, so counting it would explain reputation away."),
+        ("Houses", "House sales (RCN, from 2017) are shown as they are, not modelled: a house price includes land, and "
+         "the register records a house's living area for about one deed in six. The rest is estimated from the "
+         "building outline and floors (typical miss 14 % per house), fine for medians, not for a single house."),
         ("Associations, not causes", "These are patterns in real sales, not experiments. Cafés follow money as much as "
          "they attract it. Where we say more (metro openings), we compare the same buildings before and after."),
         ("What's missing", "Cooperative flats (spółdzielcze prawo) never enter the register: about one flat in five "
          "sits in a building with no recorded sale. 2017–2020 is nearly empty. Developer deeds carry prices agreed a "
          "year or two before completion. Asking prices are not sale prices."),
     ]
-    y = 0.88
+    y = 0.90
     for head, body in blocks:
-        fig.text(0.06, y, head, fontsize=12.5, fontweight="bold", color=style.INK, va="top")
-        lines = wrap(body, 92)
-        fig.text(0.06, y - 0.030, lines, fontsize=10.5, color=style.INK_2, va="top", linespacing=1.45)
-        y -= 0.058 + 0.0215 * (lines.count("\n") + 1)
+        fig.text(0.06, y, head, fontsize=12, fontweight="bold", color=style.INK, va="top")
+        lines = wrap(body, 96)
+        fig.text(0.06, y - 0.027, lines, fontsize=10, color=style.INK_2, va="top", linespacing=1.4)
+        y -= 0.048 + 0.0200 * (lines.count(chr(10)) + 1)
     style.footer(fig, "Analysis and charts: ceny_mieszkan project. " + style.SOURCE, y=0.012)
     save(fig, "r99_methods.png")
 

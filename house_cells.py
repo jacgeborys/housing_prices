@@ -58,11 +58,8 @@ def main():
     norm = Normalize(6000, 18000)
     fig = page(f"A house m² costs {lo['val'] / 1000:.0f}K in {dist.index[0]} and {hi['val'] / 1000:.0f}K in {dist.index[-1]}",
                f"Median price per m² of living space (plot included) of houses sold 2017–2026, in 2025 prices, per {CELL} m cell",
-               f"{len(h):,} sales of a single-family house with its plot (RCN, full ownership, one house per deed; recorded "
-               f"from 2017). Cells with ≥ {MIN_IN_CELL} sales are coloured ({len(good):,} cells, {covered:.0%} of sales); "
-               "other sales are grey dots. Prices brought to 2025 with a house price index net of district. Living area: "
-               "the deed's own where recorded, else estimated from the building outline and floors (BDOT10k; typical "
-               "miss 14 % per house). Districts with ≥ 40 sales in the bars. " + style.SOURCE)
+               f"{len(h):,} house sales (RCN, from 2017) in 2025 prices (house price index net of district). Cells with ≥ {MIN_IN_CELL} sales "
+               f"coloured ({len(good):,} cells, {covered:.0%} of sales). Area: deed or estimated from outline and floors. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.03, 0.40, 0.94, 0.45])
     rest = h.merge(good.reset_index()[["cx", "cy"]], on=["cx", "cy"], how="left", indicator=True)

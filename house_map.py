@@ -30,9 +30,8 @@ def main():
     ratio = n_flat / n_house
     fig = page(f"One house sale for every {ratio:.0f} flat sales",
                "Houses ring the city; flats fill the middle. Every house sale 2017–2026, and every building with a flat sale",
-               f"Houses: {n_house:,} sales of a single-family house with its plot (RCN, full ownership, one house per deed; "
-               f"the register records houses from 2017). Flats: {n_flat:,} sales of flats, 2006–2026 (grey: buildings with "
-               "a recorded sale). The register's flat records for 2017–2020 are nearly empty. " + style.SOURCE)
+               f"Houses: {n_house:,} single-family house sales (RCN, recorded from 2017). Flats: {n_flat:,} sales 2006–2026; grey = buildings "
+               "with a recorded sale. The register's flat records for 2017–2020 are nearly empty. " + style.SOURCE)
 
     ax = basemap(fig, d, w)
     ax.scatter(pts.x, pts.y, s=1.1, color=FLAT, lw=0, zorder=3)

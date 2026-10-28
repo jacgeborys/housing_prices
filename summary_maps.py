@@ -223,10 +223,8 @@ def cafes(v, d, w):
     fig = page("Cafés and prices go together",
                wrap("Flats cost more only where 40 or more venues are within a short walk. Cafés follow wealth "
                     "as much as they attract it", 80),
-               f"{len(f):,} cafés, restaurants, bars and pubs from OpenStreetMap (Oct 2026), counted per 600 m "
-               "hexagon. Bars: typical-flat price net of the district and every other feature, by venues within a "
-               f"7-minute walk (560 m on footpaths). Regression: {cafe_pct():+.1f} % per doubling of venues within a district; "
-               "Żabka shops: no effect. An association, not a measured cause. " + style.SOURCE)
+               f"{len(f):,} venues from OpenStreetMap (Oct 2026), per 600 m hexagon. Bars: typical-flat price net of district and other "
+               f"features, by venues within a 7-minute walk ({cafe_pct():+.1f} % per doubling). An association, not a cause. " + style.SOURCE)
     ax = basemap(fig, d, w)
     cmap = ListedColormap(["#fde4cf", "#f9b98a", "#f08a4b", "#d4602a", "#a33f14", "#6e2508"])
     bounds = [1, 3, 6, 12, 25, 50, 1000]
@@ -248,11 +246,8 @@ def cafes(v, d, w):
 def noise(v, d, w):
     fig = page("Where Warsaw is loud",
                "EU strategic noise map: road, tram and train, day-evening-night level (Lden)",
-               "EEA Environmental Noise Directive data (round 4, update April 2026), 10 m grid; the louder of road "
-               "and rail shown ('rail' includes trams: 91 % of tram stops away from railways lie in it). Bars: "
-               "typical-flat price net of the district and every other feature, by tram & train noise at the façade "
-               "(loudest band within 10 m). Road noise has a much smaller effect (−0.5 % per 10 dB). "
-               + style.SOURCE)
+               "EEA noise data (round 4, 2026), 10 m grid; the louder of road and rail (rail includes trams). Bars: typical-flat price net "
+               "of district and other features, by tram & train noise at the façade; road noise: −0.5 % per 10 dB. " + style.SOURCE)
     ax = basemap(fig, d, w)
     arrs = []
     for s in ("road", "rail"):
@@ -285,10 +280,8 @@ def trees(v, d, w):
     greens = ["#dcedc8", "#aed581", "#7cb342", "#4f8f2f", "#2e6b1f", "#16461a"]
     fig = page("Trees: lovely, barely priced",
                "Only the leafiest surroundings (30 %+ tree cover) add about 2 %; parks nearby matter more",
-               "Tree Cover Density 2018: Copernicus Land Monitoring Service (EEA), 10 m, summer Sentinel-2; shown from "
-               "10 %. Bars: typical-flat price net of the district and every other feature (incl. parks and forest "
-               "within 500 m), by mean tree cover within 100 m of the building. Regression: +0.3 % per 10 points, not "
-               "significant; 10 ha of park within 500 m: +2.7 %. " + style.SOURCE)
+               "Tree cover density 2018 (Copernicus), shown from 10 %. Bars: typical-flat price net of district and other features, by tree "
+               "cover within 100 m: +0.3 % per 10 points, not significant. 10 ha of park within 500 m: +2.7 %. " + style.SOURCE)
     ax = basemap(fig, d, w)
     with rasterio.open("trees/data/tree_density_warsaw_10m.tif") as src:
         a = src.read(1).astype(float)

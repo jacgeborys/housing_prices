@@ -69,10 +69,8 @@ def main():
 
     fig = page("New flats on offer",
                "Every flat a developer is selling in Warsaw today, from the developers' own price lists",
-               "Asking prices: developers' price lists on dane.gov.pl (2025 price-transparency law), latest price per flat, "
-               f"{len(o):,} flats in {len(inv)} investments placed via the city's address points (~85 % of Warsaw files "
-               "readable). Premium: median asking per m² vs the typical-flat value (hedonic model, resale level, 2025) of "
-               f"priced buildings built 2011–2020 within {COMP_M / 1000:g} km. Resales: RCN 2024–26. " + style.SOURCE)
+               f"Developers' asking prices (dane.gov.pl): {len(o):,} flats, {len(inv)} investments. Premium: median asking per m² vs the "
+               f"typical-flat value of priced 2011–2020 buildings within {COMP_M / 1000:g} km. Resales: RCN 2024–26. " + style.SOURCE)
     # 1 supply map
     ax1 = basemap(fig, d, w)
     ax1.set_position([0.01, 0.46, 0.48, 0.31])

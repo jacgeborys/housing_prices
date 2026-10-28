@@ -76,11 +76,8 @@ def main():
     fig = page("The centre is pulling away",
                f"Same buildings, {EARLY[0]}–{str(EARLY[1])[2:]} vs {LATE[0]}–{str(LATE[1])[2:]}: "
                "price change relative to Warsaw as a whole",
-               f"Same buildings, resales only, buildings with no developer sale (existing before 2006); "
-               f"≥ {MIN_SALES} resales in each period. Prices net of the city-wide quality-adjusted index, so 0 % = "
-               f"moved with the city. Map: median per 600 m hexagon (≥ 3 buildings). Scatter: MSI neighbourhoods "
-               f"(city's official areas) with ≥ {MIN_BUILDINGS} buildings; reputation = median model residual today "
-               f"(figure 06). Districts in the headline: ≥ 25 buildings. " + style.SOURCE)
+               f"Resales only, buildings that existed before 2006; prices net of the city-wide index (0 % = moved with the city). Map: 600 m "
+               f"hexagons. Scatter: MSI neighbourhoods with ≥ {MIN_BUILDINGS} buildings; reputation = fig. 06. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.03, 0.47, 0.94, 0.40])
     p = ch.geometry.representative_point()

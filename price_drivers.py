@@ -338,10 +338,11 @@ def boosted(v, feats, seed=0, importance=True):
     weights each building by 1 / (tau² + fe_var). Reputation = residual x tau² / (tau² + fe_var): a building
     with few sales is pulled toward what its features predict, never toward its district."""
     y, s2 = v["y"].to_numpy(), v["fe_var"].to_numpy()
-    r0 = y - oof(v, feats, seed=seed)
-    tau2 = max(np.var(r0) - s2.mean(), 1e-3)
+    seeds = (seed, seed + 1, seed + 2)          # three different block splits, predictions averaged (2026-10-28): one split moved
+    r0 = y - np.mean([oof(v, feats, seed=s) for s in seeds], axis=0)    # Praga-Północ's median by 3 points; each prediction is
+    tau2 = max(np.var(r0) - s2.mean(), 1e-3)                            # still made by models that never saw its block
     w = 1 / (tau2 + s2)
-    pred = oof(v, feats, w=w, seed=seed)
+    pred = np.mean([oof(v, feats, w=w, seed=s) for s in seeds], axis=0)
     r2 = 1 - (w * (y - pred) ** 2).sum() / (w * (y - np.average(y, weights=w)) ** 2).sum()
     resid = (y - pred) * tau2 / (tau2 + s2)
     print(f"Boosting, spatial 5-fold on 2 km blocks: out-of-sample R² {r2:.3f} (precision-weighted), "

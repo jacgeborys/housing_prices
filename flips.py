@@ -126,11 +126,8 @@ def main():
     n_r, med, med_net = len(recent_f), recent_f["markup"].median(), recent_f["markup_net"].median()
     fig = page("The flippers",
                "Flats resold within a year of being bought: where, how often, and for how much",
-               f"RCN flat sales; one flat = the land-register flat id (all sales since 2018), before 2018 the same address, "
-               f"floor and area (resale→resale pairs only). Flip = resold {MIN_DAYS}–{MAX_DAYS} "
-               "days after the previous sale. Markup net of market = change in price per m² after removing the "
-               "city-wide quality-adjusted index over the holding period. Map: flips per 100 resales, 2021–25, "
-               "600 m hexagons with ≥ 40 resales. " + style.SOURCE)
+               f"One flat = the land-register flat id. Flip = resold {MIN_DAYS}–{MAX_DAYS} days after the previous sale; markup net of the "
+               "city-wide price index. Map: 2021–25, hexagons with ≥ 40 resales. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"2021–25: {n_r:,} flips, {100 * n_r / len(recent_s):.1f} per 100 resales. "
                                f"Median markup {med:+.0f}% ({med_net:+.0f}% beyond what the market did), before renovation, tax and fees, "
                                f"median holding {recent_f['days'].median():.0f} days. The markup sticks: flipped flats that sold again "

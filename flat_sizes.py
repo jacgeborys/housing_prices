@@ -33,9 +33,8 @@ def main():
 
     fig = page("Flats are getting smaller",
                "Size of flats sold in Warsaw, 2006–2026, and what size does to the price per m²",
-               "RCN flat sales (full ownership). New = sold by the developer (deed at completion, so a year or two after "
-               "the flat was bought). Years with < 300 sales hidden (2017–20 RCN gap). Price by size: hedonic model, same "
-               "building and quarter, vs a 45–60 m² flat. " + style.SOURCE)
+               "New = sold by the developer (deed at completion, a year or two after purchase). Years with < 300 sales hidden (2017–20 register "
+               "gap). Price by size: same building and quarter, vs a 45–60 m² flat. " + style.SOURCE)
     a1 = fig.add_axes([0.10, 0.50, 0.84, 0.30])
     for mk, lab, colr in (("primary", "new (developer)", "#c4521f"), ("secondary", "resale", style.BLUE)):
         s = sz[("median", mk)].where(sz[("size", mk)] >= 300).reindex(range(2006, 2027))
