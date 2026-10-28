@@ -26,7 +26,7 @@ style.apply()
 
 WALK_M_PER_MIN = 80                     # 4.8 km/h
 OSM = "D:/QGIS/mapy_warszawy_misc/data/osm"
-MAP_BOX = [0.03, 0.35, 0.94, 0.49]      # map axes (figure fractions)
+MAP_BOX = [0.02, 0.32, 0.96, 0.57]      # map axes (figure fractions); was [0.03, 0.35, 0.94, 0.49] until 2026-10-28 (city filled 60 % of the width)
 BAR_BOX = [0.14, 0.09, 0.80, 0.19]      # within-district bar panel
 GREY = "#e7e6e1"
 
@@ -43,8 +43,8 @@ def load():
     return v, d, w
 
 
-def basemap(fig, d, w, buildings=None):
-    ax = fig.add_axes(MAP_BOX)
+def basemap(fig, d, w, buildings=None, box=None):
+    ax = fig.add_axes(box or MAP_BOX)
     d.plot(ax=ax, color=style.SURFACE, edgecolor="none")
     if buildings is not None:
         buildings.plot(ax=ax, color=GREY, linewidth=0)
@@ -125,24 +125,24 @@ def legend_patches(ax, colours, labels, title, loc="upper right"):
 # 6 --------------------------------------------------------------------------------------------
 def cheaper_than_expected(v, d, w):
     fig = page("Reputation: what a place earns beyond its features",
-               wrap("What flats sell for vs what the model predicts from location, transit, amenities, noise "
-                    "and the building. The model never sees district names", 80),
+               wrap("Where flats sell for more (red) or less (blue) than their location, transit, amenities, noise "
+                    "and building predict", 80),
                "Median per 600 m hexagon (≥ 5 buildings): actual vs out-of-sample predicted value of a typical flat "
                "(spatial CV, no district variable). It holds reputation, condition, finish and views. " + style.SOURCE)
-    ax = basemap(fig, d, w)
+    ax = basemap(fig, d, w, box=[0.02, 0.335, 0.96, 0.52])
     pts = v.geometry.representative_point()
     norm = TwoSlopeNorm(vmin=-15, vcenter=0, vmax=15)
     hb = ax.hexbin(pts.x, pts.y, C=v["resid_pct"].clip(-40, 40), gridsize=(48, 42), reduce_C_function=np.median,
                    mincnt=5, cmap=style.DIV_CMAP, norm=norm, linewidths=0.3, edgecolors=style.SURFACE, zorder=3)
     outlines(ax, d)
-    cax = fig.add_axes([0.80, 0.66, 0.022, 0.14])
+    cax = fig.add_axes([0.86, 0.60, 0.022, 0.15])
     cb = fig.colorbar(hb, cax=cax, ticks=[-15, -10, -5, 0, 5, 10, 15])
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8.5, length=0)
     cb.ax.set_yticklabels(["−15%", "−10%", "−5%", "as\nexpected", "+5%", "+10%", "+15%"])
     cb.set_label("vs prediction", fontsize=9, color=style.INK_2)
 
-    # bottom: residual by district (median), as bars; dots = the same if the river side were counted as a feature
+    # bottom: residual by district (median), as bars
     ax2 = fig.add_axes([0.14, 0.15, 0.80, 0.16])
     g = v.groupby("district")["resid_pct"].median().sort_values()
     cnt = v.groupby("district").size().reindex(g.index)
@@ -159,26 +159,15 @@ def cheaper_than_expected(v, d, w):
                         fontsize=8.5)
     style.pct(ax2)
     style.hgrid_only(ax2)
-    ax2.set_title("Median building vs prediction, by district: the part no feature explains", fontsize=11)
-    gr = v.groupby("district")["resid_pct_river"].median().reindex(g.index) if "resid_pct_river" in v else None
+    ax2.set_title("Median building vs prediction, by district", fontsize=11)
     for xi, val in zip(x, g.values):
         if abs(val) >= 4:
-            edge = max(val, gr.values[xi]) if val > 0 and gr is not None else min(val, gr.values[xi]) if gr is not None else val
-            ax2.text(xi, edge + (1.0 if val > 0 else -1.0), f"{val:+.0f}%", ha="center",
+            ax2.text(xi, val + (1.0 if val > 0 else -1.0), f"{val:+.0f}%", ha="center",
                      va="bottom" if val > 0 else "top", fontsize=9, color=style.INK)
-    lo, hi = g.min(), g.max()
-    if gr is not None:
-        ax2.scatter(x, gr.values, s=14, color=style.INK, zorder=5, label="if the river side counted as a feature")
-        ax2.legend(loc="upper left", frameon=False, fontsize=8.5, handletextpad=0.2)
-        lo, hi = min(lo, gr.min()), max(hi, gr.max())
-    ax2.set_ylim(lo - 6, hi + 6)
-    extra = ""
-    if "resid_pct_river" in v:
-        pn = v.loc[v["district"] == "Praga-Północ", "resid_pct_river"].median()
-        extra = f" Counting the river side as a feature would shrink Praga-Północ's gap to {abs(pn):.0f}%."
-    fig.text(0.03, 0.885, wrap(f"Same location, transit, cafés, green and noise: a flat in Żoliborz still "
-                               f"sells {abs(g.get('Żoliborz', 0)):.0f}% above the prediction, one in Praga-Północ "
-                               f"{abs(g.get('Praga-Północ', 0)):.0f}% below.{extra}", 95),
+    ax2.set_ylim(g.min() - 6, g.max() + 6)
+    fig.text(0.03, 0.885, wrap(f"Same location, transit, cafés, green and noise, yet flats in Żoliborz sell "
+                               f"~{abs(g.get('Żoliborz', 0)):.0f}% above prediction and in Praga-Północ "
+                               f"~{abs(g.get('Praga-Północ', 0)):.0f}% below. That gap is reputation.", 100),
              fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
     save(fig, "06_cheaper_than_expected.png")
 
