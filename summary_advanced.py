@@ -33,9 +33,13 @@ GROUPS = {   # feature group -> features (fixed order = fixed colour)
                              "noise_rail_db", "noise_air_db"],
     "Building age": ["age_prewar", "age_1941_60", "age_1991_00", "age_2001_10", "age_2011_20",
                      "age_2021_plus", "age_unknown"],
-    "Building form": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage"],
+    "Building size & type": ["pct_primary", "new_build", "height_m", "log_footprint", "heritage"],
 }
-REPUTATION = "Unexplained (reputation)"
+REPUTATION = "Reputation (unexplained)"
+GROUP_COLOURS = {   # families: blues = getting to places, orange = things to do, green = nature, purples = the building, grey = reputation
+    "Distance to the centre & jobs": "#1d58a8", "Metro & rail lines": "#4a90e2", "Buses & trams": "#9cc4f2",
+    "Cafés, shops & schools": "#f08a4b", "Green, river & quiet": "#3f9d4a",
+    "Building age": "#5b3fa8", "Building size & type": "#b3a1e0", REPUTATION: "#8d8b84"}
 
 
 def river_pct():
@@ -63,12 +67,13 @@ def district_anatomy(v):
     c = c.loc[total.sort_values().index]
     tot = total.loc[c.index] * 100
 
-    cols = style.CAT[:8] + ["#9a9890"]
-    fig = page("Why a district is expensive",
-               "Each district's price gap to the city average, split into what goes with it",
+    cols = [GROUP_COLOURS[g] for g in c.columns]
+    fig = page("What goes with a district's price",
+               wrap("Each bar is a district; the dot is how much dearer (+) or cheaper (−) its flats are than the "
+                    "city average. The colours show what that gap goes with", 80),
                f"Regression on all features, no district variable ({len(v) / 1000:.1f}K buildings); bars = coefficient × "
                f"distance from the city average. Right-bank flats sell ~{abs(river_pct()):.0f} % below left-bank ones: not counted (mostly reputation). " + style.SOURCE)
-    ax = fig.add_axes([0.24, 0.20, 0.72, 0.67])
+    ax = fig.add_axes([0.24, 0.20, 0.72, 0.62])
     yy = np.arange(len(c))
     left_pos, left_neg = np.zeros(len(c)), np.zeros(len(c))
     for g, colr in zip(c.columns, cols):
@@ -92,6 +97,13 @@ def district_anatomy(v):
     ax.set_xlabel("Contribution to the price gap vs the city average (≈ %)")
     ax.legend(loc="upper center", bbox_to_anchor=(0.36, -0.07), ncol=3, fontsize=8.6, columnspacing=0.9,
               handlelength=1.4)
+    zo = "Żoliborz"
+    ctr = c.loc[zo, "Distance to the centre & jobs"]
+    rep = c.loc[zo, REPUTATION]
+    fig.text(0.03, 0.885, wrap(f"Read one row: flats in {zo} cost {tot[zo]:+.0f}% against the city average. Being close to the "
+                               f"centre and jobs goes with {ctr:+.0f} points of that; the hatched grey, {rep:+.0f} points, is "
+                               f"what no feature explains: the place's reputation.", 95),
+             fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
     save(fig, "10_district_anatomy.png")
     return c
 
@@ -109,7 +121,7 @@ def transit_x_price(v, d, w):
                "600 m hexagons with ≥ 5 priced buildings; median departures/day (TransitFrequency, 06–22 h, "
                "within a 5-minute walk) and median typical-flat price (2025 PLN/m²), each cut into thirds of the "
                "hexagons. " + style.SOURCE)
-    ax = basemap(fig, d, w)
+    ax = basemap(fig, d, w, box=[0.02, 0.26, 0.96, 0.63])
     pts = v.geometry.representative_point()
     kw = dict(gridsize=(48, 42), extent=(*ax.get_xlim(), *ax.get_ylim()), mincnt=5, reduce_C_function=np.median)
     hp = ax.hexbin(pts.x, pts.y, C=v["value_2025"], **kw)
@@ -128,7 +140,7 @@ def transit_x_price(v, d, w):
     pb = np.quantile(price, [1 / 3, 2 / 3])
     tb = np.quantile(trips, [1 / 3, 2 / 3])
 
-    lg = fig.add_axes([0.07, 0.38, 0.13, 0.104])
+    lg = fig.add_axes([0.07, 0.31, 0.13, 0.104])
     for r in range(3):
         for c in range(3):
             lg.add_patch(Rectangle((c, r), 1, 1, color=BIV[r][c], ec=style.SURFACE, lw=1.5))
@@ -151,7 +163,7 @@ def transit_x_price(v, d, w):
                      d[["district", "geometry"]], predicate="within", how="left")["district"].to_numpy()
     corners = [("Well served, cheap", 0, 2, BIV[0][2]), ("Well served, dear", 2, 2, BIV[2][2]),
                ("Poorly served, dear", 2, 0, BIV[2][0]), ("Poorly served, cheap", 0, 0, BIV[0][0])]
-    y0 = 0.25
+    y0 = 0.185
     for i, (name, p, t, colr) in enumerate(corners):
         m = (pq == p) & (tq == t)
         top = pd.Series(hexd[m]).value_counts().head(3)
