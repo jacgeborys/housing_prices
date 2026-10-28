@@ -63,14 +63,15 @@ def main():
     a3.set_xlabel("flat size, m²", fontsize=9)
     a3.yaxis.set_major_formatter(plt.FuncFormatter(lambda v_, _: f"{v_:+.0f}%"))
     style.hgrid_only(a3)
-    a3.set_title("Price per m² by size, same building", fontsize=10.5, loc="left")
+    a3.set_title("Price per m² by flat size: same building, vs a 45–60 m² flat", fontsize=10.5, loc="left")
+    a3.annotate("the yardstick", (x[BANDS.index("45-60")], 0.0), xytext=(0, 14), textcoords="offset points", ha="center", fontsize=8.5, color=style.MUTED)
 
     n_old = sz.loc[2006:2013, ("median", "primary")].median()
-    n_new = sz.loc[2025:2026, ("median", "primary")].median()
+    n_new = sz[("median", "primary")].where(sz[("size", "primary")] >= 300).dropna().iloc[-1]   # same value as the chart label
     fig.text(0.03, 0.885, wrap(f"A new flat sold today is {n_new:.0f} m², down from {n_old:.0f} m² in 2006–13 "
-                               f"({100 * (n_new / n_old - 1):+.0f}%): new flats are now no bigger than old ones. Small "
-                               f"flats cost more per m²: under 25 m² {prem['<25']:+.0f}% vs a 45–60 m² flat in the same "
-                               "building.", 100), fontsize=10.5, fontweight="semibold", va="top")
+                               f"({100 * (n_new / n_old - 1):+.0f}%): about the size of a resale flat. And small flats cost more per m²: "
+                               f"in the same building a studio under 25 m² sells for {prem['<25']:.0f}% more per m² than "
+                               "a 45–60 m² flat.", 100), fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "29_flat_sizes.png")
 
 

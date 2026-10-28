@@ -29,7 +29,9 @@ OUT = "output/report/src"
 NEW, RESALE = "#c4521f", style.BLUE
 SIZES = [(0, 25, "micro, under 25 m²"), (25, 35, "small, 25–35"), (35, 50, "compact, 35–50"),
          (50, 70, "medium, 50–70"), (70, 100, "spacious, 70–100"), (100, 1000, "large, 100+")]
-SIZE_COL = ["#d7263d", "#f46036", "#f8b24a", "#c9d66b", "#4aa37b", "#1d5f8a"]
+from matplotlib.colors import LinearSegmentedColormap
+_SIZE_RAMP = LinearSegmentedColormap.from_list("size", ["#f4eedd", "#f2c97d", "#e8914d", "#c9533f", "#8e2f55", "#4b1d5e"])
+SIZE_COL = [_SIZE_RAMP(x) for x in (0.17, 0.32, 0.48, 0.64, 0.82, 1.0)]   # bigger flats = darker, as on the size map (2026-10-28)
 
 
 def save(fig, name):
@@ -174,12 +176,17 @@ def new_vs_resale(t):
     a1.set_title("Median price per m², as paid", fontsize=10.5, loc="left")
 
     a2 = fig.add_axes([0.11, 0.12, 0.85, 0.28])
+    from scipy.ndimage import gaussian_filter1d
     bins = np.arange(15, 125, 5)
+    mid = bins[:-1] + 2.5
     for mk, lab, colr in (("primary", "new (developer)", NEW), ("secondary", "resale", RESALE)):
         a = recent.loc[recent["market"] == mk, "area"]
         h, _ = np.histogram(a, bins=bins)
-        a2.step(bins[:-1], 100 * h / len(a), where="post", color=colr, lw=2, label=f"{lab}, median {a.median():.0f} m²")
-    a2.set_xlabel("flat size, m² (5 m² steps; flats over 120 m² not shown)")
+        sm = gaussian_filter1d(100 * h / len(a), 1.0)
+        a2.fill_between(mid, sm, color=colr, alpha=0.18, lw=0)
+        a2.plot(mid, sm, color=colr, lw=2.4, label=f"{lab}, median {a.median():.0f} m²")
+    a2.set_ylim(0, None)
+    a2.set_xlabel("flat size, m² (smoothed; flats over 120 m² not shown)")
     a2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0f}%"))
     style.hgrid_only(a2)
     a2.legend(loc="upper right", fontsize=9, frameon=False)
