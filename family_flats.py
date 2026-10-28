@@ -11,10 +11,14 @@ Resales only: developer deeds are recorded at completion, at a price agreed 1-2 
 recent money look like it buys more. Rooms in RCN are "izby" (a separate kitchen counts as a room, a kitchen annex
 does not), so size in m² is the measure here.
 
-Output: output/summary/33_what_1m_buys.png, 34_family_flats.png, 36_big_flats.png
+  40  Where flats are big (2026-10-28, replaces 33 + 34 in the report): one map, one "bigness" score per hexagon
+      (half median m², half mean rooms, both as ranks across hexagons), all sales since 2021, plus districts below
+
+Output: output/summary/33_what_1m_buys.png, 34_family_flats.png, 36_big_flats.png, 40_where_flats_are_big.png
 """
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 
 import style
@@ -156,12 +160,69 @@ def big_flats(d, w):
     save(fig, "36_big_flats.png")
 
 
+def where_flats_are_big(d, w):
+    from matplotlib.colors import LinearSegmentedColormap
+    t = gpd.read_file("output/price_model.gpkg", layer="transactions_adj")
+    t = t[(t["year"] >= 2021) & t["district"].notna() & t["area"].between(12, 300) & t["rooms"].between(1, 10)]
+    dist = t.groupby("district").agg(area=("area", "median"), rooms=("rooms", "mean"), n=("area", "size"))
+    dist = dist[dist["n"] >= 300].sort_values("area")
+    lo, hi = dist.index[0], dist.index[-1]
+    fig = page("Where Warsaw's flats are big",
+               "Size and number of rooms of every flat sold since 2021, new and resale",
+               f"{len(t):,} flat sales 2021–{int(t['year'].max())}; hexagons with ≥ 15 sales. Score = average of a hexagon's rank "
+               "on median m² and on mean rooms (the register's 'izby'). " + style.SOURCE)
+    fig.text(0.03, 0.885, wrap(f"A typical flat sold in {lo} is {dist.loc[lo, 'area']:.0f} m² with "
+                               f"{dist.loc[lo, 'rooms']:.1f} rooms on average; in {hi}, {dist.loc[hi, 'area']:.0f} m² and "
+                               f"{dist.loc[hi, 'rooms']:.1f}. The darker the hexagon, the bigger the flats and the more rooms.", 100),
+             fontsize=10.5, fontweight="semibold", va="top")
+    ax = basemap(fig, d, w, box=[0.02, 0.30, 0.96, 0.55])
+    kw = dict(gridsize=(52, 46), mincnt=15, extent=(*ax.get_xlim(), *ax.get_ylim()))
+    ha = ax.hexbin(t.geometry.x, t.geometry.y, C=t["area"], reduce_C_function=np.median, **kw)
+    hr = ax.hexbin(t.geometry.x, t.geometry.y, C=t["rooms"], reduce_C_function=np.mean, **kw)
+    assert np.allclose(ha.get_offsets(), hr.get_offsets())
+    score = 0.5 * pd.Series(ha.get_array()).rank(pct=True) + 0.5 * pd.Series(hr.get_array()).rank(pct=True)
+    cmap = LinearSegmentedColormap.from_list("big", ["#f4eedd", "#f2c97d", "#e8914d", "#c9533f", "#8e2f55", "#4b1d5e"])
+    ha.set_cmap(cmap)
+    ha.set_clim(0.1, 0.95)
+    ha.set_array(score.to_numpy())
+    ha.set_edgecolor(style.SURFACE)
+    ha.set_linewidth(0.25)
+    ha.set_zorder(3)
+    hr.remove()
+    outlines(ax, d)
+    cax = fig.add_axes([0.62, 0.755, 0.32, 0.012])
+    cax.imshow(np.linspace(0, 1, 256)[None, :], aspect="auto", cmap=cmap)
+    cax.set_axis_off()
+    fig.text(0.62, 0.772, "smaller flats", fontsize=8.5, color=style.INK_2, va="bottom")
+    fig.text(0.94, 0.772, "bigger flats, more rooms", fontsize=8.5, color=style.INK_2, va="bottom", ha="right")
+
+    ax2 = fig.add_axes([0.06, 0.115, 0.90, 0.14])
+    x = np.arange(len(dist))
+    rk = (dist["area"].rank(pct=True) * 0.5 + dist["rooms"].rank(pct=True, method="average") * 0.5).to_numpy()
+    ax2.bar(x, dist["area"], width=0.72, color=[cmap(0.1 + 0.85 * v_) for v_ in rk])
+    for xi, (a_, r_) in zip(x, zip(dist["area"], dist["rooms"])):
+        ax2.text(xi, a_ + 1, f"{a_:.0f}", ha="center", va="bottom", fontsize=8.5, color=style.INK)
+        ax2.text(xi, 2.5, f"{r_:.1f}", ha="center", va="bottom", fontsize=8, color="white", fontweight="semibold")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(dist.index, rotation=55, ha="right", fontsize=8.5)
+    ax2.set_yticks([])
+    ax2.set_ylim(0, dist["area"].max() * 1.15)
+    style.hgrid_only(ax2)
+    ax2.grid(False)
+    for sp in ("left",):
+        ax2.spines[sp].set_visible(False)
+    ax2.set_title("Typical flat by district: median m² on top, average rooms in the bar", fontsize=10.5)
+    save(fig, "40_where_flats_are_big.png")
+    print(dist.round(1).to_string())
+
+
 def main():
     v, d, w = load()
     t = resales()
     what_1m_buys(t, d, w)
     family_flats(t, d, w)
     big_flats(d, w)
+    where_flats_are_big(d, w)
 
 
 if __name__ == "__main__":
