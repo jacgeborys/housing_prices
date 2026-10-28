@@ -16,7 +16,6 @@ from price_ridgelines import BG, CMAP_HI, CMAP_LO, INK, LABELS, MUTED, priced_bu
 from summary_charts import FIG, OUT
 
 DPI = 300
-RAMP_LO = 8000             # colour scale starts below the ridgelines' 11K so house prices show (2026-10-27)
 OTHER = "#33354b"         # other buildings, a step darker (2026-10-27; was #3a3d55)
 # blue - coral - gold (chosen 2026-10-27 from five variants): brightness rises steadily with price (L* 35 -> 91), so it
 # reads for red-green colour-blind viewers too; plasma felt too aggressive
@@ -41,16 +40,15 @@ def main():
     river.plot(ax=ax, color="#1a2033", lw=0, zorder=0)
     d.boundary.plot(ax=ax, color="#3a3c50", lw=0.5, zorder=1)
     ax.scatter(ab.x, ab.y, s=0.15, color=OTHER, lw=0, zorder=2, rasterized=True)
-    norm = Normalize(RAMP_LO, CMAP_HI)
+    norm = Normalize(CMAP_LO, CMAP_HI)
     ax.scatter(pts.x, pts.y, s=0.25 + 0.55 * np.sqrt(np.minimum(bv["n"], 200)), c=bv["value"], cmap=RAMP,
                norm=norm, lw=0, zorder=3, rasterized=True)
-    # houses (2026-10-27): one diamond per sale, price per m2 of living space (plot included) in 2025 prices; the ramp
-    # starts at 8K (not the ridgelines' 11K) so house prices (median ~10K) are told apart
+    # houses (2026-10-27): one dot per sale, price per m2 of living space (plot included) in 2025 prices, same ramp as flats
     hs = gpd.read_file("output/houses.gpkg")
     hs = hs[hs["price_m2"].between(*HOUSE_M2) & (hs["year"] >= 2017)].copy()
     hs["adj"] = hs["price_m2"] * np.exp(-hs["year"].astype(int).map(year_index(hs)))
     hs = hs.sort_values("adj")
-    ax.scatter(hs.geometry.x, hs.geometry.y, s=3.4, c=hs["adj"], cmap=RAMP, norm=norm, marker="D", lw=0,
+    ax.scatter(hs.geometry.x, hs.geometry.y, s=3.4, c=hs["adj"], cmap=RAMP, norm=norm, lw=0,
                zorder=3.5, rasterized=True)
     ax.set_xlim(x0 - 500, x1 + 500)
     ax.set_ylim(y0 - 300, y1 + 2600)
@@ -63,14 +61,14 @@ def main():
                 path_effects=[pe.withStroke(linewidth=2.5, foreground=BG)])
 
     fig.text(0.05, 0.955, "Where flats and houses sold", color=INK, fontsize=30, fontweight="bold", va="top")
-    fig.text(0.05, 0.905, f"Dots: {len(bv):,} buildings with {int(bv['n'].sum()):,} flat sales 2006–2026 (bigger = more sales).\n"
-                          f"Diamonds: {len(hs):,} house sales 2017–2026. Colour: PLN per m² in 2025. Dark grey: other buildings.",
+    fig.text(0.05, 0.905, f"Flats: {len(bv):,} buildings with {int(bv['n'].sum()):,} flat sales 2006–2026 (bigger = more sales).\n"
+                          f"Houses: {len(hs):,} sales 2017–2026, one dot each. Colour: PLN per m² in 2025. Dark grey: other buildings.",
              color=MUTED, fontsize=12.5, va="top", linespacing=1.4)
     cax = fig.add_axes([0.66, 0.075, 0.28, 0.012])
     cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=RAMP), cax=cax, orientation="horizontal")
     cb.outline.set_visible(False)
-    cb.set_ticks([10000, 14000, 18000, 22000, 26000])
-    cb.set_ticklabels(["10K", "14K", "18K", "22K", "26K+"])
+    cb.set_ticks([12000, 16000, 20000, 24000])
+    cb.set_ticklabels(["12K", "16K", "20K", "24K+"])
     cax.tick_params(colors=MUTED, labelsize=9, length=0)
     cax.set_title("PLN per m²", color=MUTED, fontsize=9, loc="left")
     fig.text(0.05, 0.022, "Flats: a typical 2-room resale flat in 2025 per building. Houses: price per m² of living space, plot "

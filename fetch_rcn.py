@@ -30,7 +30,10 @@ PAGE_SIZE = 5000  # safe page size for the WFS
 MAX_WORKERS = 6   # parallel requests (be gentle with government servers)
 
 BBOXES = {
-    "warszawa": "5770000,7485000,5810000,7515000,urn:ogc:def:crs:EPSG::2178",
+    "warszawa": "5770000,7485000,5810000,7521000,urn:ogc:def:crs:EPSG::2178",   # east edge 7,521,000 (was 7,515,000, 2026-10-27)
+    # The "warszawa" box stops at 21.22 E (EPSG:2180 x = 652,044) but the city reaches x = 655,260: half of Wesoła and the
+    # east of Wawer were missing until 2026-10-27. This strip (1.5 km overlap) is fetched on its own and merged by gid.
+    "warszawa_east": "5770000,7514000,5810000,7521000,urn:ogc:def:crs:EPSG::2178",
     "polska": None,  # no bbox = entire country
 }
 
@@ -82,6 +85,50 @@ def fetch_page(layer, bbox, start_index):
             time.sleep(2 ** attempt)
 
 
+def count_retry(layer, bbox):
+    for attempt in range(4):
+        try:
+            return get_total_count(layer, bbox)
+        except Exception:
+            if attempt == 3:
+                raise
+            time.sleep(2 ** attempt)
+
+
+def split_cells(layer, bbox, max_hits, workers):
+    """Cut the box into cells that each hold <= max_hits features, so every cell is one request. WFS paging with
+    STARTINDEX and no sort order returned duplicate and missing records (2026-10-27: 3,900 duplicate gids and ~8,700
+    records short of the service's own count in the old paged download)."""
+    parts = bbox.split(",")
+    n0, e0, n1, e1 = map(float, parts[:4])
+    crs = parts[4]
+    level, leaves = [(n0, e0, n1, e1)], []
+    fmt = lambda c: f"{c[0]:.0f},{c[1]:.0f},{c[2]:.0f},{c[3]:.0f},{crs}"
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        while level:
+            counts = list(ex.map(lambda c: count_retry(layer, fmt(c)), level))
+            nxt = []
+            for c, h in zip(level, counts):
+                if h == 0:
+                    continue
+                if h <= max_hits or (c[2] - c[0]) < 120:
+                    leaves.append((fmt(c), h))
+                else:
+                    nm, em = (c[0] + c[2]) / 2, (c[1] + c[3]) / 2
+                    nxt += [(c[0], c[1], nm, em), (c[0], em, nm, c[3]), (nm, c[1], c[2], em), (nm, em, c[2], c[3])]
+            level = nxt
+    return leaves
+
+
+def element_text(el):
+    """Text of a WFS field. Dates (DOK_DATA) come as <ms:DOK_DATA><gml:timePosition>2015-02-27</gml:timePosition>, so
+    the text is in a child: el.text alone returned None for every deed date (found 2026-10-27)."""
+    t = el.text
+    if t is None or not t.strip():
+        t = "".join(el.itertext()).strip()
+    return t or None
+
+
 # --- GML PARSING ---
 
 NS = {
@@ -117,7 +164,7 @@ def parse_lokale_page(xml_bytes):
             tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
             if tag in ("boundedBy", "msGeometry"):
                 continue
-            rec[tag] = child.text
+            rec[tag] = element_text(child)
 
         records.append(rec)
 
@@ -157,7 +204,7 @@ def parse_budynki_page(xml_bytes):
             tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
             if tag in ("boundedBy", "msGeometry"):
                 continue
-            rec[tag] = child.text
+            rec[tag] = element_text(child)
 
         records.append(rec)
 
@@ -189,7 +236,7 @@ def parse_dzialki_page(xml_bytes):
             tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
             if tag in ("boundedBy", "msGeometry"):
                 continue
-            rec[tag] = child.text
+            rec[tag] = element_text(child)
 
         records.append(rec)
 
@@ -210,6 +257,7 @@ def main():
     parser.add_argument("--layer", default="lokale", choices=["lokale", "budynki", "dzialki"])
     parser.add_argument("--bbox-name", default="warszawa", choices=list(BBOXES.keys()))
     parser.add_argument("--max-workers", type=int, default=MAX_WORKERS)
+    parser.add_argument("--paged", action="store_true", help="old STARTINDEX paging (loses and duplicates records)")
     args = parser.parse_args()
 
     layer = args.layer
@@ -220,58 +268,59 @@ def main():
     print(f"RCN WFS Fetcher — {layer} / {args.bbox_name}")
     print(f"{'=' * 60}")
 
-    # Step 1: count
-    print("Counting features...")
-    total = get_total_count(layer, bbox)
-    print(f"Total features: {total:,}")
-
-    if total == 0:
-        print("Nothing to fetch.")
-        return
-
-    # Step 2: build page offsets
-    offsets = list(range(0, total, PAGE_SIZE))
-    print(f"Pages to fetch: {len(offsets)} (page size {PAGE_SIZE})")
-    print(f"Parallel workers: {args.max_workers}")
-    print()
-
-    # Step 3: fetch all pages in parallel
-    all_records = []
-    failed_offsets = []
+    all_records, failed_offsets = [], []
     t0 = time.time()
-
-    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
-        futures = {
-            executor.submit(fetch_page, layer, bbox, offset): offset
-            for offset in offsets
-        }
-
-        with tqdm(total=len(offsets), desc="Fetching", unit="page") as pbar:
-            for future in as_completed(futures):
-                offset = futures[future]
-                start_idx, xml_bytes = future.result()
-
-                if xml_bytes is None:
-                    failed_offsets.append(start_idx)
-                else:
-                    records = parse_fn(xml_bytes)
-                    all_records.extend(records)
-
-                pbar.update(1)
-                pbar.set_postfix(records=f"{len(all_records):,}")
-
-    elapsed = time.time() - t0
-    print(f"\nFetched {len(all_records):,} records in {elapsed:.0f}s")
-
-    if failed_offsets:
-        print(f"WARNING: {len(failed_offsets)} pages failed: {failed_offsets}")
-        print("Retrying failed pages sequentially...")
-        for offset in tqdm(failed_offsets, desc="Retrying"):
+    if not args.paged:
+        total = count_retry(layer, bbox)
+        print(f"Service count for the box: {total:,}; cutting into cells of <= 4,500 ...")
+        leaves = split_cells(layer, bbox, 4500, args.max_workers)
+        print(f"{len(leaves)} cells, {sum(h for _, h in leaves):,} features (sum of cell counts, border features count twice)")
+        jobs = [(cell, off) for cell, h in leaves for off in range(0, h, PAGE_SIZE)]
+        with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+            futures = {executor.submit(fetch_page, layer, cell, off): (cell, off) for cell, off in jobs}
+            with tqdm(total=len(jobs), desc="Fetching", unit="cell") as pbar:
+                for future in as_completed(futures):
+                    _, xml_bytes = future.result()
+                    if xml_bytes is None:
+                        failed_offsets.append(futures[future])
+                    else:
+                        all_records.extend(parse_fn(xml_bytes))
+                    pbar.update(1)
+        for cell, off in failed_offsets:
+            _, xml_bytes = fetch_page(layer, cell, off)
+            if xml_bytes:
+                all_records.extend(parse_fn(xml_bytes))
+        print(f"Fetched {len(all_records):,} records in {time.time() - t0:.0f}s")
+        seen, uniq = set(), []
+        for r in all_records:
+            if r.get("gid") not in seen:
+                seen.add(r.get("gid"))
+                uniq.append(r)
+        print(f"Unique gid: {len(uniq):,} (service count {total:,}; difference {total - len(uniq):,})")
+        all_records = uniq
+    else:
+        print("Counting features...")
+        total = get_total_count(layer, bbox)
+        print(f"Total features: {total:,}")
+        if total == 0:
+            print("Nothing to fetch.")
+            return
+        offsets = list(range(0, total, PAGE_SIZE))
+        with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+            futures = {executor.submit(fetch_page, layer, bbox, offset): offset for offset in offsets}
+            with tqdm(total=len(offsets), desc="Fetching", unit="page") as pbar:
+                for future in as_completed(futures):
+                    start_idx, xml_bytes = future.result()
+                    if xml_bytes is None:
+                        failed_offsets.append(start_idx)
+                    else:
+                        all_records.extend(parse_fn(xml_bytes))
+                    pbar.update(1)
+        for offset in failed_offsets:
             _, xml_bytes = fetch_page(layer, bbox, offset)
             if xml_bytes:
-                records = parse_fn(xml_bytes)
-                all_records.extend(records)
-        print(f"Total after retry: {len(all_records):,}")
+                all_records.extend(parse_fn(xml_bytes))
+        print(f"Fetched {len(all_records):,} records in {time.time() - t0:.0f}s")
 
     # Step 4: build GeoDataFrame and save
     print("\nBuilding GeoDataFrame...")
