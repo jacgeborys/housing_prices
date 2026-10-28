@@ -217,8 +217,8 @@ def methods():
          "building outline and floors (typical miss 14 % per house), fine for medians, not for a single house."),
         ("Associations, not causes", "These are patterns in real sales, not experiments. Cafés follow money as much as "
          "they attract it. Where we say more (metro openings), we compare the same buildings before and after."),
-        ("What's missing", "Cooperative flats (spółdzielcze prawo) never enter the register: about one flat in five "
-         "sits in a building with no recorded sale. 2017–2020 is nearly empty. Developer deeds carry prices agreed a "
+        ("What's missing", "Cooperative flats (spółdzielcze prawo) never enter the register, and some blocks "
+         "(municipal, rented) rarely sell, so parts of the city are thinly covered. 2017–2020 is nearly empty. Developer deeds carry prices agreed a "
          "year or two before completion. Asking prices are not sale prices."),
     ]
     y = 0.90

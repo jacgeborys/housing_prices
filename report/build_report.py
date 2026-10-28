@@ -28,11 +28,11 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     # opening
     ("summary", "31_price_ridgelines"), ("summary", "32_price_points"),
     # 1 what's in the data
-    ("src", "r01_data"), ("summary", "23_blind_spot"),
+    ("src", "r01_data"),
     # 2 sizes
     ("src", "r02_sizes"), ("src", "r03_new_resale"), ("summary", "29_flat_sizes"),
     # 3 prices
-    ("summary", "01_prices_over_time"), ("summary", "33_what_1m_buys"), ("summary", "34_family_flats"),
+    ("summary", "01_prices_over_time"), ("summary", "40_where_flats_are_big"),
     ("summary", "38_house_map"), ("summary", "39_house_cells"), ("summary", "35_house_or_flat"),
     # 4 what goes with price
     ("summary", "03_what_drives_price"), ("summary", "18_building_age"), ("summary", "21_infill"),
@@ -47,9 +47,9 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     ("src", "r99_methods"),
 ]
 
-SHORT = ["31_price_ridgelines", "32_price_points", "r01_data", "23_blind_spot", "01_prices_over_time",
-         "33_what_1m_buys", "38_house_map", "35_house_or_flat", "03_what_drives_price", "18_building_age", "08_cafes",
-         "24_transit_access", "06_cheaper_than_expected", "10_district_anatomy", "r99_methods"]   # the LinkedIn cut (2026-10-28)
+SHORT = ["31_price_ridgelines", "32_price_points", "r01_data", "01_prices_over_time",
+         "40_where_flats_are_big", "38_house_map", "35_house_or_flat", "03_what_drives_price", "18_building_age", "08_cafes",
+         "24_transit_access", "06_cheaper_than_expected", "10_district_anatomy", "r99_methods"]   # the LinkedIn cut (2026-10-28; blind spot and 1-million slides out, size map in)
 
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
