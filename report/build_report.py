@@ -39,7 +39,7 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     ("summary", "08_cafes"), ("summary", "09_noise"), ("summary", "20_trees"), ("summary", "11_transit_x_price"),
     ("summary", "12_price_compass"), ("summary", "24_transit_access"),
     # 5 reputation
-    ("summary", "10_district_anatomy"), ("summary", "06_cheaper_than_expected"), ("summary", "15_estates"),
+    ("summary", "41_pairs"), ("summary", "10_district_anatomy"), ("summary", "06_cheaper_than_expected"), ("summary", "15_estates"),
     ("summary", "14_reputation_over_time"),
     # 6 market behaviour
     ("summary", "16_flippers"), ("summary", "26_new_flats_on_offer"),
@@ -49,13 +49,13 @@ SLIDES = [   # (source folder, file stem); sections as in the README
 
 SHORT = ["31_price_ridgelines", "32_price_points", "r01_data", "01_prices_over_time",
          "40_where_flats_are_big", "38_house_map", "35_house_or_flat", "03_what_drives_price", "18_building_age", "08_cafes",
-         "24_transit_access", "06_cheaper_than_expected", "10_district_anatomy", "r99_methods"]   # the LinkedIn cut (2026-10-28; blind spot and 1-million slides out, size map in)
+         "24_transit_access", "41_pairs", "06_cheaper_than_expected", "10_district_anatomy", "r99_methods"]   # the LinkedIn cut (2026-10-28; blind spot and 1-million slides out, size map in)
 
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
     "reputation_time.py", "estates.py", "infill.py", "flips.py", "building_age_story.py", "flat_sizes.py",
     "offers/offers_story.py", "access/access_preview.py", "houses.py", "house_map.py", "house_cells.py", "family_flats.py", "price_ridgelines.py",
-    "price_points.py", "report/descriptive.py",
+    "price_points.py", "pairs.py", "report/descriptive.py",
 ]
 
 
