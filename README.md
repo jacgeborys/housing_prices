@@ -329,6 +329,16 @@ python build_viz.py
 
 ## Status
 
+**2026-10-29 (Gdańsk test, `gdansk/`):** separate folder to see whether the Warsaw model holds elsewhere. Run from `gdansk/`:
+`fetch_districts.py` (35 dzielnice from OSM) -> `build_prices.py` (RCN flats from `fetch_rcn.py --bbox-name gdansk`, OSM
+buildings from `D:/QGIS/osm_basemap/gdansk`, Warsaw's `price_index.py` functions imported, eras redefined, sales from 2010,
+no building heights so the height class comes from the highest floor sold) -> `maps.py` (slides 01 ridgelines and 02 dots,
+flats only, own colour scale 9-20K; Wyspa Sobieszewska left off) -> `gdansk/output/summary/`. Data and output are not in git.
+Result: 104,815 flat sales in the city, 7,356 priced buildings, typical flat median 12.5K PLN/m² (2025), index 2.7x 2013.
+Gdańsk has no 2017-20 register gap, but 2024-25 hold only ~4-4.5K flat sales a year (vs ~10K before): not yet explained.
+RCN service count for the box 248,297 vs 246,343 unique records fetched. Building age (the biggest Warsaw driver) is not
+built: next step is the dane.gov.pl set "Budynki oddane do użytkowania w Gdańsku".
+
 **2026-10-18 (report overhaul):** one deck instead of a growing pile of figures (user: newer charts "obscure what
 the dataset holds"). New `report/` folder: build_report.py (slide list, --rebuild pipeline, PDF) and descriptive.py
 (r01 data overview, r02 sizes by district and over time = clean redo of analysis/07, r03 new vs resale = redo of

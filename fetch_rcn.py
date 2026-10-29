@@ -34,6 +34,8 @@ BBOXES = {
     # The "warszawa" box stops at 21.22 E (EPSG:2180 x = 652,044) but the city reaches x = 655,260: half of Wesoła and the
     # east of Wawer were missing until 2026-10-27. This strip (1.5 km overlap) is fetched on its own and merged by gid.
     "warszawa_east": "5770000,7514000,5810000,7521000,urn:ogc:def:crs:EPSG::2178",
+    # Gdańsk (2026-10-29): 18.38-18.98 E, 54.25-54.53 N, also takes in Sopot, Gdynia and the gminas round the city
+    "gdansk": "6016000,7329000,6047000,7370000,urn:ogc:def:crs:EPSG::2178",
     "polska": None,  # no bbox = entire country
 }
 
