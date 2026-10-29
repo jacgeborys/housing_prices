@@ -331,10 +331,10 @@ python build_viz.py
 
 **2026-10-29 (Gdańsk test, `gdansk/`):** separate folder to see whether the Warsaw model holds elsewhere. Run from `gdansk/`:
 `fetch_districts.py` (35 dzielnice from OSM) -> `build_prices.py` (RCN flats from `fetch_rcn.py --bbox-name gdansk`, OSM
-buildings from `D:/QGIS/osm_basemap/gdansk`, Warsaw's `price_index.py` functions imported, eras redefined, sales from 2010,
-no building heights so the height class comes from the highest floor sold) -> `maps.py` (slides 01 ridgelines and 02 dots,
+buildings from BDOT10k (`fetch_buildings.py`, national `D:/QGIS/BODT10k/budynki.shp` cut to the city; the OSM basemap file for Gdańsk stopped at x 468.6 km and missed Osowa, Kokoszki, Matarnia), Warsaw's `price_index.py` functions imported, eras redefined, sales from 2010,
+BDOT storeys x 3 m as height) -> `maps.py` (slides 01 ridgelines and 02 dots,
 flats only, own colour scale 9-20K; Wyspa Sobieszewska left off) -> `gdansk/output/summary/`. Data and output are not in git.
-Result: 104,815 flat sales in the city, 7,356 priced buildings, typical flat median 12.5K PLN/m² (2025), index 2.7x 2013.
+Result: 104,815 flat sales in the city (99.9 % matched to a building), 8,069 priced buildings, typical flat median 12.5K PLN/m² (2025), index 2.7x 2013.
 Gdańsk has no 2017-20 register gap, but 2024-25 hold only ~4-4.5K flat sales a year (vs ~10K before): not yet explained.
 RCN service count for the box 248,297 vs 246,343 unique records fetched. Building age (the biggest Warsaw driver) is not
 built: next step is the dane.gov.pl set "Budynki oddane do użytkowania w Gdańsku".

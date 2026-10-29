@@ -2,11 +2,11 @@
 Gdańsk: RCN flat sales -> building values, with Warsaw's hedonic model (price_index.py imported, not edited).
 Run from the gdansk/ folder:  python build_prices.py
 
-    gdansk/data/rcn_lokale_gdansk.gpkg  (fetch_rcn.py --bbox-name gdansk)  +  OSM buildings (D:/QGIS/osm_basemap/gdansk)
+    gdansk/data/rcn_lokale_gdansk.gpkg  (fetch_rcn.py --bbox-name gdansk)  +  BDOT10k buildings (fetch_buildings.py)
  -> gdansk/output/price_model.gpkg      layers transactions_adj, building_value (n, value_2025, value_2025_raw, fe_var)
 
 Differences from Warsaw: sales from 2010 (thin before), eras of the new-build term redefined (Gdańsk has no 2017-20
-register gap), OSM buildings carry no height so the height class comes from the highest floor sold in the building.
+register gap), BDOT10k storeys x 3 m stand in for the height.
 """
 import os
 import sys
@@ -24,7 +24,7 @@ from rcn_clean import residential_clean  # noqa: E402
 warnings.filterwarnings("ignore")
 pi.ERAS = [(2010, 2014), (2015, 2019), (2020, 2022), (2023, 2026)]
 pi.MIN_Q_OBS = 150
-OSM_BUILDINGS = "D:/QGIS/osm_basemap/gdansk/buildings.gpkg"
+BUILDINGS = "data/buildings.gpkg"      # fetch_buildings.py: BDOT10k, whole city
 
 
 def load():
@@ -55,19 +55,19 @@ def load():
     res = res[res["district"].notna()].copy()
     print(f"  flat sales inside Gdańsk: {len(res):,}")
 
-    bld = gpd.read_file(OSM_BUILDINGS).to_crs(2180)
-    bld["osm_id"] = bld["osm_id"].astype("int64")
-    bld = bld.drop_duplicates("osm_id")[["osm_id", "geometry"]]
+    bld = gpd.read_file(BUILDINGS)
+    height = bld.set_index("osm_id")["storeys"].mul(3.0)             # BDOT storeys -> metres, the model's height class
+    bld = bld[["osm_id", "residential", "geometry"]]
     pts = res[["geometry"]]
-    j = gpd.sjoin(pts, bld, how="left", predicate="within")
+    j = gpd.sjoin(pts, bld[["osm_id", "geometry"]], how="left", predicate="within")
     j = j[~j.index.duplicated()]
     miss = j["osm_id"].isna()
-    near = gpd.sjoin_nearest(pts[miss], bld, how="left", max_distance=10)
+    near = gpd.sjoin_nearest(pts[miss], bld[bld["residential"]], how="left", max_distance=10)
     near = near[~near.index.duplicated()]
     j.loc[near.index, "osm_id"] = near["osm_id"].values
     res["osm_id"] = j["osm_id"]
     print(f"  in a building: {res['osm_id'].notna().mean():.1%}")
-    res["bld_height"] = np.nan
+    res["bld_height"] = res["osm_id"].map(height)
     res["x"], res["y"] = res.geometry.x, res.geometry.y
     keep = ["date", "year", "district", "osm_id", "bld_height", "x", "y", "price", "price_m2", "area", "rooms",
             "floor", "market", "lok_adres"]

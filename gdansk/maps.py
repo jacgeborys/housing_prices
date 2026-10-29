@@ -26,7 +26,7 @@ import price_points as pp  # noqa: E402
 import price_ridgelines as pr  # noqa: E402
 from summary_charts import DPI, FIG  # noqa: E402
 
-OSM_BUILDINGS = "D:/QGIS/osm_basemap/gdansk/buildings.gpkg"
+BUILDINGS = "data/buildings.gpkg"
 pr.BASE, pr.FULL_BUILDINGS, pr.SIGMA_M = 9000, 3, 300
 LO, HI = 9000, 20000
 ROW_M, PER_1K = 170, 200
@@ -120,7 +120,7 @@ def ridgelines(bv, d):
     finish(fig, ax, (x0, y0, x1, y1), "Gdańsk, in price",
            "What a typical flat costs per m², 2025. Each line is a slice of the city;\nit rises where flats cost more.",
            "Hedonic value of a typical 2-room resale flat, 2025, per building, smoothed over ~300 m; lines fade to grey where few flats sell.\n"
-           "Scale is the Gdańsk range (Warsaw: 12-26K); Wyspa Sobieszewska (no sales) left off. Source: GUGiK RCN 2010–2026, OSM.",
+           "Scale is the Gdańsk range (Warsaw: 12-26K); Wyspa Sobieszewska (no sales) left off. Source: GUGiK RCN 2010–2026, BDOT10k.",
            norm, pr.RAMP, "01_price_ridgelines.png", shift=1300)
 
 
@@ -144,7 +144,7 @@ def points(bv, d, bld):
            f"Flats: {len(bv):,} buildings with {int(bv['n'].sum()):,} flat sales 2010–2026 (bigger = more sales).\n"
            "Colour: PLN per m², 2025. Dark grey: other buildings.",
            "A typical 2-room resale flat in 2025 per building. Cooperative-right flats are not in the register. Scale is the Gdańsk range (Warsaw: 12-26K).\n"
-           "Wyspa Sobieszewska (no sales) left off. Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM.",
+           "Wyspa Sobieszewska (no sales) left off. Source: GUGiK Rejestr Cen Nieruchomości (RCN), BDOT10k.",
            norm, pp.RAMP, "02_price_points.png", shift=0)
 
 
@@ -152,7 +152,7 @@ def main():
     d = gpd.read_file("data/districts.gpkg").to_crs(2180)
     d = d[d["district"] != "Wyspa Sobieszewska"]        # the island: no flat sales, and it halves the scale of the map
     bv = pr.priced_buildings()
-    bld = gpd.read_file(OSM_BUILDINGS).to_crs(2180)
+    bld = gpd.read_file(BUILDINGS)
     ridgelines(bv, d)
     points(bv, d, bld)
 
