@@ -352,6 +352,16 @@ count 63,967), 44,850 flat sales in the city 2016-26, 95 % in a building, 3,499 
 descriptive cafés / noise / trees (D:/QGIS/lidar/trees) / transit (TransitFrequency `buildings_gates`), flippers, offers, age.
 Ages (run 2026-10-31, 3,528 tiles): 26,075 residential + priced buildings sampled; 3,003 of 3,499 priced buildings dated (86 %),
 163 in GIS Expert's 'brak danych' layer, 333 drawn in no layer (likely 2021+ or outline mismatch). Przyjaźni 30/32 (Tatary): 1961-70.
+Lublin deck (2026-10-31): `lublin/maps.py` (01 ridgelines, 02 dots; scale 7-13K) + `lublin/report.py` (r01 data, r02 coverage,
+r03 prices, r04 districts, r05 sizes, r06 new vs resale, r07 age, r08 flippers, r99 methods) -> `lublin/output/report/` and
+`lublin_flats.pdf` (11 slides). `build_prices.py` now also writes `output/analysis/price_index_quarterly.csv` and
+`district_index_annual.csv`. Findings: typical flat x2.0 as paid / x1.29 real 2017 -> 2025 (Warsaw x2.2 as paid from end-2016); the
+register sees 85 % of the floor area of blocks of flats (Stare Miasto 19 %, Śródmieście 61 %); districts roughly doubled (Felin +125 %,
+Rury +79 %); buildings before 2000 cost about the same whatever the decade (8.7-9.4K), 2001-10 +4 %, 2011-20 +9 % against the
+district; resales dearer than new flats 2019-24, new overtook in 2025. Flips (same land-register id, every Lublin record has one):
+Lublin codes developer sales as 'sprzedazBezprzetargowa'; first legs bought new (~45 % of quick resales) are shown apart, since the
+developer price was agreed years before. Bought-resale flips 2021-25: 751, 7 per 100 resales, median +31 % as paid; Tatary 18 and
+Kalinowszczyzna 16 per 100. Not built for Lublin yet: houses, offers, cafés / noise / trees / transit maps.
 
 **2026-10-18 (report overhaul):** one deck instead of a growing pile of figures (user: newer charts "obscure what
 the dataset holds"). New `report/` folder: build_report.py (slide list, --rebuild pipeline, PDF) and descriptive.py

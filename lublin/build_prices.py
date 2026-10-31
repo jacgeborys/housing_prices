@@ -4,6 +4,7 @@ Run from the lublin/ folder:  python build_prices.py
 
     lublin/data/rcn_lokale_lublin.gpkg  (fetch_rcn.py --bbox-name lublin)  +  BDOT10k buildings (fetch_buildings.py)
  -> lublin/output/price_model.gpkg      layers transactions_adj, building_value (n, value_2025, value_2025_raw, fe_var)
+ -> lublin/output/analysis/price_index_quarterly.csv, district_index_annual.csv
 
 Differences from Warsaw: Lublin's register leaves the flat price (lok_cena_brutto) empty in 99 % of records and puts it
 in the property price (nier_cena_brutto), so that is used; records start in 2016; eras of the new-build term
@@ -88,14 +89,16 @@ def main():
     q = qidx["gamma"]
     print("price index (2025 = 1):", {str(k): round(float(np.exp(v)), 2) for k, v in q.groupby(q.index.year).mean().items()})
 
-    os.makedirs("output", exist_ok=True)
+    os.makedirs("output/analysis", exist_ok=True)
+    qidx.rename_axis("quarter").to_csv("output/analysis/price_index_quarterly.csv")
+    pi.district_indices(df, model).to_csv("output/analysis/district_index_annual.csv", index=False)
     gm = "output/price_model.gpkg"
     if os.path.exists(gm):
         os.remove(gm)
     gamma_q = qidx["gamma"].reindex(df["q"]).values
     df["price_m2_2025"] = df["price_m2"] * np.exp(-gamma_q)
     txn = gpd.GeoDataFrame(df[["date", "year", "district", "osm_id", "floor", "area", "rooms", "market", "price", "price_m2",
-                               "price_m2_2025"]].assign(date=df["date"].dt.strftime("%Y-%m-%d")),
+                               "price_m2_2025", "lok_adres"]].assign(date=df["date"].dt.strftime("%Y-%m-%d")),
                            geometry=gpd.points_from_xy(df["x"], df["y"]), crs=2180)
     txn.to_file(gm, layer="transactions_adj", driver="GPKG")
     b = bv[bv["osm_id"].notna()].copy()
