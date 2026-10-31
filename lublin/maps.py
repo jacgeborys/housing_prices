@@ -25,13 +25,14 @@ from shapely import contains_xy  # noqa: E402
 import price_points as pp  # noqa: E402
 import price_ridgelines as pr  # noqa: E402
 from summary_charts import DPI, FIG  # noqa: E402
+from common import LANG, T, fmt, set_lang  # noqa: E402
 
 BUILDINGS = "data/buildings.gpkg"
 pr.BASE, pr.FULL_BUILDINGS, pr.SIGMA_M = 7000, 3, 300
 LO, HI = 7000, 13000
 ROW_M, PER_1K = 130, 260
 BG, INK, MUTED = pr.BG, pr.INK, pr.MUTED
-OUT = "output/summary"
+OUT = {"en": "output/summary", "pl": "output/summary_pl"}       # by language (python maps.py --lang pl)
 LABELS = {   # district -> (label, dx, dy) metres
     "Śródmieście": ("Śródmieście", 0, 0), "Stare Miasto": ("Stare Miasto", 0, 500), "Czuby Północne": ("Czuby", 0, 0),
     "Rury": ("Rury", 0, 0), "Wieniawa": ("Wieniawa", 0, 0), "Sławin": ("Sławin", 0, 0), "Czechów Północny": ("Czechów", 0, 0),
@@ -64,14 +65,15 @@ def finish(fig, ax, bounds, title, sub, foot, norm, cmap, name, shift):
     cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, orientation="horizontal")
     cb.outline.set_visible(False)
     cb.set_ticks([t for t, _ in TICKS])
-    cb.set_ticklabels([lab for _, lab in TICKS])
+    cb.set_ticklabels([T(lab, lab.replace("K", " tys.")) for _, lab in TICKS])
     cax.tick_params(colors=MUTED, labelsize=9, length=0)
-    cax.set_title("PLN per m²", color=MUTED, fontsize=9, loc="left")
+    cax.set_title(T("PLN per m²", "zł za m²"), color=MUTED, fontsize=9, loc="left")
     fig.text(0.05, 0.022, foot, color=MUTED, fontsize=7.5, va="bottom")
-    os.makedirs(OUT, exist_ok=True)
-    fig.savefig(f"{OUT}/{name}", dpi=DPI, facecolor=BG)
+    out = OUT[LANG["code"]]
+    os.makedirs(out, exist_ok=True)
+    fig.savefig(f"{out}/{name}", dpi=DPI, facecolor=BG)
     plt.close(fig)
-    print("saved", f"{OUT}/{name}")
+    print("saved", f"{out}/{name}")
 
 
 def label(ax, d, offset_y=0):
@@ -116,10 +118,13 @@ def ridgelines(bv, d):
                 linewidths=0.55 + 0.5 * sf[:-1], capstyle="round"))
     label(ax, d, offset_y=1500)
     mpl.rcParams["savefig.facecolor"] = BG
-    finish(fig, ax, (x0, y0, x1, y1), "Lublin, in price",
-           "What a typical flat costs per m², 2025. Each line is a slice of the city;\nit rises where flats cost more.",
-           "Hedonic value of a typical 2-room resale flat, 2025, per building, smoothed over ~300 m; lines fade to grey where few flats sell.\n"
-           "Scale is the Lublin range (Warsaw: 12-26K). Source: GUGiK RCN 2016–2026, BDOT10k.",
+    finish(fig, ax, (x0, y0, x1, y1), T("Lublin, in price", "Lublin w cenach"),
+           T("What a typical flat costs per m², 2025. Each line is a slice of the city;\nit rises where flats cost more.",
+             "Ile kosztuje m² typowego mieszkania, 2025. Każda linia to przekrój miasta;\nwznosi się tam, gdzie mieszkania są droższe."),
+           T("Hedonic value of a typical 2-room resale flat, 2025, per building, smoothed over ~300 m; lines fade to grey where few flats sell.\n"
+             "Scale is the Lublin range (Warsaw: 12-26K). Source: GUGiK RCN 2016–2026, BDOT10k.",
+             "Wartość hedoniczna typowego 2-pokojowego mieszkania z rynku wtórnego, 2025, na budynek, wygładzona na ~300 m; szare tam, gdzie mało sprzedaży.\n"
+             "Skala dla Lublina (Warszawa: 12-26 tys.). Źródło: GUGiK RCN 2016–2026, BDOT10k."),
            norm, pr.RAMP, "01_price_ridgelines.png", shift=1300)
 
 
@@ -139,15 +144,20 @@ def points(bv, d, bld):
                lw=0, zorder=3, rasterized=True)
     label(ax, d)
     mpl.rcParams["savefig.facecolor"] = BG
-    finish(fig, ax, (x0, y0, x1, y1), "Where flats sold",
-           f"Flats: {len(bv):,} buildings with {int(bv['n'].sum()):,} flat sales 2016–2026 (bigger = more sales).\n"
-           "Colour: PLN per m², 2025. Dark grey: other buildings.",
-           "A typical 2-room resale flat in 2025 per building. Cooperative-right flats are not in the register. Scale is the Lublin range (Warsaw: 12-26K).\n"
-           "Source: GUGiK Rejestr Cen Nieruchomości (RCN), BDOT10k.",
+    finish(fig, ax, (x0, y0, x1, y1), T("Where flats sold", "Gdzie sprzedawano mieszkania"),
+           T(f"Flats: {len(bv):,} buildings with {int(bv['n'].sum()):,} flat sales 2016–2026 (bigger = more sales).\n"
+             "Colour: PLN per m², 2025. Dark grey: other buildings.",
+             f"{fmt(len(bv))} budynków z {fmt(int(bv['n'].sum()))} sprzedażami mieszkań 2016–2026 (większe = więcej sprzedaży).\n"
+             "Kolor: zł za m², 2025. Ciemnoszare: pozostałe budynki."),
+           T("A typical 2-room resale flat in 2025 per building. Cooperative-right flats are not in the register. Scale is the Lublin range (Warsaw: 12-26K).\n"
+             "Source: GUGiK Rejestr Cen Nieruchomości (RCN), BDOT10k.",
+             "Typowe 2-pokojowe mieszkanie z rynku wtórnego w 2025, na budynek. Mieszkań spółdzielczych nie ma w rejestrze. Skala dla Lublina (Warszawa: 12-26 tys.).\n"
+             "Źródło: GUGiK Rejestr Cen Nieruchomości (RCN), BDOT10k."),
            norm, pp.RAMP, "02_price_points.png", shift=0)
 
 
 def main():
+    set_lang("pl" if "pl" in sys.argv[1:] else "en")
     d = gpd.read_file("data/districts.gpkg").to_crs(2180)
     bv = pr.priced_buildings()
     bld = gpd.read_file(BUILDINGS)

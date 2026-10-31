@@ -361,7 +361,20 @@ Rury +79 %); buildings before 2000 cost about the same whatever the decade (8.7-
 district; resales dearer than new flats 2019-24, new overtook in 2025. Flips (same land-register id, every Lublin record has one):
 Lublin codes developer sales as 'sprzedazBezprzetargowa'; first legs bought new (~45 % of quick resales) are shown apart, since the
 developer price was agreed years before. Bought-resale flips 2021-25: 751, 7 per 100 resales, median +31 % as paid; Tatary 18 and
-Kalinowszczyzna 16 per 100. Not built for Lublin yet: houses, offers, cafés / noise / trees / transit maps.
+Kalinowszczyzna 16 per 100.
+**Lublin full deck (2026-10-31, later):** 18 slides in Warsaw's story order, English and Polish from the same code
+(`lublin/common.py`: `T(en, pl)`, light basemap, `rel_bars`). `python report.py [--lang pl] [--all]` (--all reruns maps, houses,
+context, offers first) -> `lublin/output/report/lublin_flats.pdf` and `lublin/output/report/pl/lublin_mieszkania.pdf`
+(PL maps in `output/summary_pl/`, PL slides in `output/report/src_pl/`). New scripts: `houses.py` (r09 house m² by 300 m cell,
+r10 house or flat; 1,187 clean house sales: Lublin TERYT 0663, share n/n, free market or developer 'bezprzetargowa'; area from the
+deed ~45 % else BDOT outline x Warsaw ratios), `fetch_context.py` (Warsaw's fetch_pois / fetch_noise pointed at Lublin; amenity
+query only, Overpass kept failing on leisure; EEA rail and air maps are empty for Lublin, road only), `context.py` (r11 cafés,
+r12 noise, r13 trees from `D:/QGIS/lidar/trees/data/hrl_full/lublin.tif`, r14 transit from TransitFrequency's
+`buildings_gates.gpkg` max_trips; bars = typical flat vs its district's median building, no model), `parse_offers.py` (Warsaw
+parser imported, town = word 'Lublin'; 8,236 rows, 3,570 distinct flats in 47 investments) and `offers.py` (r15; geocoded by
+street from register addresses, 44 located). Findings: no café, tree or transit gradient against the district (all within ~±2 %);
+road noise 65 dB+ -3 % (47 buildings); a house costs 2.0x a flat in total, 35 % less per m² (2023-26); developers ask a median
+11,460 PLN/m², +9 % over nearby 2011-20 buildings.
 
 **2026-10-18 (report overhaul):** one deck instead of a growing pile of figures (user: newer charts "obscure what
 the dataset holds"). New `report/` folder: build_report.py (slide list, --rebuild pipeline, PDF) and descriptive.py
