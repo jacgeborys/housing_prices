@@ -350,6 +350,8 @@ count 63,967), 44,850 flat sales in the city 2016-26, 95 % in a building, 3,499 
 9,560 PLN/m² (2025), index 0.50 (2016) -> 1.00 (2025). Within-building: top floor of a 5-storey block (walk-up) -3.1 %
 (-4.0..-2.3) vs floor 2 among resales. Planned slides: 01/02 maps, r01 data, sizes, prices over time (real terms), houses,
 descriptive cafés / noise / trees (D:/QGIS/lidar/trees) / transit (TransitFrequency `buildings_gates`), flippers, offers, age.
+Ages (run 2026-10-31, 3,528 tiles): 26,075 residential + priced buildings sampled; 3,003 of 3,499 priced buildings dated (86 %),
+163 in GIS Expert's 'brak danych' layer, 333 drawn in no layer (likely 2021+ or outline mismatch). Przyjaźni 30/32 (Tatary): 1961-70.
 
 **2026-10-18 (report overhaul):** one deck instead of a growing pile of figures (user: newer charts "obscure what
 the dataset holds"). New `report/` folder: build_report.py (slide list, --rebuild pipeline, PDF) and descriptive.py
