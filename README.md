@@ -339,6 +339,18 @@ Gdańsk has no 2017-20 register gap, but 2024-25 hold only ~4-4.5K flat sales a 
 RCN service count for the box 248,297 vs 246,343 unique records fetched. Building age (the biggest Warsaw driver) is not
 built: next step is the dane.gov.pl set "Budynki oddane do użytkowania w Gdańsku".
 
+**2026-10-31 (Lublin, `lublin/`):** same pattern as `gdansk/`, aiming at a short descriptive deck (no reputation model).
+Run from `lublin/`: `fetch_districts.py` (27 dzielnice, OSM admin_level 9) -> `fetch_buildings.py` (BDOT10k, 39,063
+buildings, 26,046 residential) -> `build_prices.py` (RCN from `fetch_rcn.py --bbox-name lublin --layer lokale|budynki`, files
+moved to `lublin/data/`) -> `fetch_building_age.py` (GIS Expert "zabudowa Lublina": layers `budynki_do_1900`, `rok_1910` ..
+`rok_2020`, `budynki_brak_danych`; same tile method as Warsaw; no 2021+ layer). Register quirks: the flat price field
+`lok_cena_brutto` is empty in ~99.5 % of Lublin records, the price is in `nier_cena_brutto` (used); records start in 2016.
+Floors: RCN floor 1 = ground floor (5-storey BDOT buildings have floors 1-5). Result: 63,825 flat-layer records (service
+count 63,967), 44,850 flat sales in the city 2016-26, 95 % in a building, 3,499 priced buildings, typical flat median
+9,560 PLN/m² (2025), index 0.50 (2016) -> 1.00 (2025). Within-building: top floor of a 5-storey block (walk-up) -3.1 %
+(-4.0..-2.3) vs floor 2 among resales. Planned slides: 01/02 maps, r01 data, sizes, prices over time (real terms), houses,
+descriptive cafés / noise / trees (D:/QGIS/lidar/trees) / transit (TransitFrequency `buildings_gates`), flippers, offers, age.
+
 **2026-10-18 (report overhaul):** one deck instead of a growing pile of figures (user: newer charts "obscure what
 the dataset holds"). New `report/` folder: build_report.py (slide list, --rebuild pipeline, PDF) and descriptive.py
 (r01 data overview, r02 sizes by district and over time = clean redo of analysis/07, r03 new vs resale = redo of

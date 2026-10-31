@@ -36,6 +36,8 @@ BBOXES = {
     "warszawa_east": "5770000,7514000,5810000,7521000,urn:ogc:def:crs:EPSG::2178",
     # Gdańsk (2026-10-29): 18.38-18.98 E, 54.25-54.53 N, also takes in Sopot, Gdynia and the gminas round the city
     "gdansk": "6016000,7329000,6047000,7370000,urn:ogc:def:crs:EPSG::2178",
+    # Lublin (2026-10-31): 22.44-22.71 E, 51.13-51.31 N (city 22.45-22.68, 51.14-51.30), takes in a strip of Świdnik and the gminas
+    "lublin": "5667098,7600791,5687524,7619223,urn:ogc:def:crs:EPSG::2178",
     "polska": None,  # no bbox = entire country
 }
 
