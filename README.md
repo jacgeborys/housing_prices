@@ -385,6 +385,10 @@ parser imported, town = word 'Lublin'; 8,236 rows, 3,570 distinct flats in 47 in
 street from register addresses, 44 located). Findings: no café, tree or transit gradient against the district (all within ~±2 %);
 road noise 65 dB+ -3 % (47 buildings); a house costs 2.0x a flat in total, 35 % less per m² (2023-26); developers ask a median
 11,460 PLN/m², +9 % over nearby 2011-20 buildings.
+Sales-volume slide (2026-11-01, `lublin/volume_slide.py --street ... --no ... [--lang pl]` -> `output/report[/pl]/volume_<street>_<no>.png`):
+flats sold per quarter since 2018, Lublin (second-hand bars, new-build line) and round the address (district + 500 m); last quarter
+hatched (register to 2026-09-11). Jan-Jun 2026 vs 2025: second-hand Lublin +11 %, Tatary +4 %, 500 m 37 -> 33; new-build +31 %,
+still ~25 % below 2023-24. No sign of fewer buyers.
 One-flat slide (`lublin/flat_slide.py --street ... --no ... --m2 ... --rooms ... --floor ... [--lang pl]` -> `output/report[/pl]/flat_<street>_<no>.png`):
 the address is an argument only, so no private address lives in git. Comparables: resales since 2023 within 500 m, same storeys, +-10 m²
 (as-is = middle half, flips excluded); renovated = flips' second legs since 2021, +-20 m²; map of typical-flat values, timeline of nearby sales.
