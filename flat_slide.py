@@ -243,10 +243,10 @@ def value_page(a, d, label, out):
     a2.scatter(plain["date"], plain["price_m2"], s=9, color="#b9b6ac", lw=0,
                label=T(f"second-hand, {decade} blocks", f"z drugiej ręki, bloki z lat {decade}"))
     fl = pool[pool["flip"]]
-    a2.scatter(fl["date"], fl["price_m2"], s=22, color=style.ORANGE, lw=0,
+    a2.scatter(fl["date"], fl["price_m2"], s=22, color=style.AQUA, lw=0,
                label=T("second-hand, resold within a year", "z drugiej ręki, odsprzedane w ciągu roku"))
     prim = t[(t["market"] == "primary") & (t["dist"] < R) & t["area"].between(AREA - 15, AREA + 15)]
-    a2.scatter(prim["date"], prim["price_m2"], s=14, color=style.VIOLET, lw=0, alpha=0.7,
+    a2.scatter(prim["date"], prim["price_m2"], s=14, color=style.YELLOW, lw=0, alpha=0.75,
                label=T("new, from a developer (any block)", "nowe, od dewelopera (dowolny budynek)"))
     own_b = t[(t["osm_id"] == me["osm_id"]) & (t["market"] == "secondary") & ~t["own_flat"]]
     a2.scatter(own_b["date"], own_b["price_m2"], s=34, color=style.INK, lw=0, label=T("this building", "ten budynek"), zorder=5)
@@ -358,7 +358,7 @@ def place_page(a, d, label, out, val):
             bars.append((T(f"Sold {month(p['date'])}", f"Sprzedaż {month(p['date'])}"), float(sold["today"].iloc[0]) * AREA,
                          float(p["LOK_CENA_BRUTTO"]), style.RED))
     bars += [(T("Today, as it is", "Dziś, bez remontu"), val["a_mid"], None, style.BLUE),
-             (T("Today, renovated", "Dziś, po remoncie"), val["r_mid"], None, style.ORANGE)]
+             (T("Today, renovated", "Dziś, po remoncie"), val["r_mid"], None, style.AQUA)]
     a2 = fig.add_axes([0.25, 0.10, 0.62, 0.22])
     for i, (lab, v, paid, col) in enumerate(bars):
         y = len(bars) - 1 - i
