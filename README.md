@@ -126,6 +126,12 @@ panels, describe before explaining, no model internals on slides (they go to the
 - 6 Market: 16 flippers, 26 new flats on offer; end: r99 how to read these charts (yardstick flat, sources, limits)
 Not in the report (kept in output/summary/): 02, 04, 05, 13, 19, 22, 25, 27, 28, 30, 36.
 `report/descriptive.py` builds r01-r03 and r99 (plain counts, shares and prices as paid; no model).
+One-flat pages (2026-11-01, `flat_slide.py --street ... --no ... --flat <flat no> [--lang pl]`, Warsaw twin of
+`lublin/flat_slide.py`; address only as an argument) -> `output/report/flats[/pl]/flat_<street>_<no>_<flat>.png` (value:
+comparables = resales since 2023 within 500 m in same-decade buildings, area +-10 m²; renovated = flips' second legs since
+2021) and `..._place.png` (the building's percentile among the 14,018 priced buildings on metro/tram walk, centre, cafés,
+green, trees, noise, price; its reputation vs the district; the flat's own sales in today's prices). The flat is found by
+its register unit id (`..._BUD.<flat>_LOK`, recorded since ~2021), so its own past sales show up automatically.
 
 **Figures** (`output/summary/`, contact sheet in `00_contact_sheet.png`, built by `contact_sheet.py`)
 
