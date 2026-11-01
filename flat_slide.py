@@ -220,26 +220,34 @@ def value_page(a, d, label, out):
                        f"in today's prices; the top one, {num(best['area'])} m² for {K(best['price'])} ({month(best['date'])}).",
                        f"Ten sam budynek od 2023: {len(bld)} innych sprzedaży, {fmt(bld['today'].min())}–{fmt(best['today'])} zł/m² w "
                        f"dzisiejszych cenach; najdroższa: {num(best['area'])} m² za {K(best['price'])} zł ({month(best['date'])})."))
-    rec_s = t[(t["market"] == "secondary") & t["year"].between(2021, 2025)]
-    rec_f = d["f"][d["f"]["date2"].dt.year.between(2021, 2025)]
-    rate = 100 * (rec_f["district"] == district).sum() / (rec_s["district"] == district).sum()
-    city = 100 * len(rec_f) / len(rec_s)
-    notes.append(T(f"{district}: {rate:.0f} flips in 100 resales (2021–25), Warsaw {city:.1f}.",
-                   f"{district}: {rate:.0f} flipów na 100 sprzedaży (2021–25), Warszawa {num(city)}."))
+    new = t[(t["market"] == "primary") & (t["dist"] < R) & (t["date"] >= t["date"].max() - pd.DateOffset(years=1))]
+    if len(new) >= 10:                  # new-build flats sold by developers in the last year of data
+        sec = t[(t["market"] == "secondary") & (t["dist"] < R) & (t["date"] >= new["date"].min())]
+        top = new["lok_adres"].str.extract(r"UL:(?:ulica )?([^;]+);NR_PORZ:(.+)$").agg(" ".join, axis=1).value_counts()
+        where = ", ".join(top.index[:2])
+        gap = 100 * (new["price_m2"].median() / sec["price_m2"].median() - 1)
+        notes.append(T(f"New flats nearby: {len(new)} sold by developers in the last year ({where}), "
+                       f"{fmt(new['price_m2'].median())} PLN/m², {gap:.0f} % above second-hand flats around.",
+                       f"Nowe mieszkania w okolicy: {len(new)} sprzedanych przez deweloperów w ostatnim roku ({where}), "
+                       f"{fmt(new['price_m2'].median())} zł/m², {gap:.0f} % drożej niż z drugiej ręki."))
     notes.append(T(f"The asking price to aim at: {KR(a_mid, a_hi)} for a well-kept flat, {KR(r_lo, r_hi)} if the renovation "
                    "still looks fresh.",
                    f"Cena do celowania: {KR(a_mid, a_hi)} za zadbane mieszkanie, {KR(r_lo, r_hi)}, jeśli remont "
                    "wciąż wygląda świeżo."))
-    notes_block(fig, notes, 0.57, 0.75)
+    notes_block(fig, notes, 0.57, 0.765)
 
     # timeline --------------------------------------------------------------------------------
     a2 = fig.add_axes([0.11, 0.09, 0.85, 0.27])
     pool = near[near["area"].between(AREA - 15, AREA + 15)]
     plain = pool[~pool["flip"]]
     a2.scatter(plain["date"], plain["price_m2"], s=9, color="#b9b6ac", lw=0,
-               label=T(f"resales nearby ({AREA - 15:.0f}–{AREA + 15:.0f} m²)", f"sprzedaże w okolicy ({AREA - 15:.0f}–{AREA + 15:.0f} m²)"))
+               label=T(f"second-hand, {decade} blocks", f"z drugiej ręki, bloki z lat {decade}"))
     fl = pool[pool["flip"]]
-    a2.scatter(fl["date"], fl["price_m2"], s=22, color=style.ORANGE, lw=0, label=T("flipped flats nearby", "odsprzedane w okolicy"))
+    a2.scatter(fl["date"], fl["price_m2"], s=22, color=style.ORANGE, lw=0,
+               label=T("second-hand, resold within a year", "z drugiej ręki, odsprzedane w ciągu roku"))
+    prim = t[(t["market"] == "primary") & (t["dist"] < R) & t["area"].between(AREA - 15, AREA + 15)]
+    a2.scatter(prim["date"], prim["price_m2"], s=14, color=style.VIOLET, lw=0, alpha=0.7,
+               label=T("new, from a developer (any block)", "nowe, od dewelopera (dowolny budynek)"))
     own_b = t[(t["osm_id"] == me["osm_id"]) & (t["market"] == "secondary") & ~t["own_flat"]]
     a2.scatter(own_b["date"], own_b["price_m2"], s=34, color=style.INK, lw=0, label=T("this building", "ten budynek"), zorder=5)
     if len(mine):
@@ -248,8 +256,9 @@ def value_page(a, d, label, out):
         for dte, p, pr in zip(mine["date"], mp, mine["LOK_CENA_BRUTTO"].astype(float)):
             a2.annotate(K(pr), (dte, p), xytext=(-8, 8), textcoords="offset points", ha="right", fontsize=8.5,
                         color=style.RED, fontweight="bold", zorder=7)
-    m = plain.set_index("date")["price_m2"].resample("QS").median().rolling(3, min_periods=2, center=True).median()
-    a2.plot(m.index, m.values, color=style.BLUE, lw=2, label=T("median nearby", "mediana w okolicy"))
+    qs = plain.set_index("date")["price_m2"].resample("QS").agg(["median", "size"])
+    m = qs["median"].where(qs["size"] >= 8).rolling(3, min_periods=2, center=True).median()   # a thin last quarter is left out
+    a2.plot(m.index, m.values, color=style.BLUE, lw=2, label=T("median, second-hand", "mediana z drugiej ręki"))
     end = pd.Timestamp("2026-10-01")
     a2.fill_between([pd.Timestamp("2026-01-01"), end], a_lo / AREA, a_hi / AREA, color=style.BLUE, alpha=0.18, lw=0)
     a2.text(pd.Timestamp("2026-01-15"), a_hi / AREA + 150, T("today, as is", "dziś, bez remontu"), fontsize=8,
@@ -260,10 +269,10 @@ def value_page(a, d, label, out):
     style.hgrid_only(a2)
     a2.set_xlim(pd.Timestamp("2020-10-01"), pd.Timestamp("2026-12-31"))
     a2.set_ylim(bottom=max(0, plain.loc[plain["date"] >= "2021-01-01", "price_m2"].quantile(0.005) - 1000),
-                top=pool.loc[pool["date"] >= "2021-01-01", "price_m2"].quantile(0.995) + 3000)
-    a2.legend(loc="upper left", fontsize=8.5, frameon=False, ncol=3)
-    a2.set_title(T(f"Every resale within {R} m in {decade} buildings since 2021",
-                   f"Wszystkie sprzedaże wtórne do {R} m w budynkach z lat {decade} od 2021"),
+                top=pd.concat([pool, prim]).loc[lambda x: x["date"] >= "2021-01-01", "price_m2"].quantile(0.995) + 4500)
+    a2.legend(loc="upper left", fontsize=8.2, frameon=False, ncol=3)
+    a2.set_title(T(f"Every flat sale within {R} m since 2021, {AREA - 15:.0f}–{AREA + 15:.0f} m²",
+                   f"Wszystkie sprzedaże mieszkań do {R} m od 2021, {AREA - 15:.0f}–{AREA + 15:.0f} m²"),
                  fontsize=10.5, loc="left")
     path = f"{out}/flat_{slug(a.street)}_{slug(a.no)}_{slug(a.flat)}.png"
     fig.savefig(path, dpi=300)

@@ -132,6 +132,10 @@ comparables = resales since 2023 within 500 m in same-decade buildings, area +-1
 2021) and `..._place.png` (the building's percentile among the 14,018 priced buildings on metro/tram walk, centre, cafés,
 green, trees, noise, price; its reputation vs the district; the flat's own sales in today's prices). The flat is found by
 its register unit id (`..._BUD.<flat>_LOK`, recorded since ~2021), so its own past sales show up automatically.
+Timeline legend: second-hand (same decade), second-hand resold within a year, new from a developer (any building); the
+median line skips quarters with < 8 sales. `fetch_rcn.py --bbox xmin,ymin,xmax,ymax --bbox-name <name>` (EPSG:2180) fetches a
+small box into `output/rcn_lokale_<name>.gpkg` without touching the city file; checked 2026-11-01: the register still ends
+on 2026-04-24, nothing newer published.
 
 **Figures** (`output/summary/`, contact sheet in `00_contact_sheet.png`, built by `contact_sheet.py`)
 

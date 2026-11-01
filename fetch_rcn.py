@@ -259,13 +259,20 @@ PARSERS = {
 def main():
     parser = argparse.ArgumentParser(description="Fetch RCN data from GUGiK WFS")
     parser.add_argument("--layer", default="lokale", choices=["lokale", "budynki", "dzialki"])
-    parser.add_argument("--bbox-name", default="warszawa", choices=list(BBOXES.keys()))
+    parser.add_argument("--bbox-name", default="warszawa", help=f"one of {list(BBOXES)}, or a file name with --bbox")
     parser.add_argument("--max-workers", type=int, default=MAX_WORKERS)
     parser.add_argument("--paged", action="store_true", help="old STARTINDEX paging (loses and duplicates records)")
+    parser.add_argument("--bbox", help="own box in EPSG:2180, 'xmin,ymin,xmax,ymax' (needs --bbox-name for the file name)")
     args = parser.parse_args()
 
     layer = args.layer
-    bbox = BBOXES[args.bbox_name]
+    bbox = BBOXES.get(args.bbox_name)
+    if args.bbox:                       # e.g. a small box round one address, kept out of the code (2026-11-01)
+        from pyproj import Transformer
+        x0, y0, x1, y1 = map(float, args.bbox.split(","))
+        tr = Transformer.from_crs(2180, 2178, always_xy=True)
+        (e0, n0), (e1, n1) = tr.transform(x0, y0), tr.transform(x1, y1)
+        bbox = f"{min(n0, n1):.0f},{min(e0, e1):.0f},{max(n0, n1):.0f},{max(e0, e1):.0f},urn:ogc:def:crs:EPSG::2178"
     parse_fn = PARSERS[layer]
 
     print(f"{'=' * 60}")
