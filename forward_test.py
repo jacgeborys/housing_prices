@@ -14,7 +14,6 @@ relative to Warsaw as a whole.
               new metro stations (central M2, opened 2015; M2 extensions 2019-22) within NEW_STATION_M
 
 Outputs: output/analysis/forward_test_neighbourhoods.csv, forward_test_drivers.csv, summary/30_forward_test.png
-(reputation then vs now) and summary/30b_what_moved.png (what moved the same buildings)
 """
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -47,10 +46,10 @@ SHOW = [("age_prewar", "Built before 1941"), ("age_1941_60", "Built 1941–60"),
         ("walk_metro_km", "1 km farther to the metro")]
 # neighbourhood labels per panel: name -> (dx, dy points, ha)
 LABELS_PERSIST = {"Stary Żoliborz": (-5, 4, "right"), "Wyględów": (-5, 4, "right"), "Kabaty": (-5, 4, "right"),
-                  "Śródmieście Południowe": (5, -9, "left"), "Nowa Praga": (-6, -12, "right"),
+                  "Śródmieście Południowe": (5, -9, "left"), "Nowa Praga": (5, -9, "left"),
                   "Bródno-Podgrodzie": (-5, 4, "right"), "Grodzisk": (5, -3, "left")}
 LABELS_CHANGE = {"Stary Żoliborz": (0, 7, "center"),
-                 "Nowa Praga": (6, -12, "left"), "Bródno-Podgrodzie": (-5, 5, "right"), "Młynów": (6, -10, "left"),
+                 "Nowa Praga": (5, 3, "left"), "Bródno-Podgrodzie": (-5, 5, "right"), "Młynów": (6, -10, "left"),
                  "Błonia Wilanowskie": (5, 2, "left"), "Wyględów": (5, 2, "left"), "Kabaty": (5, -3, "left"),
                  "Grodzisk": (5, 2, "left"), "Skorosze": (-5, -10, "right")}
 
@@ -122,56 +121,45 @@ def drivers(v):
 
 
 def plot(n, r_persist, r_catch, dr, nb_total):
-    """Two slides (2026-11-02): 30_forward_test (reputation lasts, and is priced in) and 30b_what_moved (what moved
-    the same buildings against Warsaw)."""
-    zo = n.loc["Stary Żoliborz"]
-    fig = page("Can you get rich buying the next Żoliborz?",
-               "Probably not: a place's reputation lasts for years, and it's already in the price",
-               f"{len(n)} neighbourhoods, the same {nb_total:,} buildings in both periods (≥ {MIN_RES} resales each). Reputation = "
-               "price vs what location, transit, amenities, noise and building age predict. " + style.SOURCE)
-    fig.text(0.03, 0.885, wrap(f"Stary Żoliborz sold {zo['rep1_pct']:+.0f} % above its prediction in 2010–14 and "
-                               f"{zo['rep2_pct']:+.0f} % in 2021–25: reputation barely moves (correlation {r_persist:+.2f}). But "
-                               f"the cheap-for-their-reputation places did not rise faster, nor the dear ones slower "
-                               f"(correlation {r_catch:+.2f}). The market already knows.", 100),
-             fontsize=10.5, fontweight="semibold", va="top")
+    fig = page("Reputation is like a surname",
+               wrap("Measured on 2010–14 sales, it predicted 2021–25 prices. What moved prices in between was "
+                    "building age and the metro, not cafés or trees", 80),
+               f"Same {nb_total:,} buildings, ≥ {MIN_RES} resales in each period (older stock; buildings finished after "
+               "2014 are not included). Price = median resale price per m², city index removed. Reputation = actual "
+               "vs predicted from location, transit, amenities, noise, greenery and building age (gradient boosting, "
+               f"spatial CV), mean per city neighbourhood (MSI, ≥ {MIN_NB} buildings). Change drivers: OLS within "
+               "district, 95 % CI clustered by 2 km block; new station = within 800 m straight line. Associations; "
+               "the metro openings are the closest to an experiment. " + style.SOURCE)
+    fig.text(0.03, 0.885, wrap(f"Across {len(n)} neighbourhoods, reputation in 2010–14 and in 2021–25 correlate "
+                               f"{r_persist:+.2f}: Stary Żoliborz +{n.loc['Stary Żoliborz', 'rep1_pct']:.0f} % then, "
+                               f"+{n.loc['Stary Żoliborz', 'rep2_pct']:.0f} % now. But it does not say where prices go "
+                               f"next (correlation with the change {r_catch:+.2f}): what everyone knows is already in "
+                               "the price.", 95), fontsize=10.5, fontweight="semibold", va="top")
     lim = (-28, 32)
     for k, (ax_pos, ycol, ytitle, title, labels) in enumerate((
-            ([0.12, 0.47, 0.80, 0.31], "rep2_pct", "Reputation 2021–25", "Then and now: the same places stay dear or cheap",
-             LABELS_PERSIST),
-            ([0.12, 0.08, 0.80, 0.29], "d_pct", "Price change vs Warsaw",
-             "Reputation in 2014 vs what prices did next: no pattern", LABELS_CHANGE))):
+            ([0.09, 0.53, 0.37, 0.25], "rep2_pct", "Reputation 2021–25", "Reputation is stable", LABELS_PERSIST),
+            ([0.59, 0.53, 0.37, 0.25], "d_pct", "Price change vs Warsaw", "…and already priced in", LABELS_CHANGE))):
         ax = fig.add_axes(ax_pos)
         ax.axhline(0, color=style.AXIS, lw=1)
         ax.axvline(0, color=style.AXIS, lw=1)
         if k == 0:
             ax.plot(lim, lim, color=style.MUTED, lw=1, ls="--")
-            ax.text(24, 16, "same as\nin 2014", fontsize=8.5, color=style.MUTED, ha="left", va="top")
-        ax.scatter(n["rep1_pct"], n[ycol], s=14 + n["buildings"] / 2, color=style.BLUE, alpha=0.75, lw=0)
+            ax.text(23, 14, "same as\nin 2014", fontsize=8.5, color=style.MUTED, ha="left", va="top")
+        ax.scatter(n["rep1_pct"], n[ycol], s=12 + n["buildings"] / 2, color=style.BLUE, alpha=0.7, lw=0)
         for nm, (dx, dy, ha) in labels.items():
             if nm in n.index:
                 ax.annotate(nm, (n.loc[nm, "rep1_pct"], n.loc[nm, ycol]), xytext=(dx, dy), textcoords="offset points",
-                            fontsize=8, color=style.INK_2, ha=ha)
+                            fontsize=7.5, color=style.INK_2, ha=ha)
         ax.set_xlim(*lim)
-        ax.set_ylim(*(lim if k == 0 else (-13, 13)))
+        ax.set_ylim(*(lim if k == 0 else (-12, 12)))
         ax.set_xlabel("Reputation 2010–14")
         ax.set_ylabel(ytitle)
         style.pct(ax, "x")
         style.pct(ax, "y")
         ax.set_title(title, fontsize=11.5, loc="left")
-    save(fig, "30_forward_test.png")
 
-    # what moved the same buildings ----------------------------------------------------------------
+    ax = fig.add_axes([0.40, 0.125, 0.55, 0.31])
     rows = dr.loc[[f for f, _ in SHOW]][::-1]
-    pre, ext, d90 = dr.loc["age_prewar", "pct"], dr.loc["m2_ext", "pct"], dr.loc[["age_1991_00", "age_2001_10"], "pct"].mean()
-    fig = page("What made old buildings gain?",
-               "Pre-war blocks and blocks near a new metro station gained; the 1990s–2000s ones lost their shine",
-               f"The same {nb_total:,} buildings, 2010–14 vs 2021–25, against Warsaw as a whole, compared within their district; lines = 95 % "
-               "range, grey = no clear effect. New station = within 800 m. " + style.SOURCE)
-    fig.text(0.03, 0.885, wrap(f"Between 2010–14 and 2021–25, against the city: pre-war blocks {pre:+.1f} %, blocks near a new M2 "
-                               f"station {ext:+.1f} %, blocks from 1991–2010 {d90:+.1f} %. Cafés, trees and parks: nothing measurable. "
-                               "The metro extension is the closest thing here to an experiment.", 100),
-             fontsize=10.5, fontweight="semibold", va="top")
-    ax = fig.add_axes([0.42, 0.10, 0.52, 0.68])
     y = np.arange(len(rows))
     sig = (rows["lo"] > 0) | (rows["hi"] < 0)
     col = np.where(~sig, style.CONTEXT, np.where(rows["pct"] > 0, style.BLUE, style.ORANGE))
@@ -180,16 +168,17 @@ def plot(n, r_persist, r_catch, dr, nb_total):
                 ecolor=style.INK_2, elinewidth=1, capsize=0)
     for yi, (p, h, l) in enumerate(zip(rows["pct"], rows["hi"], rows["lo"])):
         ax.text(max(h, 0) + 0.4 if p >= 0 else min(l, 0) - 0.4, yi, f"{p:+.1f} %", va="center",
-                ha="left" if p >= 0 else "right", fontsize=9.5)
+                ha="left" if p >= 0 else "right", fontsize=9)
     ax.set_yticks(y)
-    ax.set_yticklabels([dict(SHOW)[f] for f in rows.index], fontsize=10)
+    ax.set_yticklabels([dict(SHOW)[f] for f in rows.index])
     ax.axvline(0, color=style.AXIS, lw=1)
     ax.set_xlim(-11, 13)
     ax.set_xticks(range(-10, 11, 5))
     style.pct(ax, "x")
     style.vgrid_only(ax)
-    ax.set_xlabel("Price change vs Warsaw, 2010–14 → 2021–25")
-    save(fig, "30b_what_moved.png")
+    ax.set_title("What moved prices, 2010–14 → 2021–25 (same buildings, within district, vs Warsaw)",
+                 fontsize=11.5, loc="right")
+    save(fig, "30_forward_test.png")
 
 
 def main():

@@ -32,7 +32,7 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     # 2 sizes
     ("src", "r02_sizes"), ("src", "r03_new_resale"), ("summary", "29_flat_sizes"),
     # 3 prices
-    ("summary", "01_prices_over_time"), ("src", "r04_tide"), ("summary", "40_where_flats_are_big"),
+    ("summary", "01_prices_over_time"), ("summary", "40_where_flats_are_big"),
     ("summary", "38_house_map"), ("summary", "39_house_cells"), ("summary", "35_house_or_flat"),
     # 4 what goes with price
     ("summary", "03_what_drives_price"), ("summary", "18_building_age"), ("summary", "21_infill"),
@@ -40,15 +40,15 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     ("summary", "12_price_compass"), ("summary", "24_transit_access"),
     # 5 reputation
     ("summary", "41_pairs"), ("summary", "10_district_anatomy"), ("summary", "06_cheaper_than_expected"), ("summary", "15_estates"),
-    ("summary", "14_reputation_over_time"), ("summary", "30_forward_test"), ("summary", "30b_what_moved"),
+    ("summary", "14_reputation_over_time"), ("summary", "30_forward_test"),
     # 6 market behaviour
     ("summary", "16_flippers"), ("summary", "26_new_flats_on_offer"),
     # end
     ("src", "r99_methods"),
 ]
 
-SHORT = ["31_price_ridgelines", "01_prices_over_time", "r04_tide", "18_building_age", "26_new_flats_on_offer",
-         "41_pairs", "06_cheaper_than_expected", "30_forward_test", "30b_what_moved", "20_trees", "16_flippers",
+SHORT = ["31_price_ridgelines", "01_prices_over_time", "18_building_age", "26_new_flats_on_offer",
+         "41_pairs", "06_cheaper_than_expected", "30_forward_test", "20_trees", "16_flippers",
          "r99_methods"]   # the LinkedIn cut (2026-11-02): one story, question titles; old cut in output/report/archive_2026-11-02/
 
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)

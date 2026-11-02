@@ -194,47 +194,6 @@ def new_vs_resale(t):
     save(fig, "r03_new_resale.png")
 
 
-def tide():
-    """Who's rising now: price growth by district, cheapest district first, 2013-21 vs 2023-25 (2026-11-02)."""
-    d = pd.read_csv("output/analysis/district_index_annual.csv").pivot(index="year", columns="district", values="gamma")
-    bv = gpd.read_file("output/price_model.gpkg", layer="building_value", ignore_geometry=True).dropna(subset=["district"])
-    lvl = bv.groupby("district").apply(lambda s: np.exp(np.average(np.log(s["value_2025"]), weights=s["n"]))).sort_values()
-    periods = [(2013, 2021), (2023, 2025)]
-    g = {p: (100 * (np.exp(d.loc[p[1]] - d.loc[p[0]]) - 1)).reindex(lvl.index) for p in periods}
-    r = {p: pd.Series(lvl.values).corr(pd.Series(g[p].values)) for p in periods}   # pandas skips a district with no index
-    print("corr(price level, growth):", {f"{a}-{b}": round(v, 2) for (a, b), v in r.items()})
-    early, late = g[periods[0]], g[periods[1]]
-    top = late.sort_values(ascending=False).head(3)
-    fig = page("Who's rising now?",
-               "The dear districts led for years. Since 2023 the cheap ones do",
-               "Constant-quality price index per district (the same kind of flat each year), as paid. Districts ordered by "
-               "the 2025 price of a typical flat, cheapest on the left; Rembertów has too few sales in 2013. " + style.SOURCE)
-    fig.text(0.03, 0.885, wrap(f"2013–21: the dearer the district, the faster it rose, and Praga-Północ led ({early['Praga-Północ']:+.0f} %). "
-                               f"Since 2023 it's the other way round: {', '.join(top.index[:2])} and {top.index[2]} "
-                               f"{top.min():+.0f} to {top.max():+.0f} %, Śródmieście {late['Śródmieście']:+.0f} %.", 100),
-             fontsize=10.5, fontweight="semibold", va="top")
-    x = np.arange(len(lvl))
-    for k, ((a, b), pos) in enumerate(zip(periods, ([0.09, 0.50, 0.87, 0.28], [0.09, 0.13, 0.87, 0.28]))):
-        ax = fig.add_axes(pos)
-        s = g[(a, b)]
-        ax.bar(x, s.values, width=0.7, color=[style.ORANGE if n == "Praga-Północ" else style.BLUE for n in s.index], lw=0)
-        ok = s.notna().values
-        fit = np.polyval(np.polyfit(x[ok], s.values[ok], 1), x)
-        ax.plot(x, fit, color=style.INK_2, lw=1.2, ls=(0, (4, 3)))
-        for xi, v in zip(x[ok], s.values[ok]):
-            ax.text(xi, v - s.max() * 0.02, f"{v:+.0f}", ha="center", va="top", fontsize=8, color="white", fontweight="bold")
-        ax.set_xticks(x)
-        ax.set_xticklabels(s.index if k == 1 else [], rotation=55, ha="right", fontsize=9)
-        ax.set_xlim(-0.6, len(x) - 0.4)
-        ax.set_ylim(0, s.max() * 1.15)
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"+{v:.0f}%"))
-        style.hgrid_only(ax)
-        strip(ax)
-        word = "dearer districts rose faster" if r[(a, b)] > 0 else "cheaper districts rose faster"
-        ax.set_title(f"{a}–{b}: {word}" + (" (districts in the same order as below)" if k == 0 else ""), fontsize=11, loc="left")
-    save(fig, "r04_tide.png")
-
-
 def methods():
     fig = plt.figure(figsize=(8, 10))
     style.header(fig, "How to read these charts", "What the data is, what we compared, and what it can't tell", y=0.985)
@@ -268,7 +227,6 @@ def main():
     data_overview(t)
     sizes(t)
     new_vs_resale(t)
-    tide()
     methods()
 
 
