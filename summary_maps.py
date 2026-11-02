@@ -276,7 +276,7 @@ def trees(v, d, w):
     from rasterio.features import geometry_mask
     greens = ["#dcedc8", "#aed581", "#7cb342", "#4f8f2f", "#2e6b1f", "#16461a"]
     k = coef()
-    fig = page("Do trees pay? Lovely, but barely",
+    fig = page("Trees: lovely, but barely priced",
                f"About {k['canopy_100']:+.0f}% per 10 points of tree cover nearby. A park within 500 m does more: "
                f"{k['green_ha_500']:+.1f}% per 10 ha",
                "Tree cover 2018 (Copernicus). Bars: typical-flat price net of district and other features, by tree cover within "
