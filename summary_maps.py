@@ -130,7 +130,7 @@ def legend_patches(ax, colours, labels, title, loc="upper right"):
 
 # 6 --------------------------------------------------------------------------------------------
 def cheaper_than_expected(v, d, w):
-    fig = page("What's an address worth?",
+    fig = page("What's an address worth? Up to 12%, either way",
                wrap("Where flats sell for more (red) or less (blue) than their location, transit, amenities, noise "
                     "and building predict", 80),
                "Median per 600 m hexagon (≥ 5 buildings): actual vs out-of-sample predicted value of a typical flat "
@@ -216,7 +216,7 @@ def cafes(v, d, w):
     p = gpd.read_file("data/osm_pois.gpkg")
     f = p[p["amenity"].isin(["cafe", "restaurant", "bar", "pub"])]
     f = f[f.within(d.unary_union)]
-    fig = page("Cafés and prices go together",
+    fig = page("Do cafés raise prices? They follow them",
                wrap("Flats cost more only where 40 or more venues are within a short walk. Cafés follow wealth "
                     "as much as they attract it", 80),
                f"{len(f):,} venues from OpenStreetMap (Oct 2026), per 600 m hexagon. Bars: typical-flat price net of district and other "
@@ -276,9 +276,9 @@ def trees(v, d, w):
     from rasterio.features import geometry_mask
     greens = ["#dcedc8", "#aed581", "#7cb342", "#4f8f2f", "#2e6b1f", "#16461a"]
     k = coef()
-    fig = page("Do trees pay?",
-               f"A little: about {k['canopy_100']:+.0f} % per 10 points of tree cover nearby. A park within 500 m pays more: "
-               f"{k['green_ha_500']:+.1f} % per 10 ha",
+    fig = page("Do trees pay? Lovely, but barely",
+               f"About {k['canopy_100']:+.0f}% per 10 points of tree cover nearby. A park within 500 m does more: "
+               f"{k['green_ha_500']:+.1f}% per 10 ha",
                "Tree cover 2018 (Copernicus). Bars: typical-flat price net of district and other features, by tree cover within "
                "100 m. " + style.SOURCE)
     ax = basemap(fig, d, w)

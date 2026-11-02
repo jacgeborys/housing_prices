@@ -124,10 +124,10 @@ def main():
     # figure ------------------------------------------------------------------------------------
     v, d, w = load()
     n_r, med, med_net = len(recent_f), recent_f["markup"].median(), recent_f["markup_net"].median()
-    fig = page("Who are the flippers?",
+    fig = page(f"Does flipping pay? {med_net:+.0f}% in a year, before costs",
                "Flats resold within a year of purchase: where, how often, and for how much",
-               f"One flat = the land-register flat id. Flip = resold {MIN_DAYS}–{MAX_DAYS} days after the previous sale; markup net of the "
-               "city-wide price index. Map: 2021–25, hexagons with ≥ 40 resales. " + style.SOURCE)
+               f"One flat = the land-register flat id. Flip = resold {MIN_DAYS}–{MAX_DAYS} days after the previous sale; markup as paid, "
+               "'beyond the market' nets out the city index. Map: 2021–25, hexagons with ≥ 40 resales. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"2021–25: {n_r:,} flats were resold within a year of purchase ({100 * n_r / len(recent_s):.0f} in 100 "
                                f"resales), at a median markup of {med:+.0f}%, or {med_net:+.0f}% beyond the market, before "
                                f"renovation, tax and fees.", 100),

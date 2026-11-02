@@ -47,9 +47,9 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     ("src", "r99_methods"),
 ]
 
-SHORT = ["31_price_ridgelines", "01_prices_over_time", "18_building_age", "26_new_flats_on_offer",
-         "41_pairs", "06_cheaper_than_expected", "30_forward_test", "20_trees", "16_flippers",
-         "r99_methods"]   # the LinkedIn cut (2026-11-02): one story, question titles; old cut in output/report/archive_2026-11-02/
+SHORT = ["31_price_ridgelines", "01_prices_over_time", "18_building_age", "20_trees", "26_new_flats_on_offer",
+         "41_pairs", "06_cheaper_than_expected", "30_forward_test", "16_flippers",
+         "r99_methods"]   # the LinkedIn cut (2026-11-03): question + answer titles; old cuts in output/report/archive_*/
 
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",

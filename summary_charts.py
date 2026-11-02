@@ -73,12 +73,12 @@ def prices_over_time():
     r08 = q.loc[est & (q["year"] <= 2012), "real"].max()
     r25 = q.loc[q["year"] == REF_YEAR, "real"].mean()
 
-    fig = page("Is Warsaw in a bubble?",
+    fig = page("Is Warsaw in a bubble? As high as 2008, in real terms",
                f"Flats cost {n25 / n13:.1f}× their 2013 price, but after inflation only {r25 / r13:.1f}×: "
                "just back at the 2008 peak", "The same kind of flat each quarter (within-building comparisons). "
                    "Real = deflated with GUS CPI to 2025 PLN. Dashed: 2017–20, too few "
                    "sales in Warsaw's register data. " + style.SOURCE)
-    ax = fig.add_axes([0.13, 0.17, 0.80, 0.62])
+    ax = fig.add_axes([0.13, 0.27, 0.80, 0.52])
     for col, colr, lab, lw, al in (("nominal", style.BLUE, "Price as paid (nominal)", 1.8, 0.8),
                                    ("real", style.ORANGE, "In today's money (real, 2025 PLN)", 3.2, 1.0)):
         ax.plot(q["t"], q[col].where(est), color=colr, lw=lw, alpha=al, label=lab)
@@ -108,13 +108,38 @@ def prices_over_time():
     # hero numbers: nominal, real, and where real sits against the 2008 peak
     for x, big, small in ((0.05, f"×{n25 / n13:.1f}", "price as paid\n2013 → 2025"),
                           (0.36, f"×{r25 / r13:.1f}", "after inflation\n(today's money), 2013 → 2025"),
-                          (0.72, f"{100 * (r25 / r08 - 1):+.0f}%", "vs the 2008 peak,\nin today's money")):
+                          (0.72, f"{100 * (r25 / r08 - 1):+.0f}%", "2025 vs the 2008 peak,\nin today's money")):
         fig.text(x, 0.885, big, fontsize=30, fontweight="bold", color=style.INK, va="top")
         fig.text(x, 0.835, small, fontsize=10.5, color=style.INK_2, va="top")
-    fig.text(0.05, 0.105, wrap(f"A typical flat cost {style.fmt_int(n25)} PLN/m² in 2025. Raw medians mix cheap old flats "
-                               "with new ones; the index compares like with like: the same buildings, floors and sizes over time.",
-                               95), fontsize=10.5, color=style.INK_2, va="top")
+    other_cities(fig, q, cpi)
     save(fig, "01_prices_over_time.png")
+
+
+def other_cities(fig, q, cpi, base=2016):
+    """Small inset: real price index since base (Lublin's register starts in 2016) for Warsaw, Gdańsk, Lublin."""
+    lines = {"Warsaw": q[q["year"] <= REF_YEAR].groupby("year")["real"].mean()}
+    for city, folder in (("Gdańsk", "gdansk"), ("Lublin", "lublin")):
+        t = gpd.read_file(f"{folder}/output/price_model.gpkg", layer="transactions_adj", ignore_geometry=True,
+                          columns=["year", "price_m2", "price_m2_2025"])
+        t = t[t["year"].between(base, REF_YEAR)]       # price_m2 / price_m2_2025 = the city's own index factor
+        lines[city] = (t["price_m2"] / t["price_m2_2025"]).groupby(t["year"]).median() / t["year"].map(cpi).groupby(t["year"]).first()
+    ax = fig.add_axes([0.13, 0.075, 0.55, 0.12])
+    cols = {"Warsaw": style.ORANGE, "Gdańsk": style.BLUE, "Lublin": style.MUTED}
+    for city, s in lines.items():
+        s = s[s.index >= base] / s[base]
+        gap = (s.index >= 2017) & (s.index <= 2020) if city == "Warsaw" else np.zeros(len(s), bool)
+        ax.plot(s.index, s.where(~gap | np.roll(~gap, 1) | np.roll(~gap, -1)), color=cols[city],
+                lw=2.4 if city == "Warsaw" else 1.8)
+        ax.plot(s.index, s.where(gap | np.roll(gap, 1) | np.roll(gap, -1)), color=cols[city], lw=1.4, ls=(0, (2, 2)))
+        ax.annotate(f"{city} ×{s.iloc[-1]:.1f}", (s.index[-1], s.iloc[-1]), xytext=(6, 0), textcoords="offset points",
+                    va="center", fontsize=10, color=cols[city], fontweight="semibold")
+    ax.set_xlim(base, REF_YEAR)
+    ax.set_xticks([base, 2020, REF_YEAR])
+    ax.set_yticks([])
+    for side in ("left", "right", "top"):
+        ax.spines[side].set_visible(False)
+    ax.set_title(f"And elsewhere? After inflation, {base} → {REF_YEAR}", fontsize=11, loc="left")
+    fig.text(0.86, 0.135, "Gdańsk and\nLublin: more soon", fontsize=9.5, color=style.INK_2, va="center")
 
 
 # 2 --------------------------------------------------------------------------------------------

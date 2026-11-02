@@ -40,8 +40,8 @@ def main():
     pct = 100 * (np.exp(g["median"]) - 1)
     print(pd.DataFrame({"pct": pct.round(1), "n": g["size"]}).to_string())
 
-    fig = page("Does new always win?",
-               "Mostly: new buildings sell above their district, the 1960s–80s prefabs below",
+    fig = page("Does new always win? Over the prefabs, yes",
+               "New buildings sell above their district, the 1960s–80s prefabs below; pre-war holds its own",
                "Construction decade: GIS Expert (mapy.gis-expert.pl) and others. Price: typical-flat value 2025 (≥ 3 sales) vs the district's "
                "median building. Map: 2011–20 vs 1961–90 buildings per 1.5 km hexagon. " + style.SOURCE)
     a1 = fig.add_axes([0.10, 0.59, 0.86, 0.21])
@@ -113,7 +113,7 @@ def main():
     prewar = pct.loc[[k for k in pct.index if k <= 1930]].median()
     prefab = pct.loc[[k for k in (1970, 1980, 1990) if k in pct.index]]
     fig.text(0.03, 0.885, wrap(f"Two flats a few streets apart: one in a 2011–20 building, one in a 1961–90 prefab block. "
-                               f"The new one sells for about {np.median(prem):.0f}% more per m²: {dist['prem'].iloc[-1]:+.0f}% in "
+                               f"On the map below, the new one sells for about {np.median(prem):.0f}% more per m²: {dist['prem'].iloc[-1]:+.0f}% in "
                                f"{dist.index[-1]}, only {dist['prem'].iloc[0]:+.0f}% in {dist.index[0]}.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "18_building_age.png")

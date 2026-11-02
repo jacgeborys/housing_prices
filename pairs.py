@@ -75,7 +75,7 @@ def main():
     for hs, hn, ls, ln in PICKS:
         a, c = key(hs, hn), key(ls, ln)
         ex.append((a, c, 100 * (a.value_2025 / c.value_2025 - 1), float(np.hypot(a.x - c.x, a.y - c.y)) / 1000))
-    fig = page(f"Why does a twin block cost {ex[0][2]:.0f} % more?",
+    fig = page(f"Why does a twin block cost {ex[0][2]:.0f}% more? The address",
                "Look-alike blocks: same decade, same height and footprint, same walk to the metro",
                f"{len(best)} pairs of resale-dominated buildings (≥ {MIN_SALES} priced sales each), 1.5–8 km apart, matched on decade, "
                "height, footprint, walk to the metro and road noise. Typical-flat price, 2025 PLN/m². " + style.SOURCE)
