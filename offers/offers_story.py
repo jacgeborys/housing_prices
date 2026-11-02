@@ -67,8 +67,8 @@ def main():
     print(f"{len(inv)} investments, {int(inv['flats'].sum()):,} flats; premium over nearby 2011-20 buildings: "
           f"median {inv['premium'].median():+.1f}% ({inv['premium'].notna().sum()} with comparables)")
 
-    fig = page("New flats on offer",
-               "Every flat a developer is selling in Warsaw today, from the developers' own price lists",
+    fig = page("Is buying from a developer a rip-off?",
+               f"Not really: the typical new project asks {inv['premium'].median():+.0f} % vs a 5–15-year-old flat nearby",
                f"Developers' asking prices (dane.gov.pl): {len(o):,} flats, {len(inv)} investments. Premium: median asking per m² vs the "
                f"typical-flat value of priced 2011–2020 buildings within {COMP_M / 1000:g} km. Resales: RCN 2024–26. " + style.SOURCE)
     # 1 supply map
@@ -91,7 +91,7 @@ def main():
     ax2.scatter(p.geometry.x, p.geometry.y, s=p["flats"].clip(upper=600) * 0.9 + 6, c=p["premium"].clip(-20, 40),
                 cmap=style.DIV_CMAP, norm=norm, edgecolor=style.INK_2, lw=0.4, zorder=4)
     outlines(ax2, d, labels=False)
-    cax = fig.add_axes([0.955, 0.55, 0.012, 0.13])
+    cax = fig.add_axes([0.93, 0.55, 0.012, 0.13])
     cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=style.DIV_CMAP), cax=cax, ticks=[-20, 0, 20, 40])
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8, length=0)

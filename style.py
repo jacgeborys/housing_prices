@@ -119,7 +119,7 @@ def fmt_int(v):
     return f"{v:,.0f}".replace(",", " ")
 
 
-def shade_gap(ax, lo=2016.5, hi=2020.5, label="RCN gap\n2017–20"):
+def shade_gap(ax, lo=2016.5, hi=2020.5, label="data gap\n2017–20"):
     ax.axvspan(lo, hi, color=GRID, alpha=0.55, lw=0, zorder=0)
     ax.text((lo + hi) / 2, 0.97, label, transform=ax.get_xaxis_transform(),
             ha="center", va="top", fontsize=8.5, color=MUTED, style="italic")

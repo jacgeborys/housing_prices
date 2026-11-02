@@ -73,7 +73,7 @@ def main():
     ch.to_file(OUT, layer="building_change", driver="GPKG")
     msi.merge(area, left_on="name", right_index=True).to_file(OUT, layer="msi_change", driver="GPKG")
 
-    fig = page("The centre is pulling away",
+    fig = page("The inner city pulled ahead",
                f"Same buildings, {EARLY[0]}–{str(EARLY[1])[2:]} vs {LATE[0]}–{str(LATE[1])[2:]}: "
                "price change relative to Warsaw as a whole",
                f"Resales only, buildings that existed before 2006; prices net of the city-wide index (0 % = moved with the city). Map: 600 m "
@@ -103,7 +103,11 @@ def main():
     lab = pd.concat([area.nlargest(4, "change"), area.nsmallest(3, "change"),
                      area.nsmallest(3, "reputation"), area.nlargest(3, "reputation")])
     lab = lab[~lab.index.duplicated()]
+    placed = []
     for name, row in lab.iterrows():
+        if any(abs(row["reputation"] - x) < 2.5 and abs(row["change"] - y) < 1.5 for x, y in placed):
+            continue                    # a neighbour's label already sits there (Koło over Młynów)
+        placed.append((row["reputation"], row["change"]))
         a2.annotate(name, (row["reputation"], row["change"]), xytext=(5, 3), textcoords="offset points",
                     fontsize=8, color=style.INK)
     a2.set_xlim(area["reputation"].min() - 3, area["reputation"].max() + 9)

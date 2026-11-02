@@ -26,12 +26,13 @@ def main():
     b = gpd.read_file("output/price_model.gpkg", layer="building_value").drop_duplicates("osm_id")
     pts = b.geometry.representative_point()
 
-    n_flat, n_house = len(t), len(h)
-    ratio = n_flat / n_house
+    n_flat, n_house = int(t["district"].notna().sum()), len(h)
+    both = range(2021, 2026)          # years both are fully recorded: flats are missing 2017-20, houses before 2017
+    ratio = t["year"].isin(both).sum() / h["year"].isin(both).sum()
     fig = page(f"One house sale for every {ratio:.0f} flat sales",
                "Houses ring the city; flats fill the middle. Every house sale 2017–2026, and every building with a flat sale",
-               f"Houses: {n_house:,} single-family house sales (RCN, recorded from 2017). Flats: {n_flat:,} sales 2006–2026; grey = buildings "
-               "with a recorded sale. The register's flat records for 2017–2020 are nearly empty. " + style.SOURCE)
+               f"Houses: {n_house:,} sales (recorded from 2017). Flats: {n_flat:,} sales 2006–2026, grey = buildings with one. Ratio: "
+               "2021–25, when both are complete. " + style.SOURCE)
 
     ax = basemap(fig, d, w)
     ax.scatter(pts.x, pts.y, s=1.1, color=FLAT, lw=0, zorder=3)
@@ -52,7 +53,7 @@ def main():
     hy = h.groupby("year").size().reindex(years, fill_value=0)
     x0, wd, hh = 0.10, 0.86, 0.085
     for k, (series, colr, lab, gap_lo, gap_hi, gap_lab) in enumerate((
-            (fy / 1000, FLAT, "Flat sales per year (thousands)", 2016.5, 2020.5, "register gap\n2017–20"),
+            (fy / 1000, FLAT, "Flat sales per year (thousands)", 2016.5, 2020.5, "data gap\n2017–20"),
             (hy, HOUSE, "House sales per year", 2005.5, 2016.5, "not recorded\nbefore 2017"))):
         a = fig.add_axes([x0, 0.26 - k * 0.135, wd, hh])
         a.bar(series.index, series.values, color=colr, width=0.8, zorder=2)

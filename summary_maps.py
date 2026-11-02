@@ -117,6 +117,12 @@ def cafe_pct():
     return c.loc["walk7_food_drink", "pct_district"]
 
 
+def coef():
+    """Within-district associations from price_drivers.py (% per the unit in its label), so slides quote one number."""
+    c = pd.read_csv("output/analysis/price_drivers_coefficients.csv")
+    return dict(zip(c["feature"], c["pct_district"]))
+
+
 def legend_patches(ax, colours, labels, title, loc="upper right"):
     ax.legend(handles=[Patch(color=c, label=l) for c, l in zip(colours, labels)], title=title, loc=loc,
               fontsize=8.5, title_fontsize=9, frameon=True, framealpha=0.9, edgecolor="none")
@@ -124,7 +130,7 @@ def legend_patches(ax, colours, labels, title, loc="upper right"):
 
 # 6 --------------------------------------------------------------------------------------------
 def cheaper_than_expected(v, d, w):
-    fig = page("Reputation: what a place earns beyond its features",
+    fig = page("What's an address worth?",
                wrap("Where flats sell for more (red) or less (blue) than their location, transit, amenities, noise "
                     "and building predict", 80),
                "Median per 600 m hexagon (≥ 5 buildings): actual vs out-of-sample predicted value of a typical flat "
@@ -165,7 +171,7 @@ def cheaper_than_expected(v, d, w):
             ax2.text(xi, val + (1.0 if val > 0 else -1.0), f"{val:+.0f}%", ha="center",
                      va="bottom" if val > 0 else "top", fontsize=9, color=style.INK)
     ax2.set_ylim(g.min() - 6, g.max() + 6)
-    fig.text(0.03, 0.885, wrap(f"Same location, transit, cafés, green and noise, yet flats in Żoliborz sell "
+    fig.text(0.03, 0.885, wrap(f"Same distance to the centre, transit, cafés, green and noise, yet flats in Żoliborz sell "
                                f"~{abs(g.get('Żoliborz', 0)):.0f}% above prediction and in Praga-Północ "
                                f"~{abs(g.get('Praga-Północ', 0)):.0f}% below. That gap is reputation.", 100),
              fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
@@ -234,10 +240,11 @@ def cafes(v, d, w):
 
 # 9 --------------------------------------------------------------------------------------------
 def noise(v, d, w):
-    fig = page("Where Warsaw is loud",
-               "EU strategic noise map: road, tram and train, day-evening-night level (Lden)",
-               "EEA noise data (2026), the louder of road and rail (rail includes trams). Bars: typical-flat price net "
-               "of district and other features, by tram & train noise at the façade; road noise: −0.5 % per 10 dB. " + style.SOURCE)
+    k = coef()
+    fig = page("Does noise cost money?",
+               f"A little: about {k['noise_rail_db']:+.0f} % per 10 dB of tram and train noise, {k['noise_road_db']:+.1f} % for road noise",
+               "EEA noise data (2026), the louder of road and rail (rail includes trams). Bars: typical-flat price net of district "
+               f"and other features, by tram & train noise at the façade. " + style.SOURCE)
     ax = basemap(fig, d, w)
     arrs = []
     for s in ("road", "rail"):
@@ -268,10 +275,12 @@ def trees(v, d, w):
     """Tree cover density map (Copernicus 2018, trees/) + price by tree cover within 100 m, all else equal."""
     from rasterio.features import geometry_mask
     greens = ["#dcedc8", "#aed581", "#7cb342", "#4f8f2f", "#2e6b1f", "#16461a"]
-    fig = page("Trees: lovely, barely priced",
-               "Only the leafiest surroundings (30 %+ tree cover) add about 2 %; parks nearby matter more",
-               "Tree cover 2018 (Copernicus). Bars: typical-flat price net of district and other features, by tree "
-               "cover within 100 m: +0.3 % per 10 points, not significant. 10 ha of park within 500 m: +2.7 %. " + style.SOURCE)
+    k = coef()
+    fig = page("Do trees pay?",
+               f"A little: about {k['canopy_100']:+.0f} % per 10 points of tree cover nearby. A park within 500 m pays more: "
+               f"{k['green_ha_500']:+.1f} % per 10 ha",
+               "Tree cover 2018 (Copernicus). Bars: typical-flat price net of district and other features, by tree cover within "
+               "100 m. " + style.SOURCE)
     ax = basemap(fig, d, w)
     with rasterio.open("trees/data/tree_density_warsaw_10m.tif") as src:
         a = src.read(1).astype(float)

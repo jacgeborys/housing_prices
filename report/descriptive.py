@@ -105,7 +105,7 @@ def sizes(t):
     fig = page("What sizes sell where",
                "Flats sold by size, by district (2021–26) and across the years",
                "RCN flat sales in full ownership, new and resale together. Size = usable floor area from the deed. Years with "
-               "fewer than 300 sales left out (2017–20 register gap). " + style.SOURCE)
+               "fewer than 300 sales left out (2017–20, Warsaw's register data gap). " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"Small flats (under 35 m²) are {small.max():.0f} % of sales in {small.idxmax()} but "
                                f"{small.min():.0f} % in {small.idxmin()}; flats of 70 m² or more are most common in "
                                f"{share.index[-1]} and {share.index[-2]}. Micro flats under 25 m² are rare: "
@@ -194,32 +194,64 @@ def new_vs_resale(t):
     save(fig, "r03_new_resale.png")
 
 
+def tide():
+    """Who's rising now: price growth by district, cheapest district first, 2013-21 vs 2023-25 (2026-11-02)."""
+    d = pd.read_csv("output/analysis/district_index_annual.csv").pivot(index="year", columns="district", values="gamma")
+    bv = gpd.read_file("output/price_model.gpkg", layer="building_value", ignore_geometry=True).dropna(subset=["district"])
+    lvl = bv.groupby("district").apply(lambda s: np.exp(np.average(np.log(s["value_2025"]), weights=s["n"]))).sort_values()
+    periods = [(2013, 2021), (2023, 2025)]
+    g = {p: (100 * (np.exp(d.loc[p[1]] - d.loc[p[0]]) - 1)).reindex(lvl.index) for p in periods}
+    r = {p: pd.Series(lvl.values).corr(pd.Series(g[p].values)) for p in periods}   # pandas skips a district with no index
+    print("corr(price level, growth):", {f"{a}-{b}": round(v, 2) for (a, b), v in r.items()})
+    early, late = g[periods[0]], g[periods[1]]
+    top = late.sort_values(ascending=False).head(3)
+    fig = page("Who's rising now?",
+               "The dear districts led for years. Since 2023 the cheap ones do",
+               "Constant-quality price index per district (the same kind of flat each year), as paid. Districts ordered by "
+               "the 2025 price of a typical flat, cheapest on the left; Rembertów has too few sales in 2013. " + style.SOURCE)
+    fig.text(0.03, 0.885, wrap(f"2013–21: the dearer the district, the faster it rose, and Praga-Północ led ({early['Praga-Północ']:+.0f} %). "
+                               f"Since 2023 it's the other way round: {', '.join(top.index[:2])} and {top.index[2]} "
+                               f"{top.min():+.0f} to {top.max():+.0f} %, Śródmieście {late['Śródmieście']:+.0f} %.", 100),
+             fontsize=10.5, fontweight="semibold", va="top")
+    x = np.arange(len(lvl))
+    for k, ((a, b), pos) in enumerate(zip(periods, ([0.09, 0.50, 0.87, 0.28], [0.09, 0.13, 0.87, 0.28]))):
+        ax = fig.add_axes(pos)
+        s = g[(a, b)]
+        ax.bar(x, s.values, width=0.7, color=[style.ORANGE if n == "Praga-Północ" else style.BLUE for n in s.index], lw=0)
+        ok = s.notna().values
+        fit = np.polyval(np.polyfit(x[ok], s.values[ok], 1), x)
+        ax.plot(x, fit, color=style.INK_2, lw=1.2, ls=(0, (4, 3)))
+        for xi, v in zip(x[ok], s.values[ok]):
+            ax.text(xi, v - s.max() * 0.02, f"{v:+.0f}", ha="center", va="top", fontsize=8, color="white", fontweight="bold")
+        ax.set_xticks(x)
+        ax.set_xticklabels(s.index if k == 1 else [], rotation=55, ha="right", fontsize=9)
+        ax.set_xlim(-0.6, len(x) - 0.4)
+        ax.set_ylim(0, s.max() * 1.15)
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"+{v:.0f}%"))
+        style.hgrid_only(ax)
+        strip(ax)
+        word = "dearer districts rose faster" if r[(a, b)] > 0 else "cheaper districts rose faster"
+        ax.set_title(f"{a}–{b}: {word}" + (" (districts in the same order as below)" if k == 0 else ""), fontsize=11, loc="left")
+    save(fig, "r04_tide.png")
+
+
 def methods():
     fig = plt.figure(figsize=(8, 10))
     style.header(fig, "How to read these charts", "What the data is, what we compared, and what it can't tell", y=0.985)
     blocks = [
-        ("The data", "Every notarial deed of a flat sale in Warsaw in the official price register (GUGiK RCN), 2006–2026: "
-         "about 265,000 sales with price, size, floor and date. Locations, buildings, transit, noise and greenery come "
-         "from OpenStreetMap, BDOT10k, the EU noise maps and Warsaw's timetables; building ages from GIS Expert's map "
-         "of Warsaw's development and other sources."),
-        ("The yardstick flat", "Flats differ, so most comparisons use one yardstick: a ~50 m² flat on the 2nd floor, "
-         "resold (not new), priced in 2025. For each building we ask what that flat would sell for there, using every "
-         "sale since 2006 and what we learned from flats in the same building about size, floor and the year of sale. "
-         "Think of it as Warsaw's Big Mac index."),
-        ("\"Within the same district\"", "When we say cafés or noise go with a price difference, we compare buildings "
-         "against others in the same district, so that 'Mokotów is expensive' does not pass for 'cafés are expensive'."),
-        ("Reputation", "What a place sells for beyond what its location, transport, amenities, noise and buildings "
-         "predict. The model never sees district names. It also holds what the data can't see: condition, finish, "
-         "views. The side of the river is not a feature: right-bank flats sell about 13 % below similar left-bank ones, "
-         "but that gap is largely the right bank's reputation, so counting it would explain reputation away."),
-        ("Houses", "House sales (RCN, from 2017) are shown as they are, not modelled: a house price includes land, and "
-         "the register records a house's living area for about one deed in six. The rest is estimated from the "
-         "building outline and floors (typical miss 14 % per house), fine for medians, not for a single house."),
-        ("Associations, not causes", "These are patterns in real sales, not experiments. Cafés follow money as much as "
-         "they attract it. Where we say more (metro openings), we compare the same buildings before and after."),
-        ("What's missing", "Cooperative flats (spółdzielcze prawo) never enter the register, and some blocks "
-         "(municipal, rented) rarely sell, so parts of the city are thinly covered. 2017–2020 is nearly empty. Developer deeds carry prices agreed a "
-         "year or two before completion. Asking prices are not sale prices."),
+        ("The data", "Every notarial deed of a flat sale in Warsaw's official price register (GUGiK RCN), 2006–2026: about "
+         "265,000 sales with price, size, floor and date. Maps, transit, noise and greenery from OpenStreetMap, BDOT10k, "
+         "EU noise maps and Warsaw's timetables; building ages from GIS Expert and others."),
+        ("The yardstick flat", "Flats differ, so most comparisons use one yardstick: a ~50 m² resold flat on the 2nd "
+         "floor, priced in 2025, worked out for every building from all its sales. Warsaw's Big Mac index."),
+        ("Reputation", "What a place sells for beyond what its location, transit, cafés, noise, greenery and building "
+         "age predict. It also holds what the data can't see: condition, finish, views."),
+        ("Associations, not causes", "Patterns in real sales, compared within the same district, not experiments: "
+         "cafés follow money as much as they attract it. The closest thing to an experiment is the new metro stations."),
+        ("What's missing", "Cooperative flats never enter the register, and Warsaw's register data for 2017–2020 is "
+         "nearly empty. Houses are shown as sold, not modelled. Developer deeds carry prices agreed a year or two "
+         "before completion; asking prices are not sale prices."),
+        ("Coming next", "Is the address premium a Warsaw thing? Same data, same method: Lublin and Gdańsk are next."),
     ]
     y = 0.90
     for head, body in blocks:
@@ -236,6 +268,7 @@ def main():
     data_overview(t)
     sizes(t)
     new_vs_resale(t)
+    tide()
     methods()
 
 

@@ -124,7 +124,7 @@ def main():
     # figure ------------------------------------------------------------------------------------
     v, d, w = load()
     n_r, med, med_net = len(recent_f), recent_f["markup"].median(), recent_f["markup_net"].median()
-    fig = page("The flippers",
+    fig = page("Who are the flippers?",
                "Flats resold within a year of purchase: where, how often, and for how much",
                f"One flat = the land-register flat id. Flip = resold {MIN_DAYS}–{MAX_DAYS} days after the previous sale; markup net of the "
                "city-wide price index. Map: 2021–25, hexagons with ≥ 40 resales. " + style.SOURCE)

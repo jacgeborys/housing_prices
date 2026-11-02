@@ -40,8 +40,8 @@ def main():
     pct = 100 * (np.exp(g["median"]) - 1)
     print(pd.DataFrame({"pct": pct.round(1), "n": g["size"]}).to_string())
 
-    fig = page("Old, older, newest",
-               "What a building's age does to the price of its flats",
+    fig = page("Does new always win?",
+               "Mostly: new buildings sell above their district, the 1960s–80s prefabs below",
                "Construction decade: GIS Expert (mapy.gis-expert.pl) and others. Price: typical-flat value 2025 (≥ 3 sales) vs the district's "
                "median building. Map: 2011–20 vs 1961–90 buildings per 1.5 km hexagon. " + style.SOURCE)
     a1 = fig.add_axes([0.10, 0.59, 0.86, 0.21])
