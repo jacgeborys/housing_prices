@@ -68,7 +68,7 @@ def main():
           f"median {inv['premium'].median():+.1f}% ({inv['premium'].notna().sum()} with comparables)")
 
     fig = page("Is buying from a developer a rip-off? Not really",
-               f"The typical new project asks {inv['premium'].median():+.0f}% vs a 5–15-year-old flat nearby; central towers are the exception",
+               f"You pay for new, not for the developer: the typical project asks {inv['premium'].median():+.0f}% vs a 5–15-year-old flat nearby",
                f"Developers' asking prices (dane.gov.pl): {len(o):,} flats, {len(inv)} investments. Premium: median asking per m² vs the "
                f"typical-flat value of priced 2011–2020 buildings within {COMP_M / 1000:g} km. Resales: RCN 2024–26. " + style.SOURCE)
     # 1 supply map

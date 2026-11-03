@@ -42,6 +42,7 @@ DIV_CMAP = LinearSegmentedColormap.from_list(
 
 CPI_NOTE = "Real prices deflated with GUS annual CPI (2025 PLN)."
 SOURCE = "Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k."
+BYLINE = "© 2026 Jacek Gęborys"
 
 
 def apply():
@@ -84,9 +85,15 @@ def apply():
 def header(fig, title, subtitle=None, y=0.995):
     """Left-aligned figure title with a takeaway subtitle underneath."""
     fig.text(0.01, y, title, fontsize=17, fontweight="bold", color=INK, va="top", ha="left")
+    byline(fig, y=y)
     if subtitle:
         gap = 0.36 / fig.get_figheight()      # constant ~0.36 in, whatever the figure size
         fig.text(0.01, y - gap, subtitle, fontsize=11.5, color=INK_2, va="top", ha="left")
+
+
+def byline(fig, y=0.995, color=MUTED, fontsize=9, x=0.99):
+    """Author credit, top right of every slide."""
+    fig.text(x, y, BYLINE, fontsize=fontsize, color=color, va="top", ha="right")
 
 
 def footer(fig, text=SOURCE, y=0.005):

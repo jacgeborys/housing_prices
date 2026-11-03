@@ -16,6 +16,7 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize
 from scipy.ndimage import distance_transform_edt, gaussian_filter
 from shapely import contains_xy
 
+import style
 from summary_charts import DPI, FIG, save
 
 MIN_SALES = 3                 # buildings with at least this many sales keep their model value (shrunk toward the district)
@@ -139,6 +140,7 @@ def main():
         ax.text(pt.x + dx, pt.y + dy + 2000, name, color=INK, fontsize=8.5, ha="center", zorder=10_000,
                 fontweight="semibold", path_effects=[pe.withStroke(linewidth=2.5, foreground=BG)])
 
+    style.byline(fig, y=0.975, color=MUTED, fontsize=10, x=0.95)
     fig.text(0.05, 0.955, "Warsaw, in price", color=INK, fontsize=30, fontweight="bold", va="top")
     fig.text(0.05, 0.905, "What a typical flat costs per m², 2025. Each line is a slice of the city;\n"
                           "it rises where flats cost more.", color=MUTED, fontsize=12.5, va="top", linespacing=1.4)

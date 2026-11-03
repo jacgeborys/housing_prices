@@ -73,7 +73,7 @@ def prices_over_time():
     r08 = q.loc[est & (q["year"] <= 2012), "real"].max()
     r25 = q.loc[q["year"] == REF_YEAR, "real"].mean()
 
-    fig = page("Is Warsaw in a bubble? As high as 2008, in real terms",
+    fig = page("Record prices? In real terms, just past 2008",
                f"Flats cost {n25 / n13:.1f}× their 2013 price, but after inflation only {r25 / r13:.1f}×: "
                "just back at the 2008 peak", "The same kind of flat each quarter (within-building comparisons). "
                    "Real = deflated with GUS CPI to 2025 PLN. Dashed: 2017–20, too few "

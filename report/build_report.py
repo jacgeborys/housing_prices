@@ -51,6 +51,21 @@ SHORT = ["31_price_ridgelines", "01_prices_over_time", "18_building_age", "20_tr
          "41_pairs", "06_cheaper_than_expected", "30_forward_test", "16_flippers",
          "r99_methods"]   # the LinkedIn cut (2026-11-03): question + answer titles; old cuts in output/report/archive_*/
 
+SELECTED = [   # the user's picks (output/report/selected/, 2026-11-03) in a buyer's order -> output/report/selected_ordered/
+    # 1 the city: where, and how dear now
+    "31_price_ridgelines", "32_price_points", "r01_data", "01_prices_over_time",
+    # 2 what you get for it: flat sizes, then houses
+    "40_where_flats_are_big", "r02_sizes", "38_house_map", "39_house_cells", "35_house_or_flat",
+    # 3 what you pay for: overview, then one factor per slide
+    "03_what_drives_price", "18_building_age", "21_infill", "11_transit_x_price", "24_transit_access",
+    "08_cafes", "09_noise", "20_trees", "12_price_compass",
+    # 4 what's left: the name of the place
+    "41_pairs", "10_district_anatomy", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
+    "30_forward_test",
+    # 5 who you buy from
+    "26_new_flats_on_offer", "16_flippers",
+]
+
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
     "reputation_time.py", "estates.py", "infill.py", "flips.py", "building_age_story.py", "flat_sizes.py",
@@ -93,6 +108,16 @@ def assemble():
     write_pdf(PDF, SLIDES)
     by_stem = {stem: (d, stem) for d, stem in SLIDES}
     write_pdf(PDF.replace(".pdf", "_short.pdf"), [by_stem[x] for x in SHORT])
+    sel = os.path.join(OUT, "selected_ordered")
+    os.makedirs(sel, exist_ok=True)
+    for f in os.listdir(sel):
+        if f.endswith(".png"):
+            os.remove(os.path.join(sel, f))
+    for i, stem in enumerate(SELECTED, 1):
+        d, _ = by_stem[stem]
+        shutil.copyfile(os.path.join(folders[d], f"{stem}.png"), os.path.join(sel, f"{i:02d}_{stem}.png"))
+    write_pdf(PDF.replace(".pdf", "_selected.pdf"), [by_stem[x] for x in SELECTED])
+    print(f"selected deck: {len(SELECTED)} slides -> {sel}")
     print(f"short deck: {len(SHORT)} slides -> {PDF.replace('.pdf', '_short.pdf')}")
     print(f"{len(SLIDES)} slides -> {OUT}, {PDF} ({os.path.getsize(PDF) / 1e6:.1f} MB)")
 
