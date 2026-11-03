@@ -5,7 +5,7 @@ Two buyer's-eye figures from actual sales (no model, no benchmark flat):
   34  Room for a family: where flats of 70 m² or more are resold (share of resales 2021-26) and what a 65-80 m²
       flat costs (median total price, resales 2024-26)
   36  Where the big flats are: median size and share of 4+ room flats among all flat sales since 2016 (developer
-      and resale: where such flats exist), per hexagon, with the top city neighbourhoods (MSI) named
+      and resale: where such flats exist), per hexagon, with the top city neighborhoods (MSI) named
 
 Resales only: developer deeds are recorded at completion, at a price agreed 1-2 years earlier, so they would make
 recent money look like it buys more. Rooms in RCN are "izby" (a separate kitchen counts as a room, a kitchen annex
@@ -64,7 +64,7 @@ def what_1m_buys(t, d, w):
                f"bars: districts with ≥ {MIN_DISTRICT} such sales. Developer sales left out (prices agreed 1–2 years earlier). " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"The same million buys a {g[lo]:.0f} m² flat in {lo} and a {g[hi]:.0f} m² one in {hi}: "
                                f"{g[hi] / g[lo]:.1f}× the space. Across the river or out past the ring roads, the "
-                               "budget of a city-centre two-room flat becomes a family flat.", 100),
+                               "budget of a city-center two-room flat becomes a family flat.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     ax = basemap(fig, d, w)
     ax.set_position([0.02, 0.10, 0.60, 0.72])
@@ -134,7 +134,7 @@ def big_flats(d, w):
     many_small = nb[(nb["many"] >= 0.35) & (nb["med"] < 55)].sort_values("med")      # many rooms, little space
     fig = page("Where the big flats are",
                f"All flat sales since 2016 (developer and resale): size and number of rooms",
-               f"{len(t):,} flat sales 2016–{int(t['year'].max())}. Hexagons with ≥ 40 sales; lists: MSI neighbourhoods with ≥ 300 sales. "
+               f"{len(t):,} flat sales 2016–{int(t['year'].max())}. Hexagons with ≥ 40 sales; lists: MSI neighborhoods with ≥ 300 sales. "
                "Rooms = the register's 'izby' (a separate kitchen counts as a room). " + style.SOURCE)
     ex = many_small.index[0] if len(many_small) else None
     fig.text(0.03, 0.885, wrap("Space and rooms are not the same thing. The biggest flats sell in Wawer, on the Saska "

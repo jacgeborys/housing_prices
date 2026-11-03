@@ -112,9 +112,12 @@ def main():
     a3.set_title("By district", fontsize=10)
     prewar = pct.loc[[k for k in pct.index if k <= 1930]].median()
     prefab = pct.loc[[k for k in (1970, 1980, 1990) if k in pct.index]]
-    fig.text(0.03, 0.885, wrap(f"Two flats a few streets apart: one in a 2011–20 building, one in a 1961–90 prefab block. "
-                               f"On the map below, the new one sells for about {np.median(prem):.0f}% more per m²: {dist['prem'].iloc[-1]:+.0f}% in "
-                               f"{dist.index[-1]}, only {dist['prem'].iloc[0]:+.0f}% in {dist.index[0]}.", 100),
+    new_pct = pd.read_csv("output/analysis/price_drivers_coefficients.csv").set_index("feature").loc[
+        "age_2011_20", "pct_district"]                     # the same number as slide 03 (what goes with price)
+    fig.text(0.03, 0.885, wrap(f"Same district, same size and floor: a flat in a 2011–20 building sells for about "
+                               f"{new_pct:.0f}% more per m² than one in a 1961–90 prefab. Next door the gap runs from "
+                               f"{dist['prem'].iloc[-1]:+.0f}% in {dist.index[-1]} to {dist['prem'].iloc[0]:+.0f}% in "
+                               f"{dist.index[0]}.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "18_building_age.png")
     print(dist.round(1).to_string())

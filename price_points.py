@@ -1,7 +1,7 @@
 """
-Companion to the opening map (price_ridgelines.py): the same frame and colours, but every building with recorded
-flat sales as a dot (colour = 2025 value of a typical flat, size = number of sales), over all other buildings in
-dark grey. Shows where the transactions behind the ridgelines actually are.
+Companion to the opening map (price_ridgelines.py): the same frame and colors, but every building with recorded
+flat sales as a dot (color = 2025 value of a typical flat, size = number of sales), over all other buildings in
+dark gray. Shows where the transactions behind the ridgelines actually are.
 
 Output: output/summary/32_price_points.png (2400 x 3000, dark: zoomable)
 """

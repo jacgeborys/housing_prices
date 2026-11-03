@@ -9,7 +9,7 @@ is held fixed (apart from renovation and ageing, which hit all old buildings ali
 
 Outputs:
   output/reputation_time.gpkg                   layer building_change, layer msi_change
-  output/summary/14_reputation_over_time.png    hex map of relative change + catch-up scatter by neighbourhood
+  output/summary/14_reputation_over_time.png    hex map of relative change + catch-up scatter by neighborhood
 """
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -68,7 +68,7 @@ def main():
     area = area[area["n"] >= MIN_BUILDINGS].dropna()
     r = np.corrcoef(area["reputation"], area["change"])[0, 1]
     slope = np.polyfit(area["reputation"], area["change"], 1)[0]
-    print(f"{len(area)} neighbourhoods with >= {MIN_BUILDINGS} buildings; corr(reputation, change) = {r:.2f}, "
+    print(f"{len(area)} neighborhoods with >= {MIN_BUILDINGS} buildings; corr(reputation, change) = {r:.2f}, "
           f"slope {slope:.2f}")
     ch.to_file(OUT, layer="building_change", driver="GPKG")
     msi.merge(area, left_on="name", right_index=True).to_file(OUT, layer="msi_change", driver="GPKG")
@@ -77,7 +77,7 @@ def main():
                f"Same buildings, {EARLY[0]}–{str(EARLY[1])[2:]} vs {LATE[0]}–{str(LATE[1])[2:]}: "
                "price change relative to Warsaw as a whole",
                f"Resales only, buildings that existed before 2006; prices net of the city-wide index (0 % = moved with the city). Map: 600 m "
-               f"hexagons. Scatter: neighbourhoods with ≥ {MIN_BUILDINGS} buildings. " + style.SOURCE)
+               f"hexagons. Scatter: neighborhoods with ≥ {MIN_BUILDINGS} buildings. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.02, 0.41, 0.96, 0.46])
     p = ch.geometry.representative_point()
@@ -118,7 +118,7 @@ def main():
     a2.set_ylabel("Change vs city, 2010–14 → 2021–25")
     verdict = "low-reputation areas are catching up" if slope < -0.15 else \
         "high-reputation areas are pulling away" if slope > 0.15 else "no clear catch-up either way"
-    a2.set_title(f"Neighbourhoods: {verdict} (correlation {r:+.2f}); the two Pragas gain most", fontsize=11)
+    a2.set_title(f"Neighborhoods: {verdict} (correlation {r:+.2f}); the two Pragas gain most", fontsize=11)
     gd = ch.groupby("district")["change_pct"].agg(["median", "size"])
     gain = gd.loc[gd["size"] >= 25, "median"].sort_values()
     fig.text(0.03, 0.885, wrap(f"Biggest gains against the city: {gain.index[-1]} ({gain.iloc[-1]:+.0f}%), "

@@ -31,7 +31,7 @@ def main():
     ratio = t["year"].isin(both).sum() / h["year"].isin(both).sum()
     fig = page(f"One house sale for every {ratio:.0f} flat sales",
                "Houses ring the city; flats fill the middle. Every house sale 2017–2026, and every building with a flat sale",
-               f"Houses: {n_house:,} sales (recorded from 2017). Flats: {n_flat:,} sales 2006–2026, grey = buildings with one. Ratio: "
+               f"Houses: {n_house:,} sales (recorded from 2017). Flats: {n_flat:,} sales 2006–2026, gray = buildings with one. Ratio: "
                "2021–25, when both are complete. " + style.SOURCE)
 
     ax = basemap(fig, d, w)

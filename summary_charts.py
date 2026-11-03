@@ -176,7 +176,7 @@ def districts():
 # 3 --------------------------------------------------------------------------------------------
 PLAIN = [  # feature, plain-language label, sign flip (effect of the "worse" direction reads naturally)
     ("pct_primary", "New building (sold by the developer)"),
-    ("age_2001_10", "Built 2001–2010 (vs a 1961–90 prefab block)"),
+    ("age_2011_20", "Built 2011–2020 (vs a 1961–90 prefab block)"),
     ("age_1941_60", "Built 1941–1960 (vs a 1961–90 prefab block)"),
     ("canopy_100", "10 points more tree cover within 100 m"),
     ("walk7_food_drink", "Twice as many cafés, restaurants and bars within a 7-min walk"),
@@ -184,7 +184,7 @@ PLAIN = [  # feature, plain-language label, sign flip (effect of the "worse" dir
     ("green_ha_500", "10 ha more park or forest within 500 m"),
     ("log_footprint", "Twice the building footprint"),
     ("log2_trips", "Twice as many bus and tram departures"),
-    ("centre_km", "Each km farther from the centre"),
+    ("centre_km", "Each km farther from the center"),
     ("height_m", "Building 10 m taller"),
     ("walk_metro_km", "Each km farther to walk to the metro"),
     ("noise_rail_db", "Tram & train noise 10 dB louder"),
@@ -231,9 +231,9 @@ def drivers():
     style.pct(ax, "x")
     style.vgrid_only(ax)
     ax.set_xlabel("Change in price per m²")
-    new_pct = float(c.loc["age_2001_10", "pct_district"])
+    new_pct = float(c.loc["age_2011_20", "pct_district"])   # same number as the age slide (18)
     fig.text(0.03, 0.885, wrap(f"Take two flats of the same size on the same floor, in the same district. One is in a "
-                               f"2001–10 building, the other in a 1961–90 prefab block: the newer one costs about "
+                               f"2011–20 building, the other in a 1961–90 prefab block: the newer one costs about "
                                f"{new_pct:.0f}% more per m², roughly {base * new_pct / 100 / 1000:.0f}k zł on a 50 m² flat. "
                                f"Every bar below is a comparison like that.", 92),
              fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
@@ -250,7 +250,7 @@ def blind_spot():
     fig = page("The price register's blind spot",
                wrap("Cooperative-right sales (spółdzielcze własnościowe prawo) never enter RCN, "
                     "and rented city blocks rarely sell", 80),
-               "Flats estimated from building footprint × storeys (BDOT10k / OSM). Few sales = under 25 % of the city's usual sales per flat. "
+               "Flats estimated from building footprint × stories (BDOT10k / OSM). Few sales = under 25 % of the city's usual sales per flat. "
                "Only flats in full ownership are registered. " + style.SOURCE)
     fig.text(0.05, 0.885, f"1 in {round(1 / none_share)}", fontsize=30, fontweight="bold", va="top")
     fig.text(0.05, 0.835, "flats sits in a building with\nno recorded sale at all", fontsize=10.5,

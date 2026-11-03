@@ -154,7 +154,7 @@ def main():
     cax.set_title("PLN per m²", color=MUTED, fontsize=9, loc="left")
     fig.text(0.05, 0.022, "Hedonic value of a typical 2-room resale flat, 2025, per building (1-2 sale buildings "
                           f"included, obvious outliers removed),\n"
-                          f"smoothed over ~{SIGMA_M} m; lines fade to grey where few flats sell.\nLine spacing {ROW_M} m; peak height grows "
+                          f"smoothed over ~{SIGMA_M} m; lines fade to gray where few flats sell.\nLine spacing {ROW_M} m; peak height grows "
                           f"{PER_1K} m per 1,000 PLN/m². Source: GUGiK Rejestr Cen Nieruchomości (RCN) 2006–2026, "
                           "OSM, BDOT10k.", color=MUTED, fontsize=7.5, va="bottom")
     mpl.rcParams["savefig.facecolor"] = BG      # summary_charts.save() would use the light page colour

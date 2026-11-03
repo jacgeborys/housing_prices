@@ -114,7 +114,7 @@ def main():
     rt = gpd.read_file("output/reputation_time.gpkg", layer="msi_change", ignore_geometry=True).set_index("name")
     both = area.join(rt[["change", "reputation"]], how="inner")
     r = np.corrcoef(both["share"], both["change"])[0, 1] if len(both) > 5 else np.nan
-    print(f"{len(area)} neighbourhoods with >= 150 resales 2021-25; corr(flip share, gain vs city) = {r:.2f} "
+    print(f"{len(area)} neighborhoods with >= 150 resales 2021-25; corr(flip share, gain vs city) = {r:.2f} "
           f"over {len(both)} areas")
     print(area.sort_values("share", ascending=False).head(10).round(1).to_string())
 
@@ -163,7 +163,7 @@ def main():
     a3.set_xlim(0, top["share"].max() * 1.3)
     style.vgrid_only(a3)
     a3.tick_params(axis="x", labelsize=8)
-    a3.set_title("Top neighbourhoods", fontsize=10)
+    a3.set_title("Top neighborhoods", fontsize=10)
 
     a1 = fig.add_axes([0.10, 0.09, 0.38, 0.24])
     yy = by_year[(by_year.index >= 2006) & (by_year["resales"] > 2000)]["share"].reindex(range(2006, 2027))

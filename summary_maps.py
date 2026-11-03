@@ -171,7 +171,7 @@ def cheaper_than_expected(v, d, w):
             ax2.text(xi, val + (1.0 if val > 0 else -1.0), f"{val:+.0f}%", ha="center",
                      va="bottom" if val > 0 else "top", fontsize=9, color=style.INK)
     ax2.set_ylim(g.min() - 6, g.max() + 6)
-    fig.text(0.03, 0.885, wrap(f"Same distance to the centre, transit, cafés, green and noise, yet flats in Żoliborz sell "
+    fig.text(0.03, 0.885, wrap(f"Same distance to the center, transit, cafés, green and noise, yet flats in Żoliborz sell "
                                f"~{abs(g.get('Żoliborz', 0)):.0f}% above prediction and in Praga-Północ "
                                f"~{abs(g.get('Praga-Północ', 0)):.0f}% below. That gap is reputation.", 100),
              fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
@@ -184,10 +184,10 @@ def metro_walk(v, d, w, ctx):
     bins = [0, 5, 10, 15, 20, 30, 1e9]
     labels = ["≤ 5 min", "5–10", "10–15", "15–20", "20–30", "30+"]
     cols = ["#0b2f63", "#1d58a8", "#3987e5", "#7fb1ef", "#b9d4f6", "#dfe9f6"]   # near = dark
-    fig = page("Every kilometre to the metro costs about 2 %",
+    fig = page("Every kilometer to the metro costs about 2 %",
                "Walking time from each building to the nearest metro station, along real footpaths",
                "Walking distances on the OSM footpath and street network (TransitFrequency's Warsaw walking "
-               "graph, multi-source Dijkstra), 4.8 km/h. 38 metro stations. Coloured: buildings with ≥ 3 flat "
+               "graph, multi-source Dijkstra), 4.8 km/h. 38 metro stations. Colored: buildings with ≥ 3 flat "
                "sales. Bars: typical-flat price net of the district and every other feature (OLS residual), "
                "relative to the average building. Regression: −2.1 % per km walked. " + style.SOURCE)
     ax = basemap(fig, d, w, ctx)

@@ -208,7 +208,7 @@ def methods():
         ("Associations, not causes", "Patterns in real sales, compared within the same district, not experiments: "
          "cafés follow money as much as they attract it. The closest thing to an experiment is the new metro stations."),
         ("What's missing", "Cooperative flats never enter the register, and Warsaw's register data for 2017–2020 is "
-         "nearly empty. Houses are shown as sold, not modelled. Developer deeds carry prices agreed a year or two "
+         "nearly empty. Houses are shown as sold, not modeled. Developer deeds carry prices agreed a year or two "
          "before completion; asking prices are not sale prices."),
         ("Coming next", "Is the address premium a Warsaw thing? Same data, same method: Lublin and Gdańsk are next."),
     ]

@@ -1,8 +1,8 @@
 """
 Intermediate look at transit accessibility (run with the main Python, after travel_times.py's AM / midday /
-evening windows): where "the centre" is, who reaches it, where service collapses in the evening, and whether
+evening windows): where "the center" is, who reaches it, where service collapses in the evening, and whether
 door-to-door access explains prices better than straight-line distance to PKiN (printed only; the figure shows
-the two job maps and minutes to the centre by district).
+the two job maps and minutes to the center by district).
 
 Output: output/summary/24_transit_access.png  (+ printed model test)
 """
@@ -70,7 +70,7 @@ def main():
     gain = 100 * (np.exp(c_swap["log_grav"] * np.log(2)) - 1)
     print(f"doubling access to jobs (gravity) = {gain:+.1f}% price, within a district")
 
-    fig = page("Where is the centre, and who can reach it?",
+    fig = page("Where is the center, and who can reach it?",
                "Jobs reachable by public transport, door to door: walking, waiting, riding, changing",
                "Jobs = floor area (BDOT10k) by building category, 250 m cells. Door-to-door routing on the Warsaw "
                "timetable (7.10.2026, median of departures 07–09). Minutes: median over the district's priced buildings. " + style.SOURCE)
@@ -149,11 +149,11 @@ def main():
     ax3.set_xticks([])
     for sp in ("top", "right", "bottom"):
         ax3.spines[sp].set_visible(False)
-    ax3.set_title("Minutes to the centre (Palace of Culture) by public transport, 7–9 am, typical flat in the district",
+    ax3.set_title("Minutes to the center (Palace of Culture) by public transport, 7–9 am, typical flat in the district",
                   fontsize=10.5, loc="left")
     fig.text(0.03, 0.885, wrap(f"Offices cluster at Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k jobs), ONZ / Central "
                                f"Station ({CLUSTERS[1][3] / 1000:.0f}k) and Służewiec ({CLUSTERS[2][3] / 1000:.0f}k). By public "
-                               f"transport the centre is {mins.iloc[0]:.0f} minutes away in {mins.index[0]} and "
+                               f"transport the center is {mins.iloc[0]:.0f} minutes away in {mins.index[0]} and "
                                f"{mins.iloc[-1]:.0f} in {mins.index[-1]}.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "24_transit_access.png")

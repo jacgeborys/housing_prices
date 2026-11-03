@@ -8,7 +8,7 @@ address lives in the code or git:
     output/report/flats[/pl]/flat_<street>_<no>_<flat>_place.png  (the spot vs Warsaw, the flat's own sales)
 
 The flat (area, rooms, floor, its own sales) is found in the register by its unit id (..._BUD.<flat>_LOK, recorded since
-~2021); --m2 / --rooms / --floor override or stand in when the flat has no recorded sale. Building, decade and storeys
+~2021); --m2 / --rooms / --floor override or stand in when the flat has no recorded sale. Building, decade and stories
 come from the data (register address -> priced building, GIS Expert decade, BDOT10k floors).
 Comparables: resales since 2023 within 500 m in buildings of the same decade, area +-10 m², price per m² in 2025 prices
 (transactions_adj) times the index's latest level. As-is = not sold as a flip's second leg (middle half); renovated =
@@ -124,7 +124,7 @@ def notes_block(fig, notes, x, y, width=48, size=9.2):
 
 def value_page(a, d, label, out):
     t, me, flat, now = d["t"], d["me"], d["flat"], d["now"]
-    AREA, storeys = flat["m2"], d["storeys"]
+    AREA, storeys = flat["m2"], d["stories"]
     dec = d["drv"].loc[d["drv"]["osm_id"] == me["osm_id"], "decade_end"]
     dec_end = float(dec.iloc[0]) if len(dec) else float(t.loc[t["osm_id"] == me["osm_id"], "decade_end"].dropna().iloc[0])
     decade = f"{int(dec_end) - 9}–{int(dec_end)}" if dec_end > 1940 else T("pre-war", "przedwojenny")
@@ -135,7 +135,7 @@ def value_page(a, d, label, out):
     reno_all = near[near["flip"] & (near["year"] >= 2021) & near["area"].between(AREA - 15, AREA + 15)]
     a_lo, a_mid, a_hi = asis["today"].quantile([.25, .5, .75]) * AREA
     r_lo, r_mid, r_hi = reno_all["today"].quantile([.25, .5, .75]) * AREA
-    print(f"{district}, {storeys} storeys, {decade}; as-is {len(asis)} sales, {a_lo:,.0f}-{a_hi:,.0f} (mid {a_mid:,.0f}); "
+    print(f"{district}, {stories} stories, {decade}; as-is {len(asis)} sales, {a_lo:,.0f}-{a_hi:,.0f} (mid {a_mid:,.0f}); "
           f"renovated {len(reno_all)} flips, {r_lo:,.0f}-{r_hi:,.0f} (mid {r_mid:,.0f})")
     ground, top = flat["floor"] == 1, flat["floor"] >= storeys
     floor_en = "ground floor" if ground else ("top floor" if top else f"floor {flat['floor'] - 1}")
@@ -143,9 +143,9 @@ def value_page(a, d, label, out):
 
     fig = page(T(f"{label}: about {KR(a_lo, a_hi)} as it is, ~{K(r_mid)} renovated",
                  f"{label}: {KR(a_lo, a_hi)} bez remontu, ok. {K(r_mid)} po"),
-               T(f"{num(AREA, 2)} m², {flat['rooms']} rooms incl. kitchen, {floor_en} of a {storeys}-storey {decade} block "
+               T(f"{num(AREA, 2)} m², {flat['rooms']} rooms incl. kitchen, {floor_en} of a {stories}-story {decade} block "
                  f"({district})",
-                 f"{num(AREA, 2)} m², {flat['rooms']} izby, {floor_pl}, {storeys}-kondygnacyjny blok z lat {decade} ({district})"),
+                 f"{num(AREA, 2)} m², {flat['rooms']} izby, {floor_pl}, {stories}-kondygnacyjny blok z lat {decade} ({district})"),
                T(f"Comparables: resales since 2023 within {R} m in {decade} buildings, {AREA - 10:.0f}–{AREA + 10:.0f} m², in today's "
                  f"prices (city index); renovated = resold within a year of purchase, since 2021, {AREA - 15:.0f}–{AREA + 15:.0f} m². "
                  "Condition is not in the register. Source: GUGiK RCN, BDOT10k, GIS Expert.",
@@ -315,7 +315,7 @@ def place_page(a, d, label, out, val):
     rows = [
         (T("Walk to the metro", "Dojście do metra"), drv["walk_metro_km"], b["walk_metro_km"], lambda v: f"{num(v)} km"),
         (T("Walk to a tram stop", "Dojście do tramwaju"), drv["walk_tram_km"], b["walk_tram_km"], lambda v: f"{num(v)} km"),
-        (T("Distance to the centre (PKiN)", "Odległość od centrum (PKiN)"), drv["centre_km"], b["centre_km"], lambda v: f"{num(v)} km"),
+        (T("Distance to the center (PKiN)", "Odległość od centrum (PKiN)"), drv["centre_km"], b["centre_km"], lambda v: f"{num(v)} km"),
         (T("Cafés, restaurants, bars, 7-min walk", "Kawiarnie, restauracje, bary, 7 min"), cafes, 2 ** b["walk7_food_drink"] - 1,
          lambda v: f"{v:.0f}"),
         (T("Park or forest within 500 m", "Park lub las do 500 m"), drv["green_ha_500"], b["green_ha_500"], lambda v: f"{num(v)} ha"),

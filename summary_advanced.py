@@ -24,7 +24,7 @@ from summary_maps import FEATURES, basemap, load, outlines
 style.apply()
 
 GROUPS = {   # feature group -> features (fixed order = fixed colour)
-    "Distance to the centre & jobs": ["centre_km", "log2_jobs_transit"],
+    "Distance to the center & jobs": ["centre_km", "log2_jobs_transit"],
     "Metro & rail lines": ["walk_metro_km", "walk_rail_km"],
     "Buses & trams": ["log2_trips", "walk_tram_km", "walk_bus_km"],
     "Cafés, shops & schools": ["walk7_food_drink", "walk7_grocery", "walk7_zabka", "walk7_schools",
@@ -37,7 +37,7 @@ GROUPS = {   # feature group -> features (fixed order = fixed colour)
 }
 REPUTATION = "Reputation (unexplained)"
 GROUP_COLOURS = {   # families: blues = getting to places, orange = things to do, green = nature, purples = the building, grey = reputation
-    "Distance to the centre & jobs": "#1d58a8", "Metro & rail lines": "#4a90e2", "Buses & trams": "#9cc4f2",
+    "Distance to the center & jobs": "#1d58a8", "Metro & rail lines": "#4a90e2", "Buses & trams": "#9cc4f2",
     "Cafés, shops & schools": "#f08a4b", "Green, river & quiet": "#3f9d4a",
     "Building age": "#5b3fa8", "Building size & type": "#b3a1e0", REPUTATION: "#8d8b84"}
 
@@ -70,7 +70,7 @@ def district_anatomy(v):
     cols = [GROUP_COLOURS[g] for g in c.columns]
     fig = page("What goes with a district's price",
                wrap("Each bar is a district; the dot is how much dearer (+) or cheaper (−) its flats are than the "
-                    "city average. The colours show what that gap goes with", 80),
+                    "city average. The colors show what that gap goes with", 80),
                f"Regression on all features, no district variable ({len(v) / 1000:.1f}K buildings); bars = coefficient × "
                f"distance from the city average. Right-bank flats sell ~{abs(river_pct()):.0f} % below left-bank ones: not counted (mostly reputation). " + style.SOURCE)
     ax = fig.add_axes([0.24, 0.20, 0.72, 0.62])
@@ -98,10 +98,10 @@ def district_anatomy(v):
     ax.legend(loc="upper center", bbox_to_anchor=(0.36, -0.07), ncol=3, fontsize=8.6, columnspacing=0.9,
               handlelength=1.4)
     zo = "Żoliborz"
-    ctr = c.loc[zo, "Distance to the centre & jobs"]
+    ctr = c.loc[zo, "Distance to the center & jobs"]
     rep = c.loc[zo, REPUTATION]
     fig.text(0.03, 0.885, wrap(f"Read one row: flats in {zo} cost {tot[zo]:+.0f}% against the city average. Being close to the "
-                               f"centre and jobs goes with {ctr:+.0f} points of that; the hatched grey, {rep:+.0f} points, is "
+                               f"center and jobs goes with {ctr:+.0f} points of that; the hatched gray, {rep:+.0f} points, is "
                                f"what no feature explains: the place's reputation.", 95),
              fontsize=10.5, color=style.INK, fontweight="semibold", va="top")
     save(fig, "10_district_anatomy.png")
@@ -235,7 +235,7 @@ def price_compass(v, d):
     hi, lo = med.idxmax(), med.idxmin()
     word = {"N": "north", "NE": "north-east", "E": "east", "SE": "south-east", "S": "south", "SW": "south-west",
             "W": "west", "NW": "north-west"}
-    fig.text(0.05, 0.885, wrap(f"Same distance, different direction: 4–7 km from the centre, a typical flat to the "
+    fig.text(0.05, 0.885, wrap(f"Same distance, different direction: 4–7 km from the center, a typical flat to the "
                                f"{word[hi]} costs {style.fmt_int(med[hi])} PLN/m², to the {word[lo]} "
                                f"{style.fmt_int(med[lo])} ({100 * (med[lo] / med[hi] - 1):+.0f}%).", 95),
              fontsize=10.5, fontweight="semibold", va="top")
@@ -244,7 +244,7 @@ def price_compass(v, d):
 
 # 13 -------------------------------------------------------------------------------------------
 SHAPES = [   # feature, title, x transform for display, x label
-    ("centre_km", "Distance from the centre", lambda x: x, "km from PKiN"),
+    ("centre_km", "Distance from the center", lambda x: x, "km from PKiN"),
     ("pct_primary", "New building share", lambda x: 100 * x, "% of sales by the developer"),
     ("walk7_food_drink", "Cafés, restaurants, bars", lambda x: 2 ** x - 1, "venues within a 7-minute walk"),
     ("walk_metro_km", "Walk to the metro", lambda x: x, "km on foot"),

@@ -1,8 +1,8 @@
 """
-Which neighbourhoods sell furthest above / below what their features predict?
+Which neighborhoods sell furthest above / below what their features predict?
 
 Residuals from price_drivers.py (out-of-sample gradient boosting, no district variable) averaged per MSI
-neighbourhood (the city's 143 official areas, data/msi.gpkg) in log points, then shrunk toward zero with
+neighborhood (the city's 143 official areas, data/msi.gpkg) in log points, then shrunk toward zero with
 empirical Bayes: weight = n / (n + k), k = within-area residual variance / between-area variance. An area
 with a handful of buildings cannot top the list by luck.
 
@@ -44,7 +44,7 @@ def ranking(v, msi):
         g[f"{c}_pct"] = 100 * (np.exp(g[c]) - 1)
     g["lo_pct"] = 100 * (np.exp(g["shrunk"] - 1.96 * g["se"]) - 1)
     g["hi_pct"] = 100 * (np.exp(g["shrunk"] + 1.96 * g["se"]) - 1)
-    print(f"{len(g)} neighbourhoods with >= {MIN_BUILDINGS} buildings; shrinkage k = {k:.1f} buildings")
+    print(f"{len(g)} neighborhoods with >= {MIN_BUILDINGS} buildings; shrinkage k = {k:.1f} buildings")
     return g.sort_values("shrunk")
 
 
@@ -55,8 +55,8 @@ def main():
     g.drop(columns=["var"]).round(3).to_csv("output/analysis/estates_ranking.csv", index=False)
 
     fig = page("Warsaw's over- and under-achievers",
-               "Neighbourhoods that sell furthest above or below what their location, amenities and buildings predict",
-               f"MSI neighbourhoods with ≥ {MIN_BUILDINGS} priced buildings. Value = average gap between a building's typical-flat price and "
+               "Neighborhoods that sell furthest above or below what their location, amenities and buildings predict",
+               f"MSI neighborhoods with ≥ {MIN_BUILDINGS} priced buildings. Value = average gap between a building's typical-flat price and "
                "the out-of-sample prediction, shrunk toward 0 for small areas; bars = 95 % interval. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.04, 0.43, 0.76, 0.47])

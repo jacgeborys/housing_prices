@@ -59,7 +59,7 @@ def main():
     fig = page(f"A house m² costs {lo['val'] / 1000:.0f}K in {dist.index[0]} and {hi['val'] / 1000:.0f}K in {dist.index[-1]}",
                f"Median price per m² of living space (plot included) of houses sold 2017–2026, in 2025 prices, per {CELL} m cell",
                f"{len(h):,} house sales (RCN, from 2017) in 2025 prices (house price index net of district). Cells with ≥ {MIN_IN_CELL} sales "
-               f"coloured ({len(good):,} cells, {covered:.0%} of sales). Area: deed or estimated from outline and floors. " + style.SOURCE)
+               f"colored ({len(good):,} cells, {covered:.0%} of sales). Area: deed or estimated from outline and floors. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.03, 0.40, 0.94, 0.45])
     rest = h.merge(good.reset_index()[["cx", "cy"]], on=["cx", "cy"], how="left", indicator=True)

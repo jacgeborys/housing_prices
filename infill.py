@@ -1,5 +1,5 @@
 """
-Infill ("plomby"): new buildings squeezed into old neighbourhoods vs new buildings in new estates.
+Infill ("plomby"): new buildings squeezed into old neighborhoods vs new buildings in new estates.
 
 A building of 2001 or later (age_check.py: GIS Expert decades + 2021+ from developer sales) is
   infill       if >= 60 % of the dated buildings within NEAR_M were built before 1961 (>= MIN_NEIGH of them)

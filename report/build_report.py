@@ -39,7 +39,7 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     ("summary", "08_cafes"), ("summary", "09_noise"), ("summary", "20_trees"), ("summary", "11_transit_x_price"),
     ("summary", "12_price_compass"), ("summary", "24_transit_access"),
     # 5 reputation
-    ("summary", "41_pairs"), ("summary", "10_district_anatomy"), ("summary", "06_cheaper_than_expected"), ("summary", "15_estates"),
+    ("summary", "42_reputation_ridgelines"), ("summary", "41_pairs"), ("summary", "10_district_anatomy"), ("summary", "06_cheaper_than_expected"), ("summary", "15_estates"),
     ("summary", "14_reputation_over_time"), ("summary", "30_forward_test"),
     # 6 market behaviour
     ("summary", "16_flippers"), ("summary", "26_new_flats_on_offer"),
@@ -51,26 +51,23 @@ SHORT = ["31_price_ridgelines", "01_prices_over_time", "18_building_age", "20_tr
          "41_pairs", "06_cheaper_than_expected", "30_forward_test", "16_flippers",
          "r99_methods"]   # the LinkedIn cut (2026-11-03): question + answer titles; old cuts in output/report/archive_*/
 
-SELECTED = [   # the user's picks (output/report/selected/, 2026-11-03) in a buyer's order -> output/report/selected/ (numbered, no PDF)
-    # 1 the city: where, and how dear now
+SELECTED = [   # the posting set, two batches (2026-11-04) -> output/report/selected/ (numbered, no PDF)
+    # batch 1, "Warsaw, in price": the city, how dear, what you get
     "31_price_ridgelines", "32_price_points", "r01_data", "01_prices_over_time",
-    # 2 what you get for it: flat sizes, then houses
-    "40_where_flats_are_big", "r02_sizes", "38_house_map", "39_house_cells", "35_house_or_flat",
-    # 3 what you pay for: overview, then one factor per slide
+    "40_where_flats_are_big", "r02_sizes", "38_house_map", "39_house_cells", "35_house_or_flat", "12_price_compass",
+    # batch 2, "Warsaw, beyond price": what goes with price, what's left (the address), who you buy from
+    "42_reputation_ridgelines",
     "03_what_drives_price", "18_building_age", "21_infill", "11_transit_x_price", "24_transit_access",
-    "08_cafes", "09_noise", "20_trees", "12_price_compass",
-    # 4 what's left: the name of the place
-    "41_pairs", "10_district_anatomy", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",   # 30_forward_test dropped 2026-11-03: repeats 14's no-catch-up point, its
-                                # Stary Żoliborz +31 % (older resales) clashes with 15's +23 %
-    # 5 who you buy from
+    "08_cafes", "09_noise", "20_trees",
+    "10_district_anatomy", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
     "26_new_flats_on_offer", "16_flippers",
-]
+]   # out: 41_pairs (user, 2026-11-04), 30_forward_test (repeats 14; its Stary Żoliborz +31 % clashes with 15's +23 %)
 
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
     "reputation_time.py", "estates.py", "infill.py", "flips.py", "building_age_story.py", "flat_sizes.py",
     "offers/offers_story.py", "access/access_preview.py", "houses.py", "house_map.py", "house_cells.py", "family_flats.py", "price_ridgelines.py",
-    "price_points.py", "pairs.py", "forward_test.py", "report/descriptive.py",
+    "price_points.py", "reputation_ridgelines.py", "pairs.py", "forward_test.py", "report/descriptive.py",
 ]
 
 

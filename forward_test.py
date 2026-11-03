@@ -7,8 +7,8 @@ Building level per period = median resale price per m² in 2025 PLN (city index 
 relative to Warsaw as a whole.
   reputation  out-of-fold gradient boosting residual of the period level on the static features of
               price_drivers.py (spatial 5-fold on 2 km blocks), separately per period; averaged per MSI
-              neighbourhood (>= MIN_NB buildings) where sampling noise averages out
-  persistence corr(reputation 2010-14, reputation 2021-25) across neighbourhoods
+              neighborhood (>= MIN_NB buildings) where sampling noise averages out
+  persistence corr(reputation 2010-14, reputation 2021-25) across neighborhoods
   catch-up    corr(reputation 2010-14, change 2010-14 -> 2021-25)
   drivers     OLS of the change on the features + district fixed effects, SEs clustered by 2 km block;
               new metro stations (central M2, opened 2015; M2 extensions 2019-22) within NEW_STATION_M
@@ -99,7 +99,7 @@ def neighbourhoods(v):
     for c in ("rep1", "rep2", "d"):
         n[f"{c}_pct"] = 100 * (np.exp(n[c]) - 1)
     r_persist, r_catch = n["rep1"].corr(n["rep2"]), n["rep1"].corr(n["d"])
-    print(f"{len(n)} neighbourhoods: persistence r = {r_persist:+.2f}, catch-up r = {r_catch:+.2f}")
+    print(f"{len(n)} neighborhoods: persistence r = {r_persist:+.2f}, catch-up r = {r_catch:+.2f}")
     n.round(2).to_csv("output/analysis/forward_test_neighbourhoods.csv")
     return n, r_persist, r_catch
 
@@ -131,12 +131,12 @@ def spread(ys, gap):
 def plot(n, r_persist, r_catch, dr, nb_total):
     zol, pra = n.loc["Stary Żoliborz"], n.loc["Nowa Praga"]
     fig = page("Will a good address keep gaining? No, it's priced in",
-               wrap("A neighbourhood's reputation barely moves in a decade, so buyers already pay for it. What moved "
+               wrap("A neighborhood's reputation barely moves in a decade, so buyers already pay for it. What moved "
                     "prices was building age and the new metro, not cafés or trees", 80),
                f"{nb_total:,} buildings with ≥ {MIN_RES} resales in both periods. Reputation: price vs what location, transit, "
                f"amenities, noise, green and age predict (≥ {MIN_NB} buildings per area). Bars: within district, 95% "
                "range. Source: GUGiK RCN, OSM, BDOT10k.")
-    fig.text(0.03, 0.885, wrap(f"Across {len(n)} neighbourhoods, reputation in 2010–14 foretells 2021–25 almost exactly "
+    fig.text(0.03, 0.885, wrap(f"Across {len(n)} neighborhoods, reputation in 2010–14 foretells 2021–25 almost exactly "
                                f"(correlation {r_persist:+.2f}). Yet Stary Żoliborz ({zol['rep1_pct']:+.0f}%) and Nowa "
                                f"Praga ({pra['rep1_pct']:+.0f}%) back then both gained about {(zol['d_pct'] + pra['d_pct']) / 2:.0f}% "
                                "on Warsaw since: a good name was already in the price.", 95),
@@ -169,7 +169,7 @@ def plot(n, r_persist, r_catch, dr, nb_total):
     ax.set_yticks([])
     for side in ("left", "right", "top", "bottom"):
         ax.spines[side].set_visible(False)
-    fig.text(0.22, 0.805, "Reputation of each neighbourhood: price vs prediction", fontsize=11.5, fontweight="semibold")
+    fig.text(0.22, 0.805, "Reputation of each neighborhood: price vs prediction", fontsize=11.5, fontweight="semibold")
     for i, (g, (_, c)) in enumerate(GROUPS.items()):
         fig.text(0.22 + i * 0.19, 0.775, "━ " + g, color=c, fontsize=10, fontweight="semibold", va="center")
 

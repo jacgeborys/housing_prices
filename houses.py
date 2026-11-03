@@ -113,7 +113,7 @@ def main():
     print(f"{len(r):,} houses, {len(f):,} flats in {len(keep)} districts; median house {hp.median():,.0f} vs flat "
           f"{fp.median():,.0f} ({tot_x:.2f}x); per m2 {hm2.median():,.0f} vs {fm2.median():,.0f} ({m2_x:.2f}x)")
 
-    fig = page(f"A house costs {tot_x:.1f}x a flat, a square metre {1 - m2_x:.0%} less",
+    fig = page(f"A house costs {tot_x:.1f}x a flat, a square meter {1 - m2_x:.0%} less",
                f"Houses and resold flats sold {RECENT[0]}–{RECENT[1]} in the {len(keep)} districts with at least {MIN_HOUSES} "
                "house sales",
                f"Houses: {len(r):,} sales with plot (RCN, from 2017); flats: {len(f):,} resales, same districts and years. House area: "
@@ -130,7 +130,7 @@ def main():
     a1.set_title("What you pay in total", fontsize=11.5, loc="left")
     a2 = fig.add_axes([0.06, 0.135, 0.90, 0.29])
     curves(a2, hm2, fm2, [4000, 6000, 10000, 15000, 25000], k, "price per m² of living space, PLN")
-    a2.set_title("What a square metre costs", fontsize=11.5, loc="left")
+    a2.set_title("What a square meter costs", fontsize=11.5, loc="left")
     save(fig, "35_house_or_flat.png")
 
 
