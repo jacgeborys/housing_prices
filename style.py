@@ -9,6 +9,8 @@ One palette, one typeface, one layout grammar:
   - change / polarity = DIV_CMAP (blue <-> red, neutral gray midpoint)
 """
 
+import os
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -44,11 +46,27 @@ CPI_NOTE = "Real prices deflated with GUS annual CPI (2025 PLN)."
 SOURCE = "Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k."
 BYLINE = "© 2026 Jacek Gęborys"
 
+# Typeface (2026-11-03): Bahnschrift; "Segoe UI" to go back. Windows ships Bahnschrift as one variable font that
+# matplotlib reads at Regular only, so static Regular / SemiBold / Bold cuts live in data/fonts/ (made with fontTools
+# varLib.instancer from C:/Windows/Fonts/bahnschrift.ttf; not in git). Glyphs it lacks (→) fall back to Segoe UI.
+FONT = "Bahnschrift"
+FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "fonts")
+
+
+def _register_fonts():
+    from matplotlib import font_manager
+    if not os.path.isdir(FONT_DIR):
+        return False
+    files = [os.path.join(FONT_DIR, f) for f in os.listdir(FONT_DIR) if f.startswith(FONT) and f.endswith(".ttf")]
+    for f in files:
+        font_manager.fontManager.addfont(f)
+    return bool(files)
+
 
 def apply():
     """Set global rcParams. Call once at import time of any plotting script."""
     mpl.rcParams.update({
-        "font.family": ["Segoe UI", "DejaVu Sans", "sans-serif"],
+        "font.family": ([FONT] if FONT == "Segoe UI" or _register_fonts() else []) + ["Segoe UI", "DejaVu Sans", "sans-serif"],
         "font.size": 10.5,
         "figure.facecolor": PAGE,
         "savefig.facecolor": PAGE,
