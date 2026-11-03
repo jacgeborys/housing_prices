@@ -51,7 +51,7 @@ SHORT = ["31_price_ridgelines", "01_prices_over_time", "18_building_age", "20_tr
          "41_pairs", "06_cheaper_than_expected", "30_forward_test", "16_flippers",
          "r99_methods"]   # the LinkedIn cut (2026-11-03): question + answer titles; old cuts in output/report/archive_*/
 
-SELECTED = [   # the user's picks (output/report/selected/, 2026-11-03) in a buyer's order -> output/report/selected_ordered/
+SELECTED = [   # the user's picks (output/report/selected/, 2026-11-03) in a buyer's order -> output/report/selected/ (numbered, no PDF)
     # 1 the city: where, and how dear now
     "31_price_ridgelines", "32_price_points", "r01_data", "01_prices_over_time",
     # 2 what you get for it: flat sizes, then houses
@@ -108,7 +108,7 @@ def assemble():
     write_pdf(PDF, SLIDES)
     by_stem = {stem: (d, stem) for d, stem in SLIDES}
     write_pdf(PDF.replace(".pdf", "_short.pdf"), [by_stem[x] for x in SHORT])
-    sel = os.path.join(OUT, "selected_ordered")
+    sel = os.path.join(OUT, "selected")   # the set to post; numbered in order, not merged (breaks between posts by hand)
     os.makedirs(sel, exist_ok=True)
     for f in os.listdir(sel):
         if f.endswith(".png"):
@@ -116,7 +116,6 @@ def assemble():
     for i, stem in enumerate(SELECTED, 1):
         d, _ = by_stem[stem]
         shutil.copyfile(os.path.join(folders[d], f"{stem}.png"), os.path.join(sel, f"{i:02d}_{stem}.png"))
-    write_pdf(PDF.replace(".pdf", "_selected.pdf"), [by_stem[x] for x in SELECTED])
     print(f"selected deck: {len(SELECTED)} slides -> {sel}")
     print(f"short deck: {len(SHORT)} slides -> {PDF.replace('.pdf', '_short.pdf')}")
     print(f"{len(SLIDES)} slides -> {OUT}, {PDF} ({os.path.getsize(PDF) / 1e6:.1f} MB)")

@@ -29,6 +29,11 @@ MIN_NEIGH = 4
 SHARE = 0.6
 
 
+def pct0(x):
+    """+1.4% style; a value that rounds to zero reads ±0%, not -0.0%."""
+    return "±0%" if round(x, 1) == 0 else f"{x:+.1f}%"
+
+
 def main():
     v, d, w = load()                                         # priced buildings with resid_pct, value_2025
     age = gpd.read_file("output/age_check.gpkg")
@@ -96,7 +101,7 @@ def main():
     s2 = summ.loc[[k for k in ("infill", "mixed", "new estate") if k in summ.index]]
     a2.bar(np.arange(len(s2)), s2["resid"], color=[col[k] for k in s2.index], width=0.6)
     for xi, val in enumerate(s2["resid"]):
-        a2.text(xi, val + (0.15 if val >= 0 else -0.15), f"{val:+.1f}%", ha="center",
+        a2.text(xi, val + (0.15 if val >= 0 else -0.15), pct0(val), ha="center",
                 va="bottom" if val >= 0 else "top", fontsize=9)
     a2.axhline(0, color=style.AXIS, lw=1)
     a2.set_xticks(np.arange(len(s2)))
@@ -129,8 +134,8 @@ def main():
 
     fig.text(0.03, 0.885, wrap(f"{(new['kind'] == 'infill').sum():,} new buildings sit among pre-1961 ones. They sell "
                                f"{summ.loc['infill', 'prem_old']:+.0f}% above the old buildings next door, and "
-                               f"{summ.loc['infill', 'resid']:+.1f}% vs what the model predicts (new estates "
-                               f"{summ.loc['new estate', 'resid']:+.1f}%).", 95),
+                               f"{pct0(summ.loc['infill', 'resid'])} vs what the model predicts (new estates "
+                               f"{pct0(summ.loc['new estate', 'resid'])}).", 95),
              fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "21_infill.png")
 

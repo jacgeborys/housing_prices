@@ -241,8 +241,8 @@ def cafes(v, d, w):
 # 9 --------------------------------------------------------------------------------------------
 def noise(v, d, w):
     k = coef()
-    fig = page("Does noise cost money?",
-               f"A little: about {k['noise_rail_db']:+.0f} % per 10 dB of tram and train noise, {k['noise_road_db']:+.1f} % for road noise",
+    fig = page("Does noise cost money? A little",
+               f"About {k['noise_rail_db']:+.0f}% per 10 dB of tram and train noise, {k['noise_road_db']:+.1f}% for road noise",
                "EEA noise data (2026), the louder of road and rail (rail includes trams). Bars: typical-flat price net of district "
                f"and other features, by tram & train noise at the façade. " + style.SOURCE)
     ax = basemap(fig, d, w)
