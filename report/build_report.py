@@ -60,8 +60,8 @@ SELECTED = [   # the user's picks (output/report/selected/, 2026-11-03) in a buy
     "03_what_drives_price", "18_building_age", "21_infill", "11_transit_x_price", "24_transit_access",
     "08_cafes", "09_noise", "20_trees", "12_price_compass",
     # 4 what's left: the name of the place
-    "41_pairs", "10_district_anatomy", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
-    "30_forward_test",
+    "41_pairs", "10_district_anatomy", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",   # 30_forward_test dropped 2026-11-03: repeats 14's no-catch-up point, its
+                                # Stary Żoliborz +31 % (older resales) clashes with 15's +23 %
     # 5 who you buy from
     "26_new_flats_on_offer", "16_flippers",
 ]

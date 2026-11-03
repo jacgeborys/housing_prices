@@ -64,8 +64,7 @@ def main():
     style.byline(fig, y=0.975, color=MUTED, fontsize=10, x=0.95)
     fig.text(0.05, 0.955, "Where flats and houses sold", color=INK, fontsize=30, fontweight="bold", va="top")
     fig.text(0.05, 0.905, f"Flats: every building with a priced flat sale, 2006–2026 (bigger = more sales).\n"
-                          "Houses: every sale of known size, 2017–2026.\n"
-                          "Colour: PLN per m², 2025. Dark grey: other buildings.",
+                          "Houses: every sale of known size, 2017–2026. Color: PLN per m², 2025.",
              color=MUTED, fontsize=12.5, va="top", linespacing=1.4)
     cax = fig.add_axes([0.66, 0.075, 0.28, 0.012])
     cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=RAMP), cax=cax, orientation="horizontal")
