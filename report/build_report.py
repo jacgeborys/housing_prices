@@ -52,18 +52,18 @@ SHORT = ["31_price_ridgelines", "01_prices_over_time", "18_building_age", "20_tr
          "r99_methods"]   # the LinkedIn cut (2026-11-03): question + answer titles; old cuts in output/report/archive_*/
 
 SELECTED = [   # the posting set, two batches (2026-11-04) -> output/report/selected/ (numbered, no PDF)
-    # batch 1, "Warsaw, in price": the city, how dear, what you get
+    # batch 1, "Warsaw, in price": the city, how dear, what you get, who you buy from
     "31_price_ridgelines", "32_price_points", "r01_data", "23_blind_spot", "01_prices_over_time",
-    "40_where_flats_are_big", "r02_sizes", "38_house_map", "39_house_cells", "35_house_or_flat", "12_price_compass",
+    "40_where_flats_are_big", "r02_sizes", "38_house_map", "39_house_cells", "35_house_or_flat",
+    "26_new_flats_on_offer", "16_flippers", "12_price_compass",
     "flat_aleja_solidarnosci_129_131_0", "r98_other_cities",   # one flat, the zoom-in closer (Muranów edge: 1950s blocks + new builds):
                                    #   python flat_slide.py --street "Aleja „Solidarności”" --no 129/131 --flat 0 --m2 33
                                    #   --rooms 2 --floor 3 --public --label "A 33 m² flat on al. Solidarności"
-    # batch 2, "Warsaw, beyond price": what goes with price, what's left (the address), who you buy from
+    # batch 2, "Warsaw, beyond price": what goes with price, and what's left (the address)
     "44_reputation_glow",          # cover: night lights (2026-11-04; alternatives 42 ridgelines, 43 spikes)
     "03_what_drives_price", "18_building_age", "21_infill", "11_transit_x_price", "24_transit_access",
     "08_cafes", "09_noise", "20_trees",
     "10_district_anatomy", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
-    "26_new_flats_on_offer", "16_flippers",
 ]   # out: 41_pairs (user, 2026-11-04), 30_forward_test (repeats 14; its Stary Żoliborz +31 % clashes with 15's +23 %)
 
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)

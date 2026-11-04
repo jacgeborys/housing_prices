@@ -101,6 +101,8 @@ skips when its csv exists: remove or rename `access_am_peak.csv`, it resumes per
 
 **Wording 2026-11-04**: cooperative-right flats are "often missing" from the register (was "never enter": not verified, coverage of spółdzielcze własnościowe prawo varies) on slides 23, 32, r01 and r99; r98 retitled "Some other cities" (no promise of more cities, maps enlarged); r99 "Coming next" -> "Other cities: mapped too"; flat-page map label has a white halo instead of a box.
 
+**Batches regrouped (2026-11-04)**: developers (26) and flippers (16) moved to batch 1, after the house slides and before the compass: batch 1 = 15 slides (city, prices, sizes, houses, who you buy from, compass, sample flat, other cities), batch 2 = 13 (night-lights cover, what goes with price, reputation; ends on 14 "The inner city pulled ahead").
+
 **Slide 23 footnote (2026-11-04)**: says "Multi-family buildings only (3+ flats, BDOT10k / OSM)", the coverage universe of coverage.py (BDOT 3+ flats or OSM apartments or >= 3 sales; >= 2 floors, >= 100 m²).
 
 **Data slide r01 (2026-11-04)**: houses (output/houses.gpkg, 6,205 resale + 1,400 new) stacked in paler versions of the same colors, grouped by market: flat resale, house resale, flat new, house new, per year and per district; districts sorted by flats + houses.
