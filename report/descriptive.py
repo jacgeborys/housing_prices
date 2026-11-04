@@ -77,8 +77,8 @@ def data_overview(t):
                                + (f", plus {len(h):,} house sales (recorded from 2017)" if len(h) else "")
                                + f". Most trade in {tot.idxmax()}, fewest in {tot.idxmin()}.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
-    layers = [("flat, resale", RESALE, "secondary", False), ("flat, new (developer)", NEW, "primary", False),
-              ("house, resale", pale(RESALE), "secondary", True), ("house, new (developer)", pale(NEW), "primary", True)]
+    layers = [("flat, resale", RESALE, "secondary", False), ("house, resale", pale(RESALE), "secondary", True),
+              ("flat, new (developer)", NEW, "primary", False), ("house, new (developer)", pale(NEW), "primary", True)]
 
     a1 = fig.add_axes([0.10, 0.52, 0.86, 0.27])
     years = np.arange(2006, 2027)
