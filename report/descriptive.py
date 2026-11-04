@@ -26,7 +26,7 @@ from summary_charts import page, wrap
 
 style.apply()
 OUT = "output/report/src"
-NEW, RESALE = "#c4521f", style.BLUE
+NEW, RESALE = style.AQUA, style.BLUE          # as on the flat pages: new = green, second-hand = blue
 SIZES = [(0, 25, "micro, under 25 m²"), (25, 35, "small, 25–35"), (35, 50, "compact, 35–50"),
          (50, 70, "medium, 50–70"), (70, 100, "spacious, 70–100"), (100, 1000, "large, 100+")]
 from matplotlib.colors import LinearSegmentedColormap
