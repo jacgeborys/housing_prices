@@ -64,7 +64,7 @@ def data_overview(t):
     fig = page("What's in the data",
                f"Every flat sale in Warsaw's official price register, {t['year'].min()}–{t['year'].max()}",
                "Deeds of flats in full ownership. New = sold by the developer (price agreed a year or two before the deed). "
-               "2017–20 are nearly empty; cooperative flats never enter the register; 2026 is partial. " + style.SOURCE)
+               "2017–20 are nearly empty; cooperative flats are often missing; 2026 is partial. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"{len(t):,} flat sales: {per_year.get('secondary', 0).sum():,} resales and "
                                f"{per_year.get('primary', 0).sum():,} from developers"
                                + (f", plus {n_houses:,} house sales (recorded from 2017)" if n_houses else "")
@@ -207,10 +207,10 @@ def methods():
          "age predict. It also holds what the data can't see: condition, finish, views."),
         ("Associations, not causes", "Patterns in real sales, compared within the same district, not experiments: "
          "cafés follow money as much as they attract it. The closest thing to an experiment is the new metro stations."),
-        ("What's missing", "Cooperative flats never enter the register, and Warsaw's register data for 2017–2020 is "
+        ("What's missing", "Cooperative-right flats are often missing from the register, and Warsaw's register data for 2017–2020 is "
          "nearly empty. Houses are shown as sold, not modeled. Developer deeds carry prices agreed a year or two "
          "before completion; asking prices are not sale prices."),
-        ("Coming next", "Is the address premium a Warsaw thing? Same data, same method: Lublin and Gdańsk are next."),
+        ("Other cities", "Same data, same method: Lublin and Gdańsk are mapped too."),
     ]
     y = 0.90
     for head, body in blocks:

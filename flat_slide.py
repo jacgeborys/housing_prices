@@ -21,6 +21,7 @@ import re
 import unicodedata
 
 import geopandas as gpd
+import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -178,7 +179,7 @@ def value_page(a, d, label, out):
     ax.add_patch(plt.Circle((cx, cy), R, fill=False, ls=(0, (4, 3)), color=style.INK_2, lw=0.9, zorder=3))
     ax.annotate(f"{a.street} {a.no}" if a.public else label, (cx, cy), xytext=(cx + 120, cy + 260), fontsize=9.5,
                 fontweight="bold", zorder=5, arrowprops=dict(arrowstyle="-", color=style.INK, lw=0.8),
-                bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=style.INK, lw=0.6, alpha=0.95))   # legible over buildings
+                path_effects=[pe.withStroke(linewidth=4, foreground="white")])     # white halo: legible over buildings
     ax.text(cx, cy - R - 35, f"{R} m", ha="center", va="top", fontsize=8, color=style.INK_2)
     ax.set_xlim(cx - half, cx + half)
     ax.set_ylim(cy - half, cy + half)

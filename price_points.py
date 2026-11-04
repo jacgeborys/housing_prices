@@ -74,7 +74,7 @@ def main():
     cax.tick_params(colors=MUTED, labelsize=9, length=0)
     cax.set_title("PLN per m²", color=MUTED, fontsize=9, loc="left")
     fig.text(0.05, 0.022, "Flats: a typical 2-room resale flat in 2025 per building. Houses: price per m² of living space, plot "
-                          "included, in 2025 prices.\nCooperative-right flats are not in the register. "
+                          "included, in 2025 prices.\nCooperative-right flats are often missing from the register. "
                           "Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k.",
              color=MUTED, fontsize=7.5, va="bottom")
     path = f"{OUT}/32_price_points.png"

@@ -204,7 +204,7 @@ def plot(osm, uni, districts, s, dcol, norm):
     bx.set_title("Flats in buildings with no recorded sales", fontsize=11.5)
 
     style.header(fig, "Where the price register goes blind",
-                 "One flat in five sits in a building with no recorded sale. RCN skips cooperative-right "
+                 "One flat in five sits in a building with no recorded sale. RCN often misses cooperative-right "
                  "sales (spółdzielcze własnościowe prawo); city-owned and rental blocks rarely sell")
     style.footer(fig, f"Flats estimated from footprint × storeys (BDOT10k / OSM), calibrated on new "
                       f"builds. 'Thin' = under {THIN_SHARE:.0%} of the city median "

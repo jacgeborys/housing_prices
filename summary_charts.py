@@ -248,10 +248,10 @@ def blind_spot():
     none_share = tot["none"] / tot.sum()
 
     fig = page("What can't the register see? 1 in 6 flats",
-               wrap("Cooperative-right sales (spółdzielcze własnościowe prawo) never enter RCN, "
-                    "and rented city blocks rarely sell", 80),
+               wrap("Cooperative-right flats (spółdzielcze własnościowe prawo) often don't make it "
+                    "into the register, and rented city blocks rarely sell", 80),
                "Flats estimated from building footprint × stories (BDOT10k / OSM). Few sales = under 25% of the city's usual sales per flat. "
-               "Only flats in full ownership are registered. " + style.SOURCE)
+               "Mostly flats in full ownership are registered. " + style.SOURCE)
     fig.text(0.05, 0.885, f"1 in {round(1 / none_share)}", fontsize=30, fontweight="bold", va="top")
     fig.text(0.05, 0.835, "flats sits in a building with\nno recorded sale at all", fontsize=10.5,
              color=style.INK_2, va="top")
