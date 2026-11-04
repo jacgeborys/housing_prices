@@ -101,6 +101,8 @@ skips when its csv exists: remove or rename `access_am_peak.csv`, it resumes per
 
 **Wording 2026-11-04**: cooperative-right flats are "often missing" from the register (was "never enter": not verified, coverage of spółdzielcze własnościowe prawo varies) on slides 23, 32, r01 and r99; r98 retitled "Some other cities" (no promise of more cities, maps enlarged); r99 "Coming next" -> "Other cities: mapped too"; flat-page map label has a white halo instead of a box.
 
+**Data slide r01 (2026-11-04)**: houses (output/houses.gpkg, 6,205 resale + 1,400 new) stacked on the flats in paler versions of the same colors (resale orange, new blue), per year and per district; districts sorted by flats + houses.
+
 **Map labels 2026-11-04**: `style.halo()` (a buffer in the page color) replaces the label boxes in summary_maps.outlines (most maps), the compass, access_preview and coverage; make_map, trees/render_canopy and explain_comparison (not in the deck) still use boxes.
 
 **Final PDFs 2026-11-04**: `output/report/warsaw_in_price_batch1.pdf` (13 slides) and `warsaw_beyond_price_batch2.pdf` (15). Fig. 12 compass redone: "Price compass from the Palace of Culture", the cover's ridgeline colors in 9 quantile bands (each about a ninth of the tiles; a linear scale painted the 14-16K outer rings one blue), each tile = sales-weighted median of its own direction if it has >= 15 priced buildings, else borrows both neighbors (blank only where its own direction has none). The red tile N-NW at 6 km (Marymont / Las Bielański) is real, >= 15 buildings. A first version that always pooled three directions was too smooth.

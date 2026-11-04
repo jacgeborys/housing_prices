@@ -54,39 +54,53 @@ def strip(ax):
 
 
 def data_overview(t):
+    from matplotlib.colors import to_rgb
+    pale = lambda c: tuple(0.45 * np.array(to_rgb(c)) + 0.55)          # houses: the flats' colors, lighter
     per_year = t.groupby(["year", "market"]).size().unstack(fill_value=0)
     per_dist = t.groupby(["district", "market"]).size().unstack(fill_value=0)
-    per_dist = per_dist.loc[per_dist.sum(axis=1).sort_values().index]
     try:
-        n_houses = len(gpd.read_file("output/houses.gpkg", ignore_geometry=True))
+        h = gpd.read_file("output/houses.gpkg", ignore_geometry=True)
     except Exception:
-        n_houses = None
+        h = pd.DataFrame(columns=["year", "market", "district"])
+    hy = h.groupby(["year", "market"]).size().unstack(fill_value=0)
+    hd = h.groupby(["district", "market"]).size().unstack(fill_value=0)
+    tot = per_dist.sum(axis=1).add(hd.sum(axis=1), fill_value=0)
+    per_dist = per_dist.reindex(tot.sort_values().index, fill_value=0)
+    hd = hd.reindex(per_dist.index, fill_value=0)
     fig = page("What's in the data",
-               f"Every flat sale in Warsaw's official price register, {t['year'].min()}–{t['year'].max()}",
-               "Deeds of flats in full ownership. New = sold by the developer (price agreed a year or two before the deed). "
-               "2017–20 are nearly empty; cooperative flats are often missing; 2026 is partial. " + style.SOURCE)
+               f"Every flat and house sale in Warsaw's official price register, {t['year'].min()}–{t['year'].max()}",
+               "Deeds in full ownership. New = sold by the developer (price agreed a year or two before the deed). "
+               "Flats 2017–20 nearly empty, houses recorded from 2017; cooperative flats are often missing; 2026 is partial. "
+               + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"{len(t):,} flat sales: {per_year.get('secondary', 0).sum():,} resales and "
                                f"{per_year.get('primary', 0).sum():,} from developers"
-                               + (f", plus {n_houses:,} house sales (recorded from 2017)" if n_houses else "")
-                               + f". Most trade in {per_dist.sum(axis=1).idxmax()}, fewest in "
-                               f"{per_dist.sum(axis=1).idxmin()}.", 100), fontsize=10.5, fontweight="semibold", va="top")
+                               + (f", plus {len(h):,} house sales (recorded from 2017)" if len(h) else "")
+                               + f". Most trade in {tot.idxmax()}, fewest in {tot.idxmin()}.", 100),
+             fontsize=10.5, fontweight="semibold", va="top")
+    layers = [("flat, resale", RESALE, "secondary", False), ("flat, new (developer)", NEW, "primary", False),
+              ("house, resale", pale(RESALE), "secondary", True), ("house, new (developer)", pale(NEW), "primary", True)]
+
     a1 = fig.add_axes([0.10, 0.52, 0.86, 0.27])
     years = np.arange(2006, 2027)
-    py = per_year.reindex(years, fill_value=0)
-    a1.bar(years, py.get("secondary", 0) / 1000, color=RESALE, width=0.75, label="resale")
-    a1.bar(years, py.get("primary", 0) / 1000, bottom=py.get("secondary", 0) / 1000, color=NEW, width=0.75,
-           label="new (developer)")
+    base = np.zeros(len(years))
+    for lab, colr, mk, house in layers:
+        v = (hy if house else per_year).reindex(years, fill_value=0).get(mk, pd.Series(0, index=years)).to_numpy() / 1000
+        a1.bar(years, v, bottom=base, color=colr, width=0.75, label=lab)
+        base += v
     style.shade_gap(a1)
     a1.set_xticks(range(2006, 2027, 2))
     a1.set_ylabel("thousand sales")
     style.hgrid_only(a1)
-    a1.legend(loc="upper left", fontsize=9, frameon=False)
-    a1.set_title("Flat sales per year", fontsize=10.5, loc="left")
+    a1.legend(loc="upper left", fontsize=9, frameon=False, ncol=2)
+    a1.set_title("Sales per year", fontsize=10.5, loc="left")
 
     a2 = fig.add_axes([0.20, 0.12, 0.74, 0.32])
     y = np.arange(len(per_dist))
-    a2.barh(y, per_dist.get("secondary", 0) / 1000, color=RESALE, height=0.7)
-    a2.barh(y, per_dist.get("primary", 0) / 1000, left=per_dist.get("secondary", 0) / 1000, color=NEW, height=0.7)
+    left = np.zeros(len(y))
+    for lab, colr, mk, house in layers:
+        v = (hd if house else per_dist).get(mk, pd.Series(0, index=per_dist.index)).to_numpy() / 1000
+        a2.barh(y, v, left=left, color=colr, height=0.7)
+        left += v
     a2.set_yticks(y)
     a2.set_yticklabels(per_dist.index, fontsize=8.5)
     a2.set_xlabel("thousand sales, 2006–2026")
