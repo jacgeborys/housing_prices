@@ -143,7 +143,8 @@ def value_page(a, d, label, out):
     floor_en = "ground floor" if ground else ("top floor" if top else f"floor {flat['floor'] - 1}")
     floor_pl = "parter" if ground else ("ostatnie piętro" if top else f"{flat['floor'] - 1}. piętro")
 
-    rooms_en = "1 room" if flat["rooms"] == 1 else f"{flat['rooms']} rooms incl. kitchen"
+    rooms_en = ("1 room" if flat["rooms"] == 1 else       # register 'izby' = rooms + a separate kitchen
+                f"{flat['rooms'] - 1} room{'s' if flat['rooms'] > 2 else ''} + kitchen")
     title_en = (f"{label}: ~{K(a_mid)} as it is, ~{K(r_mid)} renovated" if a.public     # same numbers as the big figures
                 else f"{label}: about {KR(a_lo, a_hi)} as it is, ~{K(r_mid)} renovated")
     fig = page(T(title_en,
@@ -245,6 +246,18 @@ def value_page(a, d, label, out):
                    "still looks fresh.",
                    f"Cena do celowania: {KR(a_mid, a_hi)} za zadbane mieszkanie, {KR(r_lo, r_hi)}, jeśli remont "
                    "wciąż wygląda świeżo."))
+    if a.public:                       # how prices moved here: the timeline's own median line, first vs last half-year
+        pl = near[near["area"].between(AREA - 15, AREA + 15) & ~near["flip"]
+                  & (near["year"] >= 2021)].set_index("date")["price_m2"]          # the timeline's years
+        hy = pl.resample("2QS-JAN").agg(["median", "size"])
+        hy = hy[hy["size"] >= 8]["median"]
+        if len(hy) >= 2:
+            notes.append(T(f"Second-hand flats like this one nearby went from {fmt(hy.iloc[0])} PLN/m² in "
+                           f"{hy.index[0].year} to {fmt(hy.iloc[-1])} in {hy.index[-1].year}, as paid: "
+                           f"{100 * (hy.iloc[-1] / hy.iloc[0] - 1):+.0f}%.",
+                           f"Mieszkania z drugiej ręki jak to w okolicy: z {fmt(hy.iloc[0])} zł/m² w {hy.index[0].year} "
+                           f"do {fmt(hy.iloc[-1])} w {hy.index[-1].year}, ceny transakcyjne: "
+                           f"{100 * (hy.iloc[-1] / hy.iloc[0] - 1):+.0f}%."))
     notes_block(fig, notes, 0.57, 0.765)
 
     # timeline --------------------------------------------------------------------------------
