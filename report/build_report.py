@@ -53,9 +53,9 @@ SHORT = ["31_price_ridgelines", "01_prices_over_time", "18_building_age", "20_tr
 
 SELECTED = [   # the posting set, two batches (2026-11-04) -> output/report/selected/ (numbered, no PDF)
     # batch 1, "Warsaw, in price": the city, how dear, what you get
-    "31_price_ridgelines", "32_price_points", "r01_data", "01_prices_over_time",
+    "31_price_ridgelines", "32_price_points", "r01_data", "23_blind_spot", "01_prices_over_time",
     "40_where_flats_are_big", "r02_sizes", "38_house_map", "39_house_cells", "35_house_or_flat", "12_price_compass",
-    "flat_aleja_solidarnosci_129_131_0",   # one flat, the zoom-in closer (Muranów edge: 1950s blocks + new builds):
+    "flat_aleja_solidarnosci_129_131_0", "r98_other_cities",   # one flat, the zoom-in closer (Muranów edge: 1950s blocks + new builds):
                                    #   python flat_slide.py --street "Aleja „Solidarności”" --no 129/131 --flat 0 --m2 33
                                    #   --rooms 2 --floor 3 --public --label "A 33 m² flat on al. Solidarności"
     # batch 2, "Warsaw, beyond price": what goes with price, what's left (the address), who you buy from
@@ -70,7 +70,7 @@ PIPELINE = [   # figure scripts in dependency order (data fetches and price_inde
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
     "reputation_time.py", "estates.py", "infill.py", "flips.py", "building_age_story.py", "flat_sizes.py",
     "offers/offers_story.py", "access/access_preview.py", "houses.py", "house_map.py", "house_cells.py", "family_flats.py", "price_ridgelines.py",
-    "price_points.py", "reputation_ridgelines.py", "reputation_covers.py", "pairs.py", "forward_test.py", "report/descriptive.py",
+    "price_points.py", "reputation_ridgelines.py", "reputation_covers.py", "pairs.py", "forward_test.py", "report/descriptive.py", "report/other_cities.py",
 ]
 
 
@@ -108,6 +108,8 @@ def assemble():
         shutil.copyfile(os.path.join(folders[d], f"{stem}.png"), os.path.join(OUT, f"{i:02d}_{stem}.png"))
     write_pdf(PDF, SLIDES)
     by_stem = {stem: (d, stem) for d, stem in SLIDES}
+    by_stem["r98_other_cities"] = ("src", "r98_other_cities")
+    by_stem["23_blind_spot"] = ("summary", "23_blind_spot")
     by_stem["flat_aleja_solidarnosci_129_131_0"] = ("flats", "flat_aleja_solidarnosci_129_131_0")   # sample flat, posting set only
     write_pdf(PDF.replace(".pdf", "_short.pdf"), [by_stem[x] for x in SHORT])
     sel = os.path.join(OUT, "selected")   # the set to post; numbered in order, not merged (breaks between posts by hand)

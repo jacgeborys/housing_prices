@@ -247,7 +247,7 @@ def blind_spot():
     tot = s[["none", "thin", "ok"]].sum()
     none_share = tot["none"] / tot.sum()
 
-    fig = page("The price register's blind spot",
+    fig = page("What can't the register see? 1 in 6 flats",
                wrap("Cooperative-right sales (spółdzielcze własnościowe prawo) never enter RCN, "
                     "and rented city blocks rarely sell", 80),
                "Flats estimated from building footprint × stories (BDOT10k / OSM). Few sales = under 25% of the city's usual sales per flat. "
