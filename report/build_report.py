@@ -122,6 +122,9 @@ def assemble():
         shutil.copyfile(os.path.join(folders[d], f"{stem}.png"), os.path.join(sel, f"{i:02d}_{stem}.png"))
     b1 = SELECTED[:SELECTED.index("44_reputation_glow")]          # batch 1 = everything before the batch-2 cover
     write_pdf(os.path.join(OUT, "warsaw_in_price_batch1.pdf"), [by_stem[x] for x in b1])
+    b2 = SELECTED[len(b1):]                                        # batch 2 = the cover and everything after it
+    write_pdf(os.path.join(OUT, "warsaw_beyond_price_batch2.pdf"), [by_stem[x] for x in b2])
+    print(f"batch 2 ({len(b2)} slides) -> warsaw_beyond_price_batch2.pdf")
     print(f"selected deck: {len(SELECTED)} slides -> {sel}; batch 1 ({len(b1)} slides) -> warsaw_in_price_batch1.pdf")
     print(f"short deck: {len(SHORT)} slides -> {PDF.replace('.pdf', '_short.pdf')}")
     print(f"{len(SLIDES)} slides -> {OUT}, {PDF} ({os.path.getsize(PDF) / 1e6:.1f} MB)")
