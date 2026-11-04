@@ -102,14 +102,14 @@ def sizes(t):
     yr = pd.crosstab(t["year"], t["size_cat"], normalize="index") * 100
     yr = yr[t.groupby("year").size().reindex(yr.index) >= 300]
     small = recent["area"].lt(35).groupby(recent["district"]).mean() * 100
-    fig = page("What sizes sell where",
+    fig = page("What sizes sell where? Small in Praga, big in Wawer",
                "Flats sold by size, by district (2021–26) and across the years",
                "RCN flat sales in full ownership, new and resale together. Size = usable floor area from the deed. Years with "
                "fewer than 300 sales left out (2017–20, Warsaw's register data gap). " + style.SOURCE)
-    fig.text(0.03, 0.885, wrap(f"Small flats (under 35 m²) are {small.max():.0f} % of sales in {small.idxmax()} but "
-                               f"{small.min():.0f} % in {small.idxmin()}; flats of 70 m² or more are most common in "
+    fig.text(0.03, 0.885, wrap(f"Small flats (under 35 m²) are {small.max():.0f}% of sales in {small.idxmax()} but "
+                               f"{small.min():.0f}% in {small.idxmin()}; flats of 70 m² or more are most common in "
                                f"{share.index[-1]} and {share.index[-2]}. Micro flats under 25 m² are rare: "
-                               f"{(t['area'] < 25).mean() * 100:.0f} % of all sales.", 100),
+                               f"{(t['area'] < 25).mean() * 100:.0f}% of all sales.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     a1 = fig.add_axes([0.18, 0.41, 0.78, 0.34])
     left = np.zeros(len(share))

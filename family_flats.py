@@ -94,7 +94,7 @@ def family_flats(t, d, w):
                f"Where flats of {FAMILY_M2} m² or more are resold, and what a {FAMILY_BAND[0]}–{FAMILY_BAND[1]} m² flat costs",
                f"Map: share of resales {r['year'].min()}–{r['year'].max()} that are {FAMILY_M2} m² or more, hexagons with ≥ 30 resales. "
                f"Bars: median price as paid for a {FAMILY_BAND[0]}–{FAMILY_BAND[1]} m² resale, {RECENT[0]}–{RECENT[1]}, districts with ≥ {MIN_DISTRICT} sales. " + style.SOURCE)
-    fig.text(0.03, 0.885, wrap(f"Only {100 * (r['area'] >= FAMILY_M2).mean():.0f} % of flats resold since 2021 have "
+    fig.text(0.03, 0.885, wrap(f"Only {100 * (r['area'] >= FAMILY_M2).mean():.0f}% of flats resold since 2021 have "
                                f"{FAMILY_M2} m² or more. A {FAMILY_BAND[0]}–{FAMILY_BAND[1]} m² flat costs "
                                f"{cost[lo] / 1e6:.2f} million in {lo} and {cost[hi] / 1e6:.2f} million in {hi}.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
@@ -107,7 +107,7 @@ def family_flats(t, d, w):
               cmap=cmap, norm=norm, linewidths=0.3, edgecolors=style.SURFACE, zorder=3,
               extent=(*ax.get_xlim(), *ax.get_ylim()))
     outlines(ax, d, labels=False)
-    legend_patches(ax, [cmap(i) for i in range(5)], ["< 8 %", "8–14 %", "14–20 %", "20–30 %", "30 %+"],
+    legend_patches(ax, [cmap(i) for i in range(5)], ["< 8%", "8–14%", "14–20%", "20–30%", "30%+"],
                    f"Resales ≥ {FAMILY_M2} m²")
     a2 = fig.add_axes([0.72, 0.12, 0.24, 0.66])
     district_bars(a2, cost, lambda v_: f"{v_ / 1e6:.2f} mln", f"A {FAMILY_BAND[0]}–{FAMILY_BAND[1]} m² flat costs",
@@ -139,13 +139,13 @@ def big_flats(d, w):
     ex = many_small.index[0] if len(many_small) else None
     fig.text(0.03, 0.885, wrap("Space and rooms are not the same thing. The biggest flats sell in Wawer, on the Saska "
                                "Kępa riverside and around Stegny and Wyględów"
-                               + (f". Many rooms also come in prefab estates: in {ex}, {100 * many_small.loc[ex, 'many']:.0f} % "
+                               + (f". Many rooms also come in prefab estates: in {ex}, {100 * many_small.loc[ex, 'many']:.0f}% "
                                   f"of flats have 4+ rooms in a median {many_small.loc[ex, 'med']:.0f} m²." if ex else "."),
                                100), fontsize=10.5, fontweight="semibold", va="top")
     panels = (("area", np.median, ["#f3e4d0", "#e6bb8a", "#d08a4f", "#a65a2a", "#6b3214"], [0, 45, 52, 60, 70, 500],
                ["< 45 m²", "45–52", "52–60", "60–70", "70+ m²"], "Median size", [0.02, 0.44, 0.62, 0.37]),
               ("many", np.mean, ["#e2e6f3", "#b3bde3", "#7f8fcc", "#4d5fae", "#26337a"], [0, 0.15, 0.22, 0.30, 0.40, 1],
-               ["< 15 %", "15–22 %", "22–30 %", "30–40 %", "40 %+"], "4+ rooms", [0.02, 0.06, 0.62, 0.38]))
+               ["< 15%", "15–22%", "22–30%", "30–40%", "40%+"], "4+ rooms", [0.02, 0.06, 0.62, 0.38]))
     for col, red, colors, bounds, labels, title, box in panels:
         ax = basemap(fig, d, w)
         ax.set_position(box)
@@ -156,7 +156,7 @@ def big_flats(d, w):
         outlines(ax, d, labels=False)
         legend_patches(ax, colors, labels, title)
     top_list(fig, 0.70, 0.80, "Biggest flats (median)", nb["med"].nlargest(9), lambda v_: f"{v_:.0f} m²")
-    top_list(fig, 0.70, 0.41, "Most 4+ room flats", nb["many"].nlargest(9), lambda v_: f"{100 * v_:.0f} %")
+    top_list(fig, 0.70, 0.41, "Most 4+ room flats", nb["many"].nlargest(9), lambda v_: f"{100 * v_:.0f}%")
     save(fig, "36_big_flats.png")
 
 

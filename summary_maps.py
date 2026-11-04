@@ -184,12 +184,12 @@ def metro_walk(v, d, w, ctx):
     bins = [0, 5, 10, 15, 20, 30, 1e9]
     labels = ["≤ 5 min", "5–10", "10–15", "15–20", "20–30", "30+"]
     cols = ["#0b2f63", "#1d58a8", "#3987e5", "#7fb1ef", "#b9d4f6", "#dfe9f6"]   # near = dark
-    fig = page("Every kilometer to the metro costs about 2 %",
+    fig = page("Every kilometer to the metro costs about 2%",
                "Walking time from each building to the nearest metro station, along real footpaths",
                "Walking distances on the OSM footpath and street network (TransitFrequency's Warsaw walking "
                "graph, multi-source Dijkstra), 4.8 km/h. 38 metro stations. Colored: buildings with ≥ 3 flat "
                "sales. Bars: typical-flat price net of the district and every other feature (OLS residual), "
-               "relative to the average building. Regression: −2.1 % per km walked. " + style.SOURCE)
+               "relative to the average building. Regression: −2.1% per km walked. " + style.SOURCE)
     ax = basemap(fig, d, w, ctx)
     vv = v.assign(m=mins)
     for (lo, hi), c in zip(zip(bins[:-1], bins[1:]), cols):
@@ -220,7 +220,7 @@ def cafes(v, d, w):
                wrap("Flats cost more only where 40 or more venues are within a short walk. Cafés follow wealth "
                     "as much as they attract it", 80),
                f"{len(f):,} venues from OpenStreetMap (Oct 2026), per 600 m hexagon. Bars: typical-flat price net of district and other "
-               f"features, by venues within a 7-minute walk ({cafe_pct():+.1f} % per doubling). An association, not a cause. " + style.SOURCE)
+               f"features, by venues within a 7-minute walk ({cafe_pct():+.1f}% per doubling). An association, not a cause. " + style.SOURCE)
     ax = basemap(fig, d, w)
     cmap = ListedColormap(["#fde4cf", "#f9b98a", "#f08a4b", "#d4602a", "#a33f14", "#6e2508"])
     bounds = [1, 3, 6, 12, 25, 50, 1000]
@@ -291,9 +291,9 @@ def trees(v, d, w):
     ax.imshow(a, extent=extent, cmap=cmap, norm=BoundaryNorm([10, 25, 40, 55, 70, 85, 101], cmap.N),
               interpolation="nearest", zorder=3)
     outlines(ax, d)
-    legend_patches(ax, greens, ["10–25 %", "25–40", "40–55", "55–70", "70–85", "85–100 %"], "Tree cover")
+    legend_patches(ax, greens, ["10–25%", "25–40", "40–55", "55–70", "70–85", "85–100%"], "Tree cover")
     bx = within_district_bars(fig, v, "canopy_100", [-1, 5, 10, 15, 20, 30, 101],
-                              ["< 5 %", "5–10", "10–15", "15–20", "20–30", "30 %+"],
+                              ["< 5%", "5–10", "10–15", "15–20", "20–30", "30%+"],
                               "Price by tree cover within 100 m, all else equal",
                               "Mean tree cover within 100 m of the building", focus="canopy_100")
     bx.set_position([0.14, 0.13, 0.80, 0.17])

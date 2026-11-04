@@ -57,7 +57,7 @@ def main():
     fig = page("Warsaw's over- and under-achievers",
                "Neighborhoods that sell furthest above or below what their location, amenities and buildings predict",
                f"MSI neighborhoods with ≥ {MIN_BUILDINGS} priced buildings. Value = average gap between a building's typical-flat price and "
-               "the out-of-sample prediction, shrunk toward 0 for small areas; bars = 95 % interval. " + style.SOURCE)
+               "the out-of-sample prediction, shrunk toward 0 for small areas; bars = 95% interval. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.04, 0.43, 0.76, 0.47])
     norm = TwoSlopeNorm(vmin=-15, vcenter=0, vmax=15)

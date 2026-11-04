@@ -113,13 +113,13 @@ def main():
     print(f"{len(r):,} houses, {len(f):,} flats in {len(keep)} districts; median house {hp.median():,.0f} vs flat "
           f"{fp.median():,.0f} ({tot_x:.2f}x); per m2 {hm2.median():,.0f} vs {fm2.median():,.0f} ({m2_x:.2f}x)")
 
-    fig = page(f"A house costs {tot_x:.1f}x a flat, a square meter {1 - m2_x:.0%} less",
+    fig = page(f"A house costs {tot_x:.1f}× a flat, a square meter {'a third' if 0.30 <= 1 - m2_x < 0.37 else f'{1 - m2_x:.0%}'} less",
                f"Houses and resold flats sold {RECENT[0]}–{RECENT[1]} in the {len(keep)} districts with at least {MIN_HOUSES} "
                "house sales",
                f"Houses: {len(r):,} sales with plot (RCN, from 2017); flats: {len(f):,} resales, same districts and years. House area: "
                f"the deed's ({(r['area_source'] == 'deed').mean():.0%}) or estimated from the building outline and floors. " + style.SOURCE)
     mil = lambda m: f"{m / 1e6:.2g} M" if m >= 1e6 else f"{m / 1e6:.2f} M"
-    k = lambda m: f"{m / 1000:.0f}K"
+    k = lambda m: f"{m / 1000:.1f}".rstrip("0").rstrip(".") + "K"   # 9.9K, but ticks 10K
     fig.text(0.03, 0.885, wrap(f"In total a median house costs {mil(hp.median())} and a flat {mil(fp.median())}. Per m² it flips: "
                                f"{k(hm2.median())} for a house, plot included, {k(fm2.median())} for a flat. A house buys "
                                "much more space, and the land comes with it.", 100),

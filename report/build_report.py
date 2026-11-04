@@ -39,7 +39,7 @@ SLIDES = [   # (source folder, file stem); sections as in the README
     ("summary", "08_cafes"), ("summary", "09_noise"), ("summary", "20_trees"), ("summary", "11_transit_x_price"),
     ("summary", "12_price_compass"), ("summary", "24_transit_access"),
     # 5 reputation
-    ("summary", "42_reputation_ridgelines"), ("summary", "41_pairs"), ("summary", "10_district_anatomy"), ("summary", "06_cheaper_than_expected"), ("summary", "15_estates"),
+    ("summary", "44_reputation_glow"), ("summary", "41_pairs"), ("summary", "10_district_anatomy"), ("summary", "06_cheaper_than_expected"), ("summary", "15_estates"),
     ("summary", "14_reputation_over_time"), ("summary", "30_forward_test"),
     # 6 market behaviour
     ("summary", "16_flippers"), ("summary", "26_new_flats_on_offer"),
@@ -56,7 +56,7 @@ SELECTED = [   # the posting set, two batches (2026-11-04) -> output/report/sele
     "31_price_ridgelines", "32_price_points", "r01_data", "01_prices_over_time",
     "40_where_flats_are_big", "r02_sizes", "38_house_map", "39_house_cells", "35_house_or_flat", "12_price_compass",
     # batch 2, "Warsaw, beyond price": what goes with price, what's left (the address), who you buy from
-    "42_reputation_ridgelines",
+    "44_reputation_glow",          # cover: night lights (2026-11-04; alternatives 42 ridgelines, 43 spikes)
     "03_what_drives_price", "18_building_age", "21_infill", "11_transit_x_price", "24_transit_access",
     "08_cafes", "09_noise", "20_trees",
     "10_district_anatomy", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
@@ -67,7 +67,7 @@ PIPELINE = [   # figure scripts in dependency order (data fetches and price_inde
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
     "reputation_time.py", "estates.py", "infill.py", "flips.py", "building_age_story.py", "flat_sizes.py",
     "offers/offers_story.py", "access/access_preview.py", "houses.py", "house_map.py", "house_cells.py", "family_flats.py", "price_ridgelines.py",
-    "price_points.py", "reputation_ridgelines.py", "pairs.py", "forward_test.py", "report/descriptive.py",
+    "price_points.py", "reputation_ridgelines.py", "reputation_covers.py", "pairs.py", "forward_test.py", "report/descriptive.py",
 ]
 
 
@@ -113,7 +113,9 @@ def assemble():
     for i, stem in enumerate(SELECTED, 1):
         d, _ = by_stem[stem]
         shutil.copyfile(os.path.join(folders[d], f"{stem}.png"), os.path.join(sel, f"{i:02d}_{stem}.png"))
-    print(f"selected deck: {len(SELECTED)} slides -> {sel}")
+    b1 = SELECTED[:SELECTED.index("44_reputation_glow")]          # batch 1 = everything before the batch-2 cover
+    write_pdf(os.path.join(OUT, "warsaw_in_price_batch1.pdf"), [by_stem[x] for x in b1])
+    print(f"selected deck: {len(SELECTED)} slides -> {sel}; batch 1 ({len(b1)} slides) -> warsaw_in_price_batch1.pdf")
     print(f"short deck: {len(SHORT)} slides -> {PDF.replace('.pdf', '_short.pdf')}")
     print(f"{len(SLIDES)} slides -> {OUT}, {PDF} ({os.path.getsize(PDF) / 1e6:.1f} MB)")
 

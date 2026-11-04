@@ -76,7 +76,7 @@ def main():
     fig = page("The inner city pulled ahead",
                f"Same buildings, {EARLY[0]}–{str(EARLY[1])[2:]} vs {LATE[0]}–{str(LATE[1])[2:]}: "
                "price change relative to Warsaw as a whole",
-               f"Resales only, buildings that existed before 2006; prices net of the city-wide index (0 % = moved with the city). Map: 600 m "
+               f"Resales only, buildings that existed before 2006; prices net of the city-wide index (0% = moved with the city). Map: 600 m "
                f"hexagons. Scatter: neighborhoods with ≥ {MIN_BUILDINGS} buildings. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.02, 0.41, 0.96, 0.46])

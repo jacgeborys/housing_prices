@@ -72,7 +72,7 @@ def district_anatomy(v):
                wrap("Each bar is a district; the dot is how much dearer (+) or cheaper (−) its flats are than the "
                     "city average. The colors show what that gap goes with", 80),
                f"Regression on all features, no district variable ({len(v) / 1000:.1f}K buildings); bars = coefficient × "
-               f"distance from the city average. Right-bank flats sell ~{abs(river_pct()):.0f} % below left-bank ones: not counted (mostly reputation). " + style.SOURCE)
+               f"distance from the city average. Right-bank flats sell ~{abs(river_pct()):.0f}% below left-bank ones: not counted (mostly reputation). " + style.SOURCE)
     ax = fig.add_axes([0.24, 0.20, 0.72, 0.62])
     yy = np.arange(len(c))
     left_pos, left_neg = np.zeros(len(c)), np.zeros(len(c))
@@ -197,7 +197,7 @@ def price_compass(v, d):
         if row["size"] >= 5:
             grid[ri, si] = row["median"]
 
-    fig = page("The price compass",
+    fig = page("Does direction matter? Up to 20% at the same distance",
                wrap("Typical-flat price by direction and distance from the Palace of Culture", 80),
                f"Median value of a typical flat (2025 PLN/m²) per cell: {n_sec} directions × 1 km rings, cells "
                "with ≥ 5 priced buildings. Directions are compass bearings from PKiN. " + style.SOURCE)
@@ -225,7 +225,7 @@ def price_compass(v, d):
     cb = fig.colorbar(pc, ax=ax, orientation="horizontal", fraction=0.04, pad=0.06, shrink=0.6)
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=9, length=0)
-    cb.ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x / 1000:.0f}k"))
+    cb.ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x / 1000:.0f}K"))
     cb.set_label("PLN/m², typical flat 2025", fontsize=9.5, color=style.INK_2)
     # same distance, different direction: 8 compass sectors, 4-7 km out
     names = np.array(["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
@@ -233,8 +233,8 @@ def price_compass(v, d):
     band = (r >= 4) & (r < 7)
     med = pd.Series(v["value_2025"].to_numpy()[band], index=lab[band]).groupby(level=0).median()
     hi, lo = med.idxmax(), med.idxmin()
-    word = {"N": "north", "NE": "north-east", "E": "east", "SE": "south-east", "S": "south", "SW": "south-west",
-            "W": "west", "NW": "north-west"}
+    word = {"N": "north", "NE": "northeast", "E": "east", "SE": "southeast", "S": "south", "SW": "southwest",
+            "W": "west", "NW": "northwest"}
     fig.text(0.05, 0.885, wrap(f"Same distance, different direction: 4–7 km from the center, a typical flat to the "
                                f"{word[hi]} costs {style.fmt_int(med[hi])} PLN/m², to the {word[lo]} "
                                f"{style.fmt_int(med[lo])} ({100 * (med[lo] / med[hi] - 1):+.0f}%).", 95),

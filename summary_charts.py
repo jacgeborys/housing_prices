@@ -202,7 +202,7 @@ def drivers():
 
     fig = page("What goes with the price of a Warsaw flat",
                "Buildings compared within the same district: how much more or less per m²",
-               f"{len(gv):,} buildings with ≥ 3 flat sales; typical flat (date, floor, size removed); lines = 95 % range. "
+               f"{len(gv):,} buildings with ≥ 3 flat sales; typical flat (date, floor, size removed); lines = 95% range. "
                f"Złoty: % × the median building's price, 50 m². The features explain {r2['gbm']:.0%} of price differences. " + style.SOURCE)
     ax = fig.add_axes([0.44, 0.12, 0.38, 0.66])
     lim = 8.0
@@ -250,7 +250,7 @@ def blind_spot():
     fig = page("The price register's blind spot",
                wrap("Cooperative-right sales (spółdzielcze własnościowe prawo) never enter RCN, "
                     "and rented city blocks rarely sell", 80),
-               "Flats estimated from building footprint × stories (BDOT10k / OSM). Few sales = under 25 % of the city's usual sales per flat. "
+               "Flats estimated from building footprint × stories (BDOT10k / OSM). Few sales = under 25% of the city's usual sales per flat. "
                "Only flats in full ownership are registered. " + style.SOURCE)
     fig.text(0.05, 0.885, f"1 in {round(1 / none_share)}", fontsize=30, fontweight="bold", va="top")
     fig.text(0.05, 0.835, "flats sits in a building with\nno recorded sale at all", fontsize=10.5,

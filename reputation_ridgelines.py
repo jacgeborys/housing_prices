@@ -115,7 +115,7 @@ def main():
     cax.set_title("vs prediction", color=MUTED, fontsize=9, loc="left")
     fig.text(0.05, 0.022, f"Typical-flat price vs an out-of-sample prediction from location, transit, amenities, noise, green "
                           f"and building, {len(b):,} buildings with ≥ 3 sales,\nsmoothed over ~{SIGMA_M} m; lines fade to "
-                          f"gray where few flats sell. Line spacing {ROW_M} m; {PER_PCT} m of height per 1 %. "
+                          f"gray where few flats sell. Line spacing {ROW_M} m; {PER_PCT} m of height per 1%. "
                           "Source: GUGiK RCN, OSM, BDOT10k.", color=MUTED, fontsize=7.5, va="bottom")
     mpl.rcParams["savefig.facecolor"] = BG
     save(fig, "42_reputation_ridgelines.png")

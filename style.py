@@ -123,7 +123,7 @@ def footer(fig, text=SOURCE, y=0.005):
 
 def pln(ax, axis="y"):
     """Thousands-separated PLN tick labels."""
-    f = mticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", " "))
+    f = mticker.FuncFormatter(lambda v, _: f"{v:,.0f}")
     (ax.yaxis if axis == "y" else ax.xaxis).set_major_formatter(f)
 
 
@@ -141,7 +141,7 @@ def vgrid_only(ax):
 
 
 def fmt_int(v):
-    return f"{v:,.0f}".replace(",", " ")
+    return f"{v:,.0f}"
 
 
 def shade_gap(ax, lo=2016.5, hi=2020.5, label="data gap\n2017–20"):
@@ -160,7 +160,7 @@ def colorbar(fig, mappable, ax, label, fmt="pln", **kw):
     cb.set_label(label, color=INK_2, fontsize=10)
     if fmt == "pln":
         cb.ax.yaxis.set_major_formatter(
-            mticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", " ")))
+            mticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
     elif fmt == "pct":
         cb.ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:+.0f}%"))
     return cb

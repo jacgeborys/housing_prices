@@ -101,7 +101,7 @@ def spikes(b, d, river):
     reps = frame(fig, d, "Warsaw, beyond price",
                  "Every building with flat sales is a spike: up where flats sell for more than their\n"
                  "location and building predict, down where they sell for less. The gap is the address.",
-                 f"Spike length {SPIKE_M_PER_PCT} m per 1 %.", len(b))
+                 f"Spike length {SPIKE_M_PER_PCT} m per 1%.", len(b))
     labels(ax, reps)
     mpl.rcParams["savefig.facecolor"] = BG
     save(fig, "43_reputation_spikes.png")
