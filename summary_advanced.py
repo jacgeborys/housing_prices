@@ -179,7 +179,8 @@ def transit_x_price(v, d, w):
 
 
 # 12 -------------------------------------------------------------------------------------------
-MIN_TILE = 12                                # priced buildings in a compass tile's window (its sector and both neighbors)
+MIN_OWN = 15     # priced buildings for a compass tile to use its own direction only; fewer: it borrows both neighbors
+MIN_TILE = 8     # and needs this many in that window
 
 
 def price_compass(v, d):
@@ -199,21 +200,27 @@ def price_compass(v, d):
     for ri in range(r_max):                  # each tile: its own direction and the one on each side, same ring, so one
         rr = df[df["ring"] == ri]            # estate (a few buildings in Bielany forest) cannot color a tile on its own
         for si in range(n_sec):              # and a river or park sector is bridged by its neighbors
-            c = rr[rr["sec"].isin([(si - 1) % n_sec, si, (si + 1) % n_sec])].sort_values("p")
-            if len(c) >= MIN_TILE and (rr["sec"] == si).any():
+            own = rr[rr["sec"] == si]
+            c = (own if len(own) >= MIN_OWN else                   # enough buildings: the tile's own direction only
+                 rr[rr["sec"].isin([(si - 1) % n_sec, si, (si + 1) % n_sec])]).sort_values("p")
+            if len(c) >= MIN_TILE and len(own):
                 cw = c["w"].cumsum().to_numpy()
                 grid[ri, si] = c["p"].to_numpy()[np.searchsorted(cw, cw[-1] / 2)]   # weighted median
 
     fig = page("Price compass from the Palace of Culture",
                "Typical-flat price per m², 2025, by direction and distance",
-               f"Tile = sales-weighted median of typical-flat values (2025 PLN/m²) in its direction and the one on each side, "
-               f"1 km rings, ≥ {MIN_TILE} priced buildings; blank where none in its own direction. " + style.SOURCE)
+               f"Tile = sales-weighted median of typical-flat values (2025 PLN/m²), 1 km rings; tiles with under {MIN_OWN} priced "
+               "buildings borrow the direction on each side, blank where none in their own. " + style.SOURCE)
     ax = fig.add_axes([0.08, 0.13, 0.84, 0.70], projection="polar")
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     T, R = np.meshgrid(np.linspace(0, 2 * np.pi, n_sec + 1), np.arange(r_max + 1))
     from price_ridgelines import RAMP                            # the cover's colors
-    pc = ax.pcolormesh(T, R, grid, cmap=RAMP, vmin=12000, vmax=24000, edgecolors=style.SURFACE, linewidth=0.6)
+    from matplotlib.colors import BoundaryNorm
+    edges = np.unique(np.round(np.nanquantile(grid, np.linspace(0, 1, 10)), -2))   # 9 bands, equal shares of tiles:
+    edges[0], edges[-1] = edges[0] - 1, edges[-1] + 1                              # most tiles are 14-16K, a linear
+    norm = BoundaryNorm(edges, RAMP.N)                                             # scale paints them all one blue
+    pc = ax.pcolormesh(T, R, grid, cmap=RAMP, norm=norm, edgecolors=style.SURFACE, linewidth=0.6)
     ax.set_ylim(0, r_max)
     ax.set_yticks([2, 4, 6, 8, 10])
     ax.set_yticklabels(["2 km", "4", "6", "8", "10"], fontsize=8.5, color=style.INK_2)
@@ -231,8 +238,9 @@ def price_compass(v, d):
     cb = fig.colorbar(pc, ax=ax, orientation="horizontal", fraction=0.04, pad=0.06, shrink=0.6)
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=9, length=0)
-    cb.ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x / 1000:.0f}K"))
-    cb.set_label("PLN/m², typical flat 2025", fontsize=9.5, color=style.INK_2)
+    cb.set_ticks(edges[1:-1])
+    cb.set_ticklabels([f"{x / 1000:.1f}K" for x in edges[1:-1]])
+    cb.set_label("PLN/m², typical flat 2025 (each band ≈ one ninth of the tiles)", fontsize=9.5, color=style.INK_2)
     # same distance, different direction: 8 compass sectors, 4-7 km out
     names = np.array(["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
     lab = names[((np.degrees(th) + 22.5) // 45).astype(int) % 8]
