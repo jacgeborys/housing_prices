@@ -150,7 +150,7 @@ def value_page(a, d, label, out):
                 else f"{label}: about {KR(a_lo, a_hi)} as it is, ~{K(r_mid)} renovated")
     fig = page(T(title_en,
                  f"{label}: {KR(a_lo, a_hi)} bez remontu, ok. {K(r_mid)} po"),
-               T(f"{num(AREA, 2)} m², {rooms_en}, {floor_en} of {'an' if str(storeys).startswith(('8', '11', '18')) else 'a'} {storeys}-story {decade} block "
+               T(f"{num(AREA, 2)} m², {rooms_en}, " + ("in " if a.public else f"{floor_en} of ") + f"{'an' if str(storeys).startswith(('8', '11', '18')) else 'a'} {storeys}-story {decade} block "
                  f"({district})",
                  f"{num(AREA, 2)} m², {flat['rooms']} izby, {floor_pl}, {storeys}-kondygnacyjny blok z lat {decade} ({district})"),
                T(f"Comparables: resales since 2023 within {R} m in {decade} buildings, {AREA - 10:.0f}–{AREA + 10:.0f} m², in today's "

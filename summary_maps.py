@@ -57,12 +57,16 @@ def basemap(fig, d, w, buildings=None, box=None):
     return ax
 
 
+NUDGE = {"Żoliborz": (-700, 400), "Praga-Północ": (500, -300)}   # metres: the two labels touched on small maps
+
+
 def outlines(ax, d, labels=True):
     d.boundary.plot(ax=ax, color=style.INK_2, linewidth=0.5, zorder=5)
     if labels:
         for _, r in d.iterrows():
             p = r.geometry.representative_point()
-            ax.text(p.x, p.y, r["district"], fontsize=6.5, color=style.INK, ha="center", va="center", zorder=6,
+            dx, dy = NUDGE.get(r["district"], (0, 0))
+            ax.text(p.x + dx, p.y + dy, r["district"], fontsize=6.5, color=style.INK, ha="center", va="center", zorder=6,
                     path_effects=style.halo())
 
 

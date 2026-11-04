@@ -196,7 +196,7 @@ def where_flats_are_big(d, w):
     fig.text(0.62, 0.772, "smaller flats", fontsize=8.5, color=style.INK_2, va="bottom")
     fig.text(0.94, 0.772, "bigger flats, more rooms", fontsize=8.5, color=style.INK_2, va="bottom", ha="right")
 
-    ax2 = fig.add_axes([0.06, 0.115, 0.90, 0.14])
+    ax2 = fig.add_axes([0.06, 0.135, 0.90, 0.13])
     x = np.arange(len(dist))
     rk = (dist["area"].rank(pct=True) * 0.5 + dist["rooms"].rank(pct=True, method="average") * 0.5).to_numpy()
     ax2.bar(x, dist["area"], width=0.72, color=[cmap(0.1 + 0.85 * v_) for v_ in rk])

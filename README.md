@@ -101,6 +101,8 @@ skips when its csv exists: remove or rename `access_am_peak.csv`, it resumes per
 
 **Wording 2026-11-04**: cooperative-right flats are "often missing" from the register (was "never enter": not verified, coverage of spółdzielcze własnościowe prawo varies) on slides 23, 32, r01 and r99; r98 retitled "Some other cities" (no promise of more cities, maps enlarged); r99 "Coming next" -> "Other cities: mapped too"; flat-page map label has a white halo instead of a box.
 
+**Pre-posting fixes (2026-11-04)**: r01 headline names the 347 sales without a market label (265,364 = 157,473 + 107,544 + 347); fig. 16 markups for flats bought second-hand only (+24% beyond the market, +28% as paid; flips starting from a developer deed, 1,041 of 4,151, ran +31%: price agreed before completion, flat often unfinished); fig. 23 "The register mostly covers flats in full ownership"; fig. 40 bar panel lifted off the footnote; summary_maps.NUDGE moves the Żoliborz / Praga-Północ labels apart on every outlined map; public flat pages drop the floor ("in an 8-story ... block").
+
 **Fig. 01 (2026-11-04)**: "Gdańsk and Lublin: more soon" removed from the inset (no further city reports planned).
 
 **Batches regrouped (2026-11-04)**: developers (26) and flippers (16) moved to batch 1, after the house slides and before the compass: batch 1 = 15 slides (city, prices, sizes, houses, who you buy from, compass, sample flat, other cities), batch 2 = 13 (night-lights cover, what goes with price, reputation; ends on 14 "The inner city pulled ahead").

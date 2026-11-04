@@ -250,7 +250,7 @@ def blind_spot():
                wrap("Cooperative-right flats (spółdzielcze własnościowe prawo) often don't make it "
                     "into the register, and rented city blocks rarely sell", 80),
                "Multi-family buildings only (3+ flats, BDOT10k / OSM); flats estimated from footprint × stories. Few sales = under 25% of the city's usual sales per flat. "
-               "Mostly flats in full ownership are registered. " + style.SOURCE)
+               "The register mostly covers flats in full ownership. " + style.SOURCE)
     fig.text(0.05, 0.885, f"1 in {round(1 / none_share)}", fontsize=30, fontweight="bold", va="top")
     fig.text(0.05, 0.835, "flats sits in a building with\nno recorded sale at all", fontsize=10.5,
              color=style.INK_2, va="top")

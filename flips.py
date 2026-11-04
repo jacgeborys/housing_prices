@@ -123,13 +123,15 @@ def main():
 
     # figure ------------------------------------------------------------------------------------
     v, d, w = load()
-    n_r, med, med_net = len(recent_f), recent_f["markup"].median(), recent_f["markup_net"].median()
+    n_r = len(recent_f)
+    resold = recent_f[recent_f["first_leg"] == "bought resale"]     # a developer deed's price was agreed a year or two
+    med, med_net = resold["markup"].median(), resold["markup_net"].median()   # earlier and the flat often sold unfinished
     fig = page(f"Does flipping pay? {med_net:+.0f}% in a year, before costs",
                "Flats resold within a year of purchase: where, how often, and for how much",
-               f"One flat = the land-register flat id. Flip = resold {MIN_DAYS}–{MAX_DAYS} days after the previous sale; markup as paid, "
-               "'beyond the market' nets out the city index. Map: 2021–25, hexagons with ≥ 40 resales. " + style.SOURCE)
+               f"Flip = the same register flat resold {MIN_DAYS}–{MAX_DAYS} days after its previous sale. Markups: flats bought "
+               "second-hand only; 'beyond the market' nets out the city index. Map: 2021–25, ≥ 40 resales. " + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"2021–25: {n_r:,} flats were resold within a year of purchase ({100 * n_r / len(recent_s):.0f} in 100 "
-                               f"resales), at a median markup of {med:+.0f}%, or {med_net:+.0f}% beyond the market, before "
+                               f"resales). Those bought second-hand sold for a median {med:+.0f}%, or {med_net:+.0f}% beyond the market, before "
                                f"renovation, tax and fees.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
     ax = basemap(fig, d, w)
@@ -176,7 +178,7 @@ def main():
 
     a2 = fig.add_axes([0.58, 0.09, 0.38, 0.24])
     bins = np.arange(-30, 81, 5)
-    a2.hist(recent_f["markup"].clip(-30, 80), bins=bins, color="#f08a4b", edgecolor=style.SURFACE, lw=1)
+    a2.hist(resold["markup"].clip(-30, 80), bins=bins, color="#f08a4b", edgecolor=style.SURFACE, lw=1)
     a2.axvline(0, color=style.AXIS, lw=1)
     a2.axvline(med, color=style.INK, lw=1.4, ls=(0, (4, 3)))
     a2.set_ylim(0, a2.get_ylim()[1] * 1.14)
@@ -185,7 +187,7 @@ def main():
     a2.set_xticklabels(["−20%", "0%", "+20%", "+40%", "+60%", "+80%+"])
     a2.set_yticks([])
     style.hgrid_only(a2)
-    a2.set_title("Markup on resale, as paid (2021–25)", fontsize=10.5)
+    a2.set_title("Markup, as paid (bought second-hand, 2021–25)", fontsize=10.5)
     a2.tick_params(labelsize=8.5)
     save(fig, "16_flippers.png")
 

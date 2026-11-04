@@ -74,6 +74,7 @@ def data_overview(t):
                + style.SOURCE)
     fig.text(0.03, 0.885, wrap(f"{len(t):,} flat sales: {per_year.get('secondary', 0).sum():,} resales and "
                                f"{per_year.get('primary', 0).sum():,} from developers"
+                               + (f" ({len(t) - per_year.sum().sum():,} without a market label)" if len(t) > per_year.sum().sum() else "")
                                + (f", plus {len(h):,} house sales (recorded from 2017)" if len(h) else "")
                                + f". Most trade in {tot.idxmax()}, fewest in {tot.idxmin()}.", 100),
              fontsize=10.5, fontweight="semibold", va="top")
