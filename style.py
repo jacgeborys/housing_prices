@@ -102,7 +102,10 @@ def apply():
 
 def header(fig, title, subtitle=None, y=0.995):
     """Left-aligned figure title with a takeaway subtitle underneath."""
-    fig.text(0.01, y, title, fontsize=17, fontweight="bold", color=INK, va="top", ha="left")
+    t = fig.text(0.01, y, title, fontsize=17, fontweight="bold", color=INK, va="top", ha="left")
+    r = fig.canvas.get_renderer()
+    while t.get_fontsize() > 13 and t.get_window_extent(r).x1 > 0.82 * fig.bbox.width:   # keep clear of the byline
+        t.set_fontsize(t.get_fontsize() - 0.5)
     byline(fig, y=y)
     if subtitle:
         gap = 0.36 / fig.get_figheight()      # constant ~0.36 in, whatever the figure size

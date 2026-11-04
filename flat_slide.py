@@ -149,7 +149,7 @@ def value_page(a, d, label, out):
                 else f"{label}: about {KR(a_lo, a_hi)} as it is, ~{K(r_mid)} renovated")
     fig = page(T(title_en,
                  f"{label}: {KR(a_lo, a_hi)} bez remontu, ok. {K(r_mid)} po"),
-               T(f"{num(AREA, 2)} m², {rooms_en}, {floor_en} of a {storeys}-story {decade} block "
+               T(f"{num(AREA, 2)} m², {rooms_en}, {floor_en} of {'an' if str(storeys).startswith(('8', '11', '18')) else 'a'} {storeys}-story {decade} block "
                  f"({district})",
                  f"{num(AREA, 2)} m², {flat['rooms']} izby, {floor_pl}, {storeys}-kondygnacyjny blok z lat {decade} ({district})"),
                T(f"Comparables: resales since 2023 within {R} m in {decade} buildings, {AREA - 10:.0f}–{AREA + 10:.0f} m², in today's "
@@ -176,8 +176,9 @@ def value_page(a, d, label, out):
     v.plot(ax=ax, color=[style.PRICE_CMAP(NORM(x)) for x in v["value_2025"]], lw=0, zorder=2)
     gpd.GeoSeries([me.geometry]).plot(ax=ax, facecolor=style.INK, edgecolor=style.INK, lw=2.5, zorder=4)
     ax.add_patch(plt.Circle((cx, cy), R, fill=False, ls=(0, (4, 3)), color=style.INK_2, lw=0.9, zorder=3))
-    ax.annotate(label, (cx, cy), xytext=(cx + 120, cy + 260), fontsize=9.5, fontweight="bold", zorder=5,
-                arrowprops=dict(arrowstyle="-", color=style.INK, lw=0.8))
+    ax.annotate(f"{a.street} {a.no}" if a.public else label, (cx, cy), xytext=(cx + 120, cy + 260), fontsize=9.5,
+                fontweight="bold", zorder=5, arrowprops=dict(arrowstyle="-", color=style.INK, lw=0.8),
+                bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=style.INK, lw=0.6, alpha=0.95))   # legible over buildings
     ax.text(cx, cy - R - 35, f"{R} m", ha="center", va="top", fontsize=8, color=style.INK_2)
     ax.set_xlim(cx - half, cx + half)
     ax.set_ylim(cy - half, cy + half)
@@ -201,10 +202,10 @@ def value_page(a, d, label, out):
         today = float(own["today"].iloc[0]) * AREA if len(own) else np.nan
         gap = (p1["date"] - p0["date"]).days / 30.4
         notes.append(T(f"This flat sold twice: {K(float(p0['LOK_CENA_BRUTTO']))} in {month(p0['date'])}, then {K(float(p1['LOK_CENA_BRUTTO']))} "
-                       f"{gap:.0f} months later (+{100 * (float(p1['LOK_CENA_BRUTTO']) / float(p0['LOK_CENA_BRUTTO']) - 1):.0f} %), the pattern "
+                       f"{gap:.0f} months later (+{100 * (float(p1['LOK_CENA_BRUTTO']) / float(p0['LOK_CENA_BRUTTO']) - 1):.0f}%), the pattern "
                        f"of a renovation flip. {K(float(p1['LOK_CENA_BRUTTO']))} then is about {K(today)} in today's prices.",
                        f"To mieszkanie sprzedano dwa razy: za {K(float(p0['LOK_CENA_BRUTTO']))} zł ({month(p0['date'])}), potem za "
-                       f"{K(float(p1['LOK_CENA_BRUTTO']))} zł {gap:.0f} mies. później (+{100 * (float(p1['LOK_CENA_BRUTTO']) / float(p0['LOK_CENA_BRUTTO']) - 1):.0f} %), "
+                       f"{K(float(p1['LOK_CENA_BRUTTO']))} zł {gap:.0f} mies. później (+{100 * (float(p1['LOK_CENA_BRUTTO']) / float(p0['LOK_CENA_BRUTTO']) - 1):.0f}%), "
                        f"jak po remoncie na sprzedaż. {K(float(p1['LOK_CENA_BRUTTO']))} zł wtedy to dziś ok. {K(today)} zł."))
     elif len(mine) == 1:
         p1 = mine.iloc[-1]
@@ -215,9 +216,9 @@ def value_page(a, d, label, out):
         m_in, m_out = asis.loc[sel, "today"].median(), asis.loc[~sel, "today"].median()
         g = 100 * (m_in / m_out - 1)
         word_en, word_pl = ("Ground floor", "Parter") if ground else ("Top floor", "Ostatnie piętro")
-        notes.append(T(f"{word_en}: {'no clear discount here' if g > -3 else f'{g:.0f} % here'}. {sel.sum()} such resales nearby went for "
+        notes.append(T(f"{word_en}: {'no clear discount here' if g > -3 else f'{g:.0f}% here'}. {sel.sum()} such resales nearby went for "
                        f"{fmt(m_in)} PLN/m², the other {(~sel).sum()} for {fmt(m_out)}.",
-                       f"{word_pl}: {'tu bez wyraźnej zniżki' if g > -3 else f'tu {g:.0f} %'}. {sel.sum()} takich sprzedaży w okolicy "
+                       f"{word_pl}: {'tu bez wyraźnej zniżki' if g > -3 else f'tu {g:.0f}%'}. {sel.sum()} takich sprzedaży w okolicy "
                        f"szło po {fmt(m_in)} zł/m², pozostałe {(~sel).sum()} po {fmt(m_out)}."))
     bld = t[(t["osm_id"] == me["osm_id"]) & (t["market"] == "secondary") & ~t["own_flat"] & (t["year"] >= 2023)]
     if len(bld) and a.public:          # sample page: the range only, no single stranger's sale
@@ -238,9 +239,9 @@ def value_page(a, d, label, out):
         where = ", ".join(top.index[:2])
         gap = 100 * (new["price_m2"].median() / sec["price_m2"].median() - 1)
         notes.append(T(f"New flats nearby: {len(new)} sold by developers in the last year ({where}), "
-                       f"{fmt(new['price_m2'].median())} PLN/m², {gap:.0f} % above second-hand flats around.",
+                       f"{fmt(new['price_m2'].median())} PLN/m², {gap:.0f}% above second-hand flats around.",
                        f"Nowe mieszkania w okolicy: {len(new)} sprzedanych przez deweloperów w ostatnim roku ({where}), "
-                       f"{fmt(new['price_m2'].median())} zł/m², {gap:.0f} % drożej niż z drugiej ręki."))
+                       f"{fmt(new['price_m2'].median())} zł/m², {gap:.0f}% drożej niż z drugiej ręki."))
     if not a.public:                   # seller advice: private pages only
       notes.append(T(f"The asking price to aim at: {KR(a_mid, a_hi)} for a well-kept flat, {KR(r_lo, r_hi)} if the renovation "
                    "still looks fresh.",
@@ -318,8 +319,8 @@ def place_page(a, d, label, out, val):
     dist_med = drv.groupby("district")["resid_pct"].median()
     rep, rep_d = b["resid_pct"], dist_med[district]
 
-    fig = page(T(f"{label.split('/')[0]}: flats here sell {abs(rep):.0f} % {'below' if rep < 0 else 'above'} similar buildings",
-                 f"{label.split('/')[0]}: mieszkania tu idą {abs(rep):.0f} % {'poniżej' if rep < 0 else 'powyżej'} podobnych budynków"),
+    fig = page(T(f"{label.split('/')[0]}: flats here sell {abs(rep):.0f}% {'below' if rep < 0 else 'above'} similar buildings",
+                 f"{label.split('/')[0]}: mieszkania tu idą {abs(rep):.0f}% {'poniżej' if rep < 0 else 'powyżej'} podobnych budynków"),
                T("How the spot compares with Warsaw's priced buildings, and what the flat's own sales say",
                  "Jak to miejsce wypada na tle Warszawy i co mówią sprzedaże samego mieszkania"),
                T(f"Rows: where the building falls among {len(drv):,} Warsaw buildings with >= 3 sales (left = fewer / less). 'Similar': same age, height, "
@@ -328,10 +329,10 @@ def place_page(a, d, label, out, val):
                  "wiek, wysokość, dojście do metra, kawiarnie, zieleń, hałas. Ceny dzisiejsze: indeks miasta. Źródło: GUGiK RCN, OSM, BDOT10k."))
     fig.text(0.03, 0.885, wrap(T(f"A building with the same age, height, walk to the metro, cafés, green and noise elsewhere in Warsaw "
                                  f"would go for about {fmt(b['pred_2025'])} PLN/m² for a typical flat; this one goes for {fmt(b['value_2025'])}. "
-                                 f"That gap is reputation: {district} as a whole sits {abs(rep_d):.0f} % {'below' if rep_d < 0 else 'above'}.",
+                                 f"That gap is reputation: {district} as a whole sits {abs(rep_d):.0f}% {'below' if rep_d < 0 else 'above'}.",
                                  f"Budynek w tym samym wieku, tej samej wysokości, z takim dojściem do metra, kawiarniami, zielenią i hałasem "
                                  f"gdzie indziej w Warszawie dawałby ok. {fmt(b['pred_2025'])} zł/m² za typowe mieszkanie; ten daje "
-                                 f"{fmt(b['value_2025'])}. Ta różnica to reputacja: cała {district} jest {abs(rep_d):.0f} % "
+                                 f"{fmt(b['value_2025'])}. Ta różnica to reputacja: cała {district} jest {abs(rep_d):.0f}% "
                                  f"{'poniżej' if rep_d < 0 else 'powyżej'}."), 100),
              fontsize=10.5, fontweight="semibold", va="top")
 
@@ -344,7 +345,7 @@ def place_page(a, d, label, out, val):
         (T("Cafés, restaurants, bars, 7-min walk", "Kawiarnie, restauracje, bary, 7 min"), cafes, 2 ** b["walk7_food_drink"] - 1,
          lambda v: f"{v:.0f}"),
         (T("Park or forest within 500 m", "Park lub las do 500 m"), drv["green_ha_500"], b["green_ha_500"], lambda v: f"{num(v)} ha"),
-        (T("Tree cover within 100 m", "Pokrycie drzewami do 100 m"), drv["canopy_100"], b["canopy_100"], lambda v: f"{v:.0f} %"),
+        (T("Tree cover within 100 m", "Pokrycie drzewami do 100 m"), drv["canopy_100"], b["canopy_100"], lambda v: f"{v:.0f}%"),
         (T("Road noise", "Hałas drogowy"), drv["noise_road_db"], b["noise_road_db"],
          lambda v: T("quiet", "cicho") if v <= 45 else f"{v:.0f} dB"),
         (T("Tram and train noise", "Hałas tramwajów i kolei"), drv["noise_rail_db"], b["noise_rail_db"],

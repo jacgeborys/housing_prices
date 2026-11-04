@@ -55,9 +55,9 @@ SELECTED = [   # the posting set, two batches (2026-11-04) -> output/report/sele
     # batch 1, "Warsaw, in price": the city, how dear, what you get
     "31_price_ridgelines", "32_price_points", "r01_data", "01_prices_over_time",
     "40_where_flats_are_big", "r02_sizes", "38_house_map", "39_house_cells", "35_house_or_flat", "12_price_compass",
-    "flat_dzielna_7a_0",           # one flat, the zoom-in closer (Muranów, among look-alike 1950s blocks):
-                                   #   python flat_slide.py --street Dzielna --no 7A --flat 0 --m2 47 --rooms 3 --floor 3
-                                   #   --public --label "A 47 m² flat on Dzielna 7A"
+    "flat_aleja_solidarnosci_129_131_0",   # one flat, the zoom-in closer (Muranów edge: 1950s blocks + new builds):
+                                   #   python flat_slide.py --street "Aleja „Solidarności”" --no 129/131 --flat 0 --m2 33
+                                   #   --rooms 2 --floor 3 --public --label "A 33 m² flat on al. Solidarności"
     # batch 2, "Warsaw, beyond price": what goes with price, what's left (the address), who you buy from
     "44_reputation_glow",          # cover: night lights (2026-11-04; alternatives 42 ridgelines, 43 spikes)
     "03_what_drives_price", "18_building_age", "21_infill", "11_transit_x_price", "24_transit_access",
@@ -108,7 +108,7 @@ def assemble():
         shutil.copyfile(os.path.join(folders[d], f"{stem}.png"), os.path.join(OUT, f"{i:02d}_{stem}.png"))
     write_pdf(PDF, SLIDES)
     by_stem = {stem: (d, stem) for d, stem in SLIDES}
-    by_stem["flat_dzielna_7a_0"] = ("flats", "flat_dzielna_7a_0")   # sample flat page, posting set only
+    by_stem["flat_aleja_solidarnosci_129_131_0"] = ("flats", "flat_aleja_solidarnosci_129_131_0")   # sample flat, posting set only
     write_pdf(PDF.replace(".pdf", "_short.pdf"), [by_stem[x] for x in SHORT])
     sel = os.path.join(OUT, "selected")   # the set to post; numbered in order, not merged (breaks between posts by hand)
     os.makedirs(sel, exist_ok=True)
