@@ -174,7 +174,7 @@ def plot(osm, uni, districts, s, dcol, norm):
     for _, r in districts.iterrows():
         p = r.geometry.representative_point()
         ax.text(p.x, p.y, r[dcol], fontsize=8, color=style.INK, ha="center", va="center",
-                bbox=dict(boxstyle="round,pad=0.15", fc=style.SURFACE, ec="none", alpha=0.75))
+                path_effects=style.halo())
     ax.set_axis_off()
     ax.set_aspect("equal")
     labels = [f"{a:.0f}–{b:.0f}%" for a, b in zip(GRID_BINS[:-1], GRID_BINS[1:])]

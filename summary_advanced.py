@@ -233,8 +233,7 @@ def price_compass(v, d):
     for dist, s in pd.DataFrame({"d": v["district"], "th": th, "r": r}).groupby("d"):
         t0 = np.angle(np.mean(np.exp(1j * s["th"])))
         ax.text(np.mod(t0, 2 * np.pi), min(s["r"].median(), r_max - 0.6), dist, fontsize=7.5, ha="center",
-                va="center", color=style.INK, bbox=dict(boxstyle="round,pad=0.1", fc=style.SURFACE, ec="none",
-                                                        alpha=0.75))
+                va="center", color=style.INK, path_effects=style.halo(3))
     cb = fig.colorbar(pc, ax=ax, orientation="horizontal", fraction=0.04, pad=0.06, shrink=0.6)
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=9, length=0)

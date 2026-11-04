@@ -116,7 +116,7 @@ def main():
         ax1.text(lx, ly, f"{name}\n{jobs / 1000:.0f}k" if "\n" in name else f"{name} {jobs / 1000:.0f}k", fontsize=7.5 if core else 6.8,
                  fontweight="semibold" if core else "normal", color=style.INK if core else style.INK_2,
                  ha="left" if np.cos(a) >= 0 else "right", va="center", zorder=6,
-                 bbox=dict(boxstyle="round,pad=0.15", fc=style.SURFACE, ec="none", alpha=0.85))
+                 path_effects=style.halo())
     outlines(ax1, d, labels=False)
     legend_patches(ax1, [cm1(i) for i in range(5)], ["50–500", "500–1.5k", "1.5–4k", "4–10k", "10k+"],
                    "Jobs per 250 m cell")

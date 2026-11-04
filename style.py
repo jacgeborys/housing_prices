@@ -112,6 +112,12 @@ def header(fig, title, subtitle=None, y=0.995):
         fig.text(0.01, y - gap, subtitle, fontsize=11.5, color=INK_2, va="top", ha="left")
 
 
+def halo(width=2.5, color=None):
+    """path_effects for a map label: a soft buffer in the page color instead of a box (2026-11-04)."""
+    import matplotlib.patheffects as pe
+    return [pe.withStroke(linewidth=width, foreground=color or SURFACE)]
+
+
 def byline(fig, y=0.995, color=MUTED, fontsize=9, x=0.99):
     """Author credit, top right of every slide."""
     fig.text(x, y, BYLINE, fontsize=fontsize, color=color, va="top", ha="right")

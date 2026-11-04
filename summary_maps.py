@@ -63,7 +63,7 @@ def outlines(ax, d, labels=True):
         for _, r in d.iterrows():
             p = r.geometry.representative_point()
             ax.text(p.x, p.y, r["district"], fontsize=6.5, color=style.INK, ha="center", va="center", zorder=6,
-                    bbox=dict(boxstyle="round,pad=0.12", fc=style.SURFACE, ec="none", alpha=0.7))
+                    path_effects=style.halo())
 
 
 FEATURES = ["log2_trips", "walk_metro_km", "walk_rail_km", "walk_tram_km", "walk_bus_km", "walk_park_km", "walk_school_km",
