@@ -101,7 +101,7 @@ skips when its csv exists: remove or rename `access_am_peak.csv`, it resumes per
 
 **Wording 2026-11-04**: cooperative-right flats are "often missing" from the register (was "never enter": not verified, coverage of spółdzielcze własnościowe prawo varies) on slides 23, 32, r01 and r99; r98 retitled "Some other cities" (no promise of more cities, maps enlarged); r99 "Coming next" -> "Other cities: mapped too"; flat-page map label has a white halo instead of a box.
 
-**Colors 2026-11-04**: r01/r03 new = green (style.AQUA), resale = blue, as on the flat pages. RCN record counts (lokale layer, city bounding boxes, not downloaded): Kraków 130,790, Wrocław 74,331, Gdańsk 190,579 for scale; years unknown until fetched.
+**Colors 2026-11-04**: r01/r03 new = blue, resale = orange (green tried and dropped the same day; blue/orange stays apart under simulated protan/deutan/tritan vision, dE 97-116). RCN record counts (lokale layer, city bounding boxes, not downloaded): Kraków 130,790, Wrocław 74,331, Gdańsk 190,579 for scale; years unknown until fetched.
 
 **Batch 2 PDF (2026-11-04)**: `output/report/warsaw_beyond_price_batch2.pdf`, slides 14-28 of `selected/` (night-lights cover to flippers), built by `build_report.py` next to batch 1; polish planned for next week.
 
