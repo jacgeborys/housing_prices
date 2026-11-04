@@ -179,6 +179,9 @@ def transit_x_price(v, d, w):
 
 
 # 12 -------------------------------------------------------------------------------------------
+MIN_TILE = 12                                # priced buildings in a compass tile's window (its sector and both neighbors)
+
+
 def price_compass(v, d):
     from pyproj import Transformer
     cx, cy = Transformer.from_crs(4326, 2180, always_xy=True).transform(21.0060, 52.2318)
@@ -189,25 +192,28 @@ def price_compass(v, d):
     n_sec, r_max = 24, 12
     sec = (th / (2 * np.pi / n_sec)).astype(int)
     ring = r.astype(int)
-    df = pd.DataFrame({"sec": sec, "ring": ring, "p": v["value_2025"].to_numpy()})
+    df = pd.DataFrame({"sec": sec, "ring": ring, "p": v["value_2025"].to_numpy(),
+                       "w": np.minimum(v["n"].to_numpy(float), 20)})          # busy buildings count more, capped
     df = df[df["ring"] < r_max]
-    g = df.groupby(["ring", "sec"])["p"].agg(["median", "size"])
     grid = np.full((r_max, n_sec), np.nan)
-    for (ri, si), row in g.iterrows():
-        if row["size"] >= 5:
-            grid[ri, si] = row["median"]
+    for ri in range(r_max):                  # each tile: its own direction and the one on each side, same ring, so one
+        rr = df[df["ring"] == ri]            # estate (a few buildings in Bielany forest) cannot color a tile on its own
+        for si in range(n_sec):              # and a river or park sector is bridged by its neighbors
+            c = rr[rr["sec"].isin([(si - 1) % n_sec, si, (si + 1) % n_sec])].sort_values("p")
+            if len(c) >= MIN_TILE and (rr["sec"] == si).any():
+                cw = c["w"].cumsum().to_numpy()
+                grid[ri, si] = c["p"].to_numpy()[np.searchsorted(cw, cw[-1] / 2)]   # weighted median
 
-    fig = page("Does direction matter? Up to 20% at the same distance",
-               wrap("Typical-flat price by direction and distance from the Palace of Culture", 80),
-               f"Median value of a typical flat (2025 PLN/m²) per cell: {n_sec} directions × 1 km rings, cells "
-               "with ≥ 5 priced buildings. Directions are compass bearings from PKiN. " + style.SOURCE)
+    fig = page("Price compass from the Palace of Culture",
+               "Typical-flat price per m², 2025, by direction and distance",
+               f"Tile = sales-weighted median of typical-flat values (2025 PLN/m²) in its direction and the one on each side, "
+               f"1 km rings, ≥ {MIN_TILE} priced buildings; blank where none in its own direction. " + style.SOURCE)
     ax = fig.add_axes([0.08, 0.13, 0.84, 0.70], projection="polar")
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     T, R = np.meshgrid(np.linspace(0, 2 * np.pi, n_sec + 1), np.arange(r_max + 1))
-    vmin, vmax = np.nanquantile(grid, [0.03, 0.97])
-    pc = ax.pcolormesh(T, R, grid, cmap=style.PRICE_CMAP, vmin=vmin, vmax=vmax, edgecolors=style.SURFACE,
-                       linewidth=0.6)
+    from price_ridgelines import RAMP                            # the cover's colors
+    pc = ax.pcolormesh(T, R, grid, cmap=RAMP, vmin=12000, vmax=24000, edgecolors=style.SURFACE, linewidth=0.6)
     ax.set_ylim(0, r_max)
     ax.set_yticks([2, 4, 6, 8, 10])
     ax.set_yticklabels(["2 km", "4", "6", "8", "10"], fontsize=8.5, color=style.INK_2)
