@@ -139,7 +139,6 @@ def other_cities(fig, q, cpi, base=2016):
     for side in ("left", "right", "top"):
         ax.spines[side].set_visible(False)
     ax.set_title(f"And elsewhere? After inflation, {base} → {REF_YEAR}", fontsize=11, loc="left")
-    fig.text(0.86, 0.135, "Gdańsk and\nLublin: more soon", fontsize=9.5, color=style.INK_2, va="center")
 
 
 # 2 --------------------------------------------------------------------------------------------
