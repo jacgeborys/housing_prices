@@ -63,6 +63,8 @@ def month(d):
 
 def num(v, d=1):
     s = f"{v:.{d}f}"
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")                  # 28 m², not 28.00 m²; 47.5 stays
     return s.replace(".", ",") if LANG["code"] == "pl" else s
 
 
@@ -124,7 +126,7 @@ def notes_block(fig, notes, x, y, width=48, size=9.2):
 
 def value_page(a, d, label, out):
     t, me, flat, now = d["t"], d["me"], d["flat"], d["now"]
-    AREA, storeys = flat["m2"], d["stories"]
+    AREA, storeys = flat["m2"], d["storeys"]
     dec = d["drv"].loc[d["drv"]["osm_id"] == me["osm_id"], "decade_end"]
     dec_end = float(dec.iloc[0]) if len(dec) else float(t.loc[t["osm_id"] == me["osm_id"], "decade_end"].dropna().iloc[0])
     decade = f"{int(dec_end) - 9}–{int(dec_end)}" if dec_end > 1940 else T("pre-war", "przedwojenny")
@@ -135,17 +137,20 @@ def value_page(a, d, label, out):
     reno_all = near[near["flip"] & (near["year"] >= 2021) & near["area"].between(AREA - 15, AREA + 15)]
     a_lo, a_mid, a_hi = asis["today"].quantile([.25, .5, .75]) * AREA
     r_lo, r_mid, r_hi = reno_all["today"].quantile([.25, .5, .75]) * AREA
-    print(f"{district}, {stories} stories, {decade}; as-is {len(asis)} sales, {a_lo:,.0f}-{a_hi:,.0f} (mid {a_mid:,.0f}); "
+    print(f"{district}, {storeys} stories, {decade}; as-is {len(asis)} sales, {a_lo:,.0f}-{a_hi:,.0f} (mid {a_mid:,.0f}); "
           f"renovated {len(reno_all)} flips, {r_lo:,.0f}-{r_hi:,.0f} (mid {r_mid:,.0f})")
     ground, top = flat["floor"] == 1, flat["floor"] >= storeys
     floor_en = "ground floor" if ground else ("top floor" if top else f"floor {flat['floor'] - 1}")
     floor_pl = "parter" if ground else ("ostatnie piętro" if top else f"{flat['floor'] - 1}. piętro")
 
-    fig = page(T(f"{label}: about {KR(a_lo, a_hi)} as it is, ~{K(r_mid)} renovated",
+    rooms_en = "1 room" if flat["rooms"] == 1 else f"{flat['rooms']} rooms incl. kitchen"
+    title_en = (f"{label}: ~{K(a_mid)} as it is, ~{K(r_mid)} renovated" if a.public     # same numbers as the big figures
+                else f"{label}: about {KR(a_lo, a_hi)} as it is, ~{K(r_mid)} renovated")
+    fig = page(T(title_en,
                  f"{label}: {KR(a_lo, a_hi)} bez remontu, ok. {K(r_mid)} po"),
-               T(f"{num(AREA, 2)} m², {flat['rooms']} rooms incl. kitchen, {floor_en} of a {stories}-story {decade} block "
+               T(f"{num(AREA, 2)} m², {rooms_en}, {floor_en} of a {storeys}-story {decade} block "
                  f"({district})",
-                 f"{num(AREA, 2)} m², {flat['rooms']} izby, {floor_pl}, {stories}-kondygnacyjny blok z lat {decade} ({district})"),
+                 f"{num(AREA, 2)} m², {flat['rooms']} izby, {floor_pl}, {storeys}-kondygnacyjny blok z lat {decade} ({district})"),
                T(f"Comparables: resales since 2023 within {R} m in {decade} buildings, {AREA - 10:.0f}–{AREA + 10:.0f} m², in today's "
                  f"prices (city index); renovated = resold within a year of purchase, since 2021, {AREA - 15:.0f}–{AREA + 15:.0f} m². "
                  "Condition is not in the register. Source: GUGiK RCN, BDOT10k, GIS Expert.",
@@ -214,7 +219,12 @@ def value_page(a, d, label, out):
                        f"{word_pl}: {'tu bez wyraźnej zniżki' if g > -3 else f'tu {g:.0f} %'}. {sel.sum()} takich sprzedaży w okolicy "
                        f"szło po {fmt(m_in)} zł/m², pozostałe {(~sel).sum()} po {fmt(m_out)}."))
     bld = t[(t["osm_id"] == me["osm_id"]) & (t["market"] == "secondary") & ~t["own_flat"] & (t["year"] >= 2023)]
-    if len(bld):
+    if len(bld) and a.public:          # sample page: the range only, no single stranger's sale
+        notes.append(T(f"Same building since 2023: {len(bld)} other resales, {fmt(bld['today'].min())}–"
+                       f"{fmt(bld['today'].max())} PLN/m² in today's prices, middle {fmt(bld['today'].median())}.",
+                       f"Ten sam budynek od 2023: {len(bld)} innych sprzedaży, {fmt(bld['today'].min())}–"
+                       f"{fmt(bld['today'].max())} zł/m² w dzisiejszych cenach, środek {fmt(bld['today'].median())}."))
+    elif len(bld):
         best = bld.loc[bld["today"].idxmax()]
         notes.append(T(f"Same building since 2023: {len(bld)} other resales, {fmt(bld['today'].min())}–{fmt(best['today'])} PLN/m² "
                        f"in today's prices; the top one, {num(best['area'])} m² for {K(best['price'])} ({month(best['date'])}).",
@@ -230,7 +240,8 @@ def value_page(a, d, label, out):
                        f"{fmt(new['price_m2'].median())} PLN/m², {gap:.0f} % above second-hand flats around.",
                        f"Nowe mieszkania w okolicy: {len(new)} sprzedanych przez deweloperów w ostatnim roku ({where}), "
                        f"{fmt(new['price_m2'].median())} zł/m², {gap:.0f} % drożej niż z drugiej ręki."))
-    notes.append(T(f"The asking price to aim at: {KR(a_mid, a_hi)} for a well-kept flat, {KR(r_lo, r_hi)} if the renovation "
+    if not a.public:                   # seller advice: private pages only
+      notes.append(T(f"The asking price to aim at: {KR(a_mid, a_hi)} for a well-kept flat, {KR(r_lo, r_hi)} if the renovation "
                    "still looks fresh.",
                    f"Cena do celowania: {KR(a_mid, a_hi)} za zadbane mieszkanie, {KR(r_lo, r_hi)}, jeśli remont "
                    "wciąż wygląda świeżo."))
@@ -256,8 +267,9 @@ def value_page(a, d, label, out):
         for dte, p, pr in zip(mine["date"], mp, mine["LOK_CENA_BRUTTO"].astype(float)):
             a2.annotate(K(pr), (dte, p), xytext=(-8, 8), textcoords="offset points", ha="right", fontsize=8.5,
                         color=style.RED, fontweight="bold", zorder=7)
-    qs = plain.set_index("date")["price_m2"].resample("QS").agg(["median", "size"])
-    m = qs["median"].where(qs["size"] >= 8).rolling(3, min_periods=2, center=True).median()   # a thin last quarter is left out
+    qs = plain.set_index("date")["price_m2"].resample("2QS-JAN").agg(["median", "size"])   # half-years: quarters ran thin
+    qs.index = qs.index + pd.DateOffset(months=3)                                          # plotted mid half-year
+    m = qs["median"].where(qs["size"] >= 8)                                                # a thin last half-year is left out
     a2.plot(m.index, m.values, color=style.BLUE, lw=2, label=T("median, second-hand", "mediana z drugiej ręki"))
     end = pd.Timestamp("2026-10-01")
     a2.fill_between([pd.Timestamp("2026-01-01"), end], a_lo / AREA, a_hi / AREA, color=style.BLUE, alpha=0.18, lw=0)
@@ -396,10 +408,12 @@ def main():
     ap.add_argument("--rooms", type=int, help="izby as in the register (rooms + a separate kitchen)")
     ap.add_argument("--floor", type=int, help="RCN floor, ground floor = 1")
     ap.add_argument("--lang", default="en")
+    ap.add_argument("--public", action="store_true", help="sample page for publishing: no single sale named, no seller advice")
+    ap.add_argument("--label", help="title instead of 'street no/flat', e.g. for a sample flat with an invented number")
     a = ap.parse_args()
     LANG["code"] = a.lang
     d = load(a)
-    label = f"{a.street} {a.no}/{a.flat}"
+    label = a.label or f"{a.street} {a.no}/{a.flat}"
     out = "output/report/flats/pl" if a.lang == "pl" else "output/report/flats"
     os.makedirs(out, exist_ok=True)
     val = value_page(a, d, label, out)
