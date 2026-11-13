@@ -134,7 +134,7 @@ def legend_patches(ax, colours, labels, title, loc="upper right"):
 
 # 6 --------------------------------------------------------------------------------------------
 def cheaper_than_expected(v, d, w):
-    fig = page("What's an address worth? Up to 12%, either way",
+    fig = page("What's an address worth? Up to 12% by district",
                wrap("Where flats sell for more (red) or less (blue) than their location, transit, amenities, noise "
                     "and building predict", 80),
                "Median per 600 m hexagon (≥ 5 buildings): actual vs out-of-sample predicted value of a typical flat "
@@ -247,8 +247,8 @@ def noise(v, d, w):
     k = coef()
     fig = page("Does noise cost money? A little",
                f"About {k['noise_rail_db']:+.0f}% per 10 dB of tram and train noise, {k['noise_road_db']:+.1f}% for road noise",
-               "EEA noise data (2026), the louder of road and rail (rail includes trams). Bars: typical-flat price net of district "
-               f"and other features, by tram & train noise at the façade. " + style.SOURCE)
+               "Map: EEA noise data (2026), the louder of road and rail (rail includes trams). Bars: typical-flat price net of "
+               f"district and other features, by tram & train noise only. " + style.SOURCE)
     ax = basemap(fig, d, w)
     arrs = []
     for s in ("road", "rail"):

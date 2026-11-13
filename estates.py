@@ -54,7 +54,8 @@ def main():
     g = ranking(v, msi)
     g.drop(columns=["var"]).round(3).to_csv("output/analysis/estates_ranking.csv", index=False)
 
-    fig = page("Warsaw's over- and under-achievers",
+    top = g.loc[g["shrunk_pct"].idxmax()]
+    fig = page(f"Which neighborhoods beat their prediction? {top['name']}, by {top['shrunk_pct']:.0f}%",
                "Neighborhoods that sell furthest above or below what their location, amenities and buildings predict",
                f"MSI neighborhoods with ≥ {MIN_BUILDINGS} priced buildings. Value = average gap between a building's typical-flat price and "
                "the out-of-sample prediction, shrunk toward 0 for small areas; bars = 95% interval. " + style.SOURCE)

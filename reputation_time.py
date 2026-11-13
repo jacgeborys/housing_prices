@@ -73,7 +73,7 @@ def main():
     ch.to_file(OUT, layer="building_change", driver="GPKG")
     msi.merge(area, left_on="name", right_index=True).to_file(OUT, layer="msi_change", driver="GPKG")
 
-    fig = page("The inner city pulled ahead",
+    fig = page("Who gained since 2010? The inner city, whatever its name",
                f"Same buildings, {EARLY[0]}–{str(EARLY[1])[2:]} vs {LATE[0]}–{str(LATE[1])[2:]}: "
                "price change relative to Warsaw as a whole",
                f"Resales only, buildings that existed before 2006; prices net of the city-wide index (0% = moved with the city). Map: 600 m "

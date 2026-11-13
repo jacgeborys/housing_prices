@@ -85,7 +85,7 @@ def main():
     fig = page("New among the old",
                "Infill buildings (plomby) vs new buildings in new estates",
                f"Age: GIS Expert and others. Infill: ≥ {SHARE:.0%} of dated buildings within {NEAR_M} m built before 1961; new estate: ≥ {SHARE:.0%} built "
-               f"2001 or later. Vs old neighbours = median of priced pre-1961 buildings within {NEAR_M} m. " + style.SOURCE)
+               f"2001 or later. Vs old neighbors = median of priced pre-1961 buildings within {NEAR_M} m. " + style.SOURCE)
     ax = basemap(fig, d, w)
     ax.set_position([0.03, 0.40, 0.60, 0.46])
     col = {"infill": style.MAGENTA, "new estate": style.BLUE, "mixed": "#b9b7ae"}
@@ -130,7 +130,7 @@ def main():
     a4.set_xlim(min(0, by_d["prem"].min()) - 3, by_d["prem"].max() * 1.3)
     style.pct(a4, "x")
     style.vgrid_only(a4)
-    a4.set_title("Infill premium over old neighbours", fontsize=10.5)
+    a4.set_title("Infill premium over old neighbors", fontsize=10.5)
 
     fig.text(0.03, 0.885, wrap(f"{(new['kind'] == 'infill').sum():,} new buildings sit among pre-1961 ones. They sell "
                                f"{summ.loc['infill', 'prem_old']:+.0f}% above the old buildings next door, and "

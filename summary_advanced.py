@@ -68,7 +68,7 @@ def district_anatomy(v):
     tot = total.loc[c.index] * 100
 
     cols = [GROUP_COLOURS[g] for g in c.columns]
-    fig = page("What goes with a district's price",
+    fig = page("Why is Żoliborz dear? Location, then the name",
                wrap("Each bar is a district; the dot is how much dearer (+) or cheaper (−) its flats are than the "
                     "city average. The colors show what that gap goes with", 80),
                f"Regression on all features, no district variable ({len(v) / 1000:.1f}K buildings); bars = coefficient × "
