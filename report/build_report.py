@@ -63,7 +63,8 @@ SELECTED = [   # the posting set, two batches (2026-11-04) -> output/report/sele
     "44_reputation_glow",          # cover: night lights (2026-11-04; alternatives 42 ridgelines, 43 spikes)
     "03_what_drives_price", "18_building_age", "21_infill", "11_transit_x_price", "24_transit_access",
     "08_cafes", "09_noise", "20_trees",
-    "10_district_anatomy", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
+    "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
+    "10_district_anatomy",         # dense: last (2026-11-14)
 ]   # out: 41_pairs (user, 2026-11-04), 30_forward_test (repeats 14; its Stary Żoliborz +31 % clashes with 15's +23 %)
 
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
@@ -83,10 +84,6 @@ def rebuild():
             sys.exit(f"{script} failed")
 
 
-REPUTATION_POST = ["44_reputation_glow", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
-                   "10_district_anatomy"]   # 2026-11-14: the reputation slides as one post; the dense anatomy last
-
-
 def pngs_to_pdf(path, pngs):
     """One 8 x 10 in page per image, embedded losslessly."""
     with PdfPages(path) as pdf:
@@ -100,10 +97,11 @@ def pngs_to_pdf(path, pngs):
 
 
 def post():
-    """Only the reputation post's PDF, from output/summary/ (touches nothing else)."""
-    path = os.path.join(OUT, "warsaw_reputation_post.pdf")
-    pngs_to_pdf(path, [os.path.join(ROOT, "output", "summary", f"{s}.png") for s in REPUTATION_POST])
-    print(f"{len(REPUTATION_POST)} slides -> {path} ({os.path.getsize(path) / 1e6:.1f} MB)")
+    """Only the batch-2 PDF (SELECTED from its cover on), from output/summary/; touches nothing else."""
+    b2 = SELECTED[SELECTED.index("44_reputation_glow"):]
+    path = os.path.join(OUT, "warsaw_beyond_price_batch2.pdf")
+    pngs_to_pdf(path, [os.path.join(ROOT, "output", "summary", f"{s}.png") for s in b2])
+    print(f"{len(b2)} slides -> {path} ({os.path.getsize(path) / 1e6:.1f} MB)")
 
 
 def assemble():
@@ -148,7 +146,7 @@ def assemble():
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--rebuild", action="store_true", help="rerun the figure scripts first")
-    ap.add_argument("--post", action="store_true", help="only write the reputation post's PDF")
+    ap.add_argument("--post", action="store_true", help="only write the batch-2 PDF")
     a = ap.parse_args()
     if a.post:
         post()
