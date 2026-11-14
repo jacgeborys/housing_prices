@@ -83,6 +83,29 @@ def rebuild():
             sys.exit(f"{script} failed")
 
 
+REPUTATION_POST = ["44_reputation_glow", "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
+                   "10_district_anatomy"]   # 2026-11-14: the reputation slides as one post; the dense anatomy last
+
+
+def pngs_to_pdf(path, pngs):
+    """One 8 x 10 in page per image, embedded losslessly."""
+    with PdfPages(path) as pdf:
+        for src in pngs:
+            fig = plt.figure(figsize=(8, 10), dpi=150)
+            ax = fig.add_axes([0, 0, 1, 1])
+            ax.imshow(Image.open(src).convert("RGB"), interpolation="antialiased")
+            ax.axis("off")
+            pdf.savefig(fig, dpi=300 if "32_price_points" in src else 150)
+            plt.close(fig)
+
+
+def post():
+    """Only the reputation post's PDF, from output/summary/ (touches nothing else)."""
+    path = os.path.join(OUT, "warsaw_reputation_post.pdf")
+    pngs_to_pdf(path, [os.path.join(ROOT, "output", "summary", f"{s}.png") for s in REPUTATION_POST])
+    print(f"{len(REPUTATION_POST)} slides -> {path} ({os.path.getsize(path) / 1e6:.1f} MB)")
+
+
 def assemble():
     os.makedirs(OUT, exist_ok=True)
     for f in os.listdir(OUT):                     # old numbered copies only; src/ and other files stay
@@ -94,15 +117,7 @@ def assemble():
     if missing:
         sys.exit("missing slides (run with --rebuild): " + ", ".join(missing))
     def write_pdf(path, items):
-        with PdfPages(path) as pdf:
-            for d, stem in items:
-                src = os.path.join(folders[d], f"{stem}.png")
-                fig = plt.figure(figsize=(8, 10), dpi=150)
-                ax = fig.add_axes([0, 0, 1, 1])
-                ax.imshow(Image.open(src).convert("RGB"), interpolation="antialiased")
-                ax.axis("off")
-                pdf.savefig(fig, dpi=300 if stem == "32_price_points" else 150)
-                plt.close(fig)
+        pngs_to_pdf(path, [os.path.join(folders[d], f"{stem}.png") for d, stem in items])
 
     for i, (d, stem) in enumerate(SLIDES, 1):
         shutil.copyfile(os.path.join(folders[d], f"{stem}.png"), os.path.join(OUT, f"{i:02d}_{stem}.png"))
@@ -133,6 +148,11 @@ def assemble():
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--rebuild", action="store_true", help="rerun the figure scripts first")
-    if ap.parse_args().rebuild:
+    ap.add_argument("--post", action="store_true", help="only write the reputation post's PDF")
+    a = ap.parse_args()
+    if a.post:
+        post()
+        sys.exit()
+    if a.rebuild:
         rebuild()
     assemble()
