@@ -69,8 +69,8 @@ def district_anatomy(v):
 
     cols = [GROUP_COLOURS[g] for g in c.columns]
     fig = page("Why is Żoliborz dear? Location, then the name",
-               wrap("Each bar is a district; the dot is how much dearer (+) or cheaper (−) its flats are than the "
-                    "city average. The colors show what that gap goes with", 80),
+               wrap("How much of each district's price goes with location, transit and the building, and how much "
+                    "is just the name", 80),
                f"Regression on all features, no district variable ({len(v) / 1000:.1f}K buildings); bars = coefficient × "
                f"distance from the city average. Right-bank flats sell ~{abs(river_pct()):.0f}% below left-bank ones: not counted (mostly reputation). " + style.SOURCE)
     ax = fig.add_axes([0.24, 0.20, 0.72, 0.62])

@@ -61,7 +61,7 @@ SELECTED = [   # the posting set, two batches (2026-11-04) -> output/report/sele
                                    #   --rooms 2 --floor 3 --public --label "A 33 m² flat on al. Solidarności"
     # batch 2, "Warsaw, beyond price": what goes with price, and what's left (the address)
     "44_reputation_glow",          # cover: night lights (2026-11-04; alternatives 42 ridgelines, 43 spikes)
-    "03_what_drives_price", "18_building_age", "21_infill", "11_transit_x_price", "24_transit_access",
+    "03_what_drives_price", "18_building_age", "11_transit_x_price", "24_transit_access",
     "08_cafes", "09_noise", "20_trees",
     "06_cheaper_than_expected", "15_estates", "14_reputation_over_time",
     "10_district_anatomy",         # dense: last (2026-11-14)

@@ -135,8 +135,7 @@ def legend_patches(ax, colours, labels, title, loc="upper right"):
 # 6 --------------------------------------------------------------------------------------------
 def cheaper_than_expected(v, d, w):
     fig = page("What's an address worth? Up to 12% by district",
-               wrap("Where flats sell for more (red) or less (blue) than their location, transit, amenities, noise "
-                    "and building predict", 80),
+               "Red: flats sell above the model's prediction. Blue: below",
                "Median per 600 m hexagon (≥ 5 buildings): actual vs out-of-sample predicted value of a typical flat "
                "(spatial CV, no district variable). It holds reputation, condition, finish and views. " + style.SOURCE)
     ax = basemap(fig, d, w, box=[0.02, 0.335, 0.96, 0.52])

@@ -151,10 +151,8 @@ def main():
         ax3.spines[sp].set_visible(False)
     ax3.set_title("Minutes to the center (Palace of Culture) by public transport, 7–9 am, typical flat in the district",
                   fontsize=10.5, loc="left")
-    fig.text(0.03, 0.885, wrap(f"Offices cluster at Rondo Daszyńskiego ({CLUSTERS[0][3] / 1000:.0f}k jobs), ONZ / Central "
-                               f"Station ({CLUSTERS[1][3] / 1000:.0f}k) and Służewiec ({CLUSTERS[2][3] / 1000:.0f}k). By public "
-                               f"transport the center is {mins.iloc[0]:.0f} minutes away in {mins.index[0]} and "
-                               f"{mins.iloc[-1]:.0f} in {mins.index[-1]}.", 100),
+    fig.text(0.03, 0.885, wrap(f"By public transport the center is {mins.iloc[0]:.0f} minutes away in {mins.index[0]} and "
+                               f"{mins.iloc[-1]:.0f} in {mins.index[-1]}.", 100),     # office clusters: labelled on the map
              fontsize=10.5, fontweight="semibold", va="top")
     save(fig, "24_transit_access.png")
     print(mins.round(0).to_string())
