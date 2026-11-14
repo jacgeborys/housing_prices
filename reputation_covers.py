@@ -79,11 +79,17 @@ def base_axes(fig, d, river):
     return ax
 
 
-def labels(ax, reps, dy=2000):
+def labels(ax, reps, dy=2000, values=None):
+    """District names; `values` {district: %} adds the district's median gap under its name, in the ramp's color."""
     for name, (dx, ddy) in LABELS.items():
         pt = reps[name]
         ax.text(pt.x + dx, pt.y + ddy + dy, name, color=INK, fontsize=8.5, ha="center", zorder=10_000,
                 fontweight="semibold", path_effects=[pe.withStroke(linewidth=2.5, foreground=BG)])
+        if values and name in values:
+            v = values[name]
+            ax.text(pt.x + dx, pt.y + ddy + dy - 300, f"{v:+.0f}%".replace("-", "−"),
+                    color=RAMP(Normalize(-LIM, LIM)(v)), fontsize=15, ha="center", va="top", zorder=10_000,
+                    fontweight="bold", path_effects=[pe.withStroke(linewidth=3.5, foreground=BG)])
 
 
 def spikes(b, d, river):
@@ -119,10 +125,12 @@ def glow(b, d, river):
         c[:, 3] = alpha
         ax.scatter(s["x"], s["y"], s=size * scale, c=c, lw=0, zorder=3)
     reps = frame(fig, d, "Warsaw, beyond price",
-                 "Every building with flat sales, lit warm where flats sell for more than their location\n"
-                 "and building predict, cold where they sell for less. The glow is the address.",
-                 "Bigger dot = more sales.", len(b))
-    labels(ax, reps)
+                 "Know a building's location, transit, cafés, parks, noise and age, and you can predict what\n"
+                 "its flats sell for. What's left over is the address itself: its reputation. Every building\n"
+                 "with flat sales glows warm where flats sell above that prediction, cold where they sell below.",
+                 "Bigger dot = more sales; numbers = district median.", len(b))
+    med = b.groupby("district")["resid_pct"].median()
+    labels(ax, reps, values={k: med[k] for k in (med.idxmax(), med.idxmin())})
     mpl.rcParams["savefig.facecolor"] = BG
     save(fig, "44_reputation_glow.png")
 
