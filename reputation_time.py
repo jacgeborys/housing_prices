@@ -73,7 +73,7 @@ def main():
     ch.to_file(OUT, layer="building_change", driver="GPKG")
     msi.merge(area, left_on="name", right_index=True).to_file(OUT, layer="msi_change", driver="GPKG")
 
-    fig = page("Who gained since 2010? The inner city, whatever its name",
+    fig = page("Who gained since 2010? The inner city, whatever its reputation",
                f"Same buildings, {EARLY[0]}–{str(EARLY[1])[2:]} vs {LATE[0]}–{str(LATE[1])[2:]}: "
                "price change relative to Warsaw as a whole",
                f"Resales only, buildings that existed before 2006; prices net of the city-wide index (0% = moved with the city). Map: 600 m "
@@ -116,9 +116,9 @@ def main():
     style.hgrid_only(a2)
     a2.set_xlabel("Reputation today: median price vs model prediction")
     a2.set_ylabel("Change vs city, 2010–14 → 2021–25")
-    verdict = "low-reputation areas are catching up" if slope < -0.15 else \
-        "high-reputation areas are pulling away" if slope > 0.15 else "no clear catch-up either way"
-    a2.set_title(f"Neighborhoods: {verdict} (correlation {r:+.2f}); the two Pragas gain most", fontsize=11)
+    verdict = "poorly rated areas are catching up" if slope < -0.15 else \
+        "well rated areas are pulling away" if slope > 0.15 else "good and bad reputations gained alike"
+    a2.set_title(f"Neighborhoods: {verdict}; the two Pragas gain most", fontsize=11)
     gd = ch.groupby("district")["change_pct"].agg(["median", "size"])
     gain = gd.loc[gd["size"] >= 25, "median"].sort_values()
     fig.text(0.03, 0.885, wrap(f"Biggest gains against the city: {gain.index[-1]} ({gain.iloc[-1]:+.0f}%), "

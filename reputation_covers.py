@@ -48,18 +48,24 @@ def load():
     return b, d, river
 
 
-def frame(fig, d, title, subtitle, foot, n, footnote=None):
-    """footnote replaces the standard technical one (built from foot and n)."""
+def frame(fig, d, title, subtitle, foot, n, footnote=None, title_size=30, ends=None):
+    """footnote replaces the standard technical one (built from foot and n); ends = (low, high) words under the
+    colorbar's ends."""
     reps = d.set_index("district").geometry.representative_point()
     style.byline(fig, y=0.975, color=MUTED, fontsize=10, x=0.95)
-    fig.text(0.05, 0.955, title, color=INK, fontsize=30, fontweight="bold", va="top")
+    fig.text(0.05, 0.955, title, color=INK, fontsize=title_size, fontweight="bold", va="top")
     fig.text(0.05, 0.905, subtitle, color=MUTED, fontsize=12.5, va="top", linespacing=1.4)
-    cax = fig.add_axes([0.66, 0.075, 0.28, 0.012])
+    cax = fig.add_axes([0.66, 0.095, 0.28, 0.012])
     cb = plt.colorbar(plt.cm.ScalarMappable(norm=Normalize(-LIM, LIM), cmap=RAMP), cax=cax, orientation="horizontal")
     cb.outline.set_visible(False)
     cb.set_ticks([-10, 0, 10])
-    cb.set_ticklabels(["−10%", "as predicted", "+10%"])
+    lo, hi = (f"\n{w}" for w in ends) if ends else ("", "")
+    cb.set_ticklabels([f"−10%{lo}", "as predicted", f"+10%{hi}"])
     cax.tick_params(colors=MUTED, labelsize=9, length=0)
+    if ends:
+        for t, x in zip(cax.get_xticklabels(), (0.0, 0.5, 1.0)):
+            t.set_color(RAMP(x) if x != 0.5 else MUTED)
+            t.set_fontweight("semibold")
     cax.set_title("vs prediction", color=MUTED, fontsize=9, loc="left")
     fig.text(0.05, 0.022, footnote or f"Typical-flat price vs an out-of-sample prediction from location, transit, amenities, "
                           f"noise, green and building, {n:,} buildings with ≥ 3 sales,\naveraged over neighbors within "
@@ -125,10 +131,10 @@ def glow(b, d, river):
         c = cols.copy()
         c[:, 3] = alpha
         ax.scatter(s["x"], s["y"], s=size * scale, c=c, lw=0, zorder=3)
-    reps = frame(fig, d, "Warsaw, beyond prediction",
+    reps = frame(fig, d, "Warsaw's reputation: what a model can't predict",
                  "A model predicts what flats should cost from location, transit, cafés, parks, noise and the\n"
-                 "building. Warm: they sell for more. Cold: for less. The gap is the neighborhood's reputation.",
-                 "", len(b),
+                 "building. Warm: flats sell for more, a better reputation. Cold: for less, a worse one.",
+                 "", len(b), title_size=23, ends=("worse reputation", "better reputation"),
                  footnote=f"Each dot is a building with flat sales ({len(b):,}), bigger = more sales, colored by its "
                           f"area's gap within ~{SMOOTH_M} m.\nThe model never saw the area it predicts. "
                           f"Source: GUGiK RCN, OSM, BDOT10k.")
