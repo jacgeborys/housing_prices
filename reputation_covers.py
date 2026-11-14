@@ -48,7 +48,8 @@ def load():
     return b, d, river
 
 
-def frame(fig, d, title, subtitle, foot, n):
+def frame(fig, d, title, subtitle, foot, n, footnote=None):
+    """footnote replaces the standard technical one (built from foot and n)."""
     reps = d.set_index("district").geometry.representative_point()
     style.byline(fig, y=0.975, color=MUTED, fontsize=10, x=0.95)
     fig.text(0.05, 0.955, title, color=INK, fontsize=30, fontweight="bold", va="top")
@@ -60,9 +61,9 @@ def frame(fig, d, title, subtitle, foot, n):
     cb.set_ticklabels(["−10%", "as predicted", "+10%"])
     cax.tick_params(colors=MUTED, labelsize=9, length=0)
     cax.set_title("vs prediction", color=MUTED, fontsize=9, loc="left")
-    fig.text(0.05, 0.022, f"Typical-flat price vs an out-of-sample prediction from location, transit, amenities, noise, green "
-                          f"and building, {n:,} buildings with ≥ 3 sales,\naveraged over neighbors within ~{SMOOTH_M} m. "
-                          f"{foot} Source: GUGiK RCN, OSM, BDOT10k.", color=MUTED, fontsize=7.5, va="bottom")
+    fig.text(0.05, 0.022, footnote or f"Typical-flat price vs an out-of-sample prediction from location, transit, amenities, "
+                          f"noise, green and building, {n:,} buildings with ≥ 3 sales,\naveraged over neighbors within "
+                          f"~{SMOOTH_M} m. {foot} Source: GUGiK RCN, OSM, BDOT10k.", color=MUTED, fontsize=7.5, va="bottom")
     return reps
 
 
@@ -124,13 +125,17 @@ def glow(b, d, river):
         c = cols.copy()
         c[:, 3] = alpha
         ax.scatter(s["x"], s["y"], s=size * scale, c=c, lw=0, zorder=3)
-    reps = frame(fig, d, "Warsaw, beyond price",
-                 "Know a building's location, transit, cafés, parks, noise and age, and you can predict what\n"
-                 "its flats sell for. What's left over is the address itself: its reputation. Every building\n"
-                 "with flat sales glows warm where flats sell above that prediction, cold where they sell below.",
-                 "Bigger dot = more sales; numbers = district median.", len(b))
-    med = b.groupby("district")["resid_pct"].median()
-    labels(ax, reps, values={k: med[k] for k in (med.idxmax(), med.idxmin())})
+    reps = frame(fig, d, "Warsaw, beyond prediction",
+                 "A model predicts what flats should cost from location, transit, cafés, parks, noise and the\n"
+                 "building. Warm: they sell for more. Cold: for less. The gap is the neighborhood's reputation.",
+                 "", len(b),
+                 footnote=f"Each dot is a building with flat sales ({len(b):,}), bigger = more sales, colored by its "
+                          f"area's gap within ~{SMOOTH_M} m.\nThe model never saw the area it predicts. "
+                          f"Source: GUGiK RCN, OSM, BDOT10k.")
+    halo = [pe.withStroke(linewidth=2, foreground=BG)]
+    for name, pt in reps.items():                           # every district, small, at its own center
+        ax.text(pt.x, pt.y, name, color=INK, alpha=0.8, fontsize=6.5, ha="center", va="center", zorder=10_000,
+                fontweight="semibold", path_effects=halo)
     mpl.rcParams["savefig.facecolor"] = BG
     save(fig, "44_reputation_glow.png")
 
