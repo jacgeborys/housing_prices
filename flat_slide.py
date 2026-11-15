@@ -146,13 +146,17 @@ def value_page(a, d, label, out):
 
     rooms_en = ("1 room" if flat["rooms"] == 1 else       # register 'izby' = rooms + a separate kitchen
                 f"{flat['rooms'] - 1} room{'s' if flat['rooms'] > 2 else ''} + kitchen")
+    rooms_pl = ("1 pokój" if flat["rooms"] == 1 else "1 pokój z kuchnią" if flat["rooms"] == 2 else
+                f"{flat['rooms'] - 1} {'pokoje' if flat['rooms'] - 1 < 5 else 'pokoi'} z kuchnią")
     title_en = (f"{label}: ~{K(a_mid)} as it is, ~{K(r_mid)} renovated" if a.public     # same numbers as the big figures
                 else f"{label}: about {KR(a_lo, a_hi)} as it is, ~{K(r_mid)} renovated")
-    fig = page(T(title_en,
-                 f"{label}: {KR(a_lo, a_hi)} bez remontu, ok. {K(r_mid)} po"),
+    title_pl = (f"{label}: ok. {K(a_mid)} bez remontu, {K(r_mid)} po remoncie" if a.public
+                else f"{label}: {KR(a_lo, a_hi)} bez remontu, ok. {K(r_mid)} po")
+    fig = page(T(title_en, title_pl),
                T(f"{num(AREA, 2)} m², {rooms_en}, " + ("in " if a.public else f"{floor_en} of ") + f"{'an' if str(storeys).startswith(('8', '11', '18')) else 'a'} {storeys}-story {decade} block "
                  f"({district})",
-                 f"{num(AREA, 2)} m², {flat['rooms']} izby, {floor_pl}, {storeys}-kondygnacyjny blok z lat {decade} ({district})"),
+                 f"{num(AREA, 2)} m², {rooms_pl}, " + ("" if a.public else f"{floor_pl}, ")
+                 + f"w {storeys}-kondygnacyjnym bloku z lat {decade} ({district})"),
                T(f"Comparables: resales since 2023 within {R} m in {decade} buildings, {AREA - 10:.0f}–{AREA + 10:.0f} m², in today's "
                  f"prices (city index); renovated = resold within a year of purchase, since 2021, {AREA - 15:.0f}–{AREA + 15:.0f} m². "
                  "Condition is not in the register. Source: GUGiK RCN, BDOT10k, GIS Expert.",
@@ -291,8 +295,8 @@ def value_page(a, d, label, out):
     a2.text(pd.Timestamp("2026-01-15"), a_hi / AREA + 150, T("today, as is", "dziś, bez remontu"), fontsize=8,
             color=style.BLUE, va="bottom")
     a2.yaxis.set_major_locator(plt.MultipleLocator(2000))
-    a2.yaxis.set_major_formatter(plt.FuncFormatter(lambda v_, _: T(f"{v_ / 1000:.0f}K", f"{v_ / 1000:.0f} tys.")))
-    a2.set_ylabel(T("PLN per m², as paid", "zł za m², ceny zapłacone"))
+    a2.yaxis.set_major_formatter(plt.FuncFormatter(lambda v_, _: T(f"{v_ / 1000:.0f}K", f"{v_ / 1000:.0f}")))
+    a2.set_ylabel(T("PLN per m², as paid", "tys. zł za m², ceny transakcyjne"))
     style.hgrid_only(a2)
     a2.set_xlim(pd.Timestamp("2020-10-01"), pd.Timestamp("2026-12-31"))
     a2.set_ylim(bottom=max(0, plain.loc[plain["date"] >= "2021-01-01", "price_m2"].quantile(0.005) - 1000),

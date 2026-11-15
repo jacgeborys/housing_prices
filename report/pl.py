@@ -336,6 +336,137 @@ EXACT = {
     "Kraków's register is thin before 2021. Source: GUGiK RCN, BDOT10k.":
         "Typowe 2-pokojowe mieszkanie z drugiej ręki, 2025, w każdym budynku; każda mapa we własnej skali cen (Warszawa: 12–24K+).\n"
         "Krakowski rejestr jest ubogi przed 2021. Źródło: GUGiK RCN, BDOT10k.",
+
+    # --- r01 what's in the data
+    "What's in the data": "Co jest w danych",
+    "Every flat and house sale in Warsaw's official price register, 2006–2026":
+        "Każda sprzedaż mieszkania i domu w warszawskim Rejestrze Cen Nieruchomości, 2006–2026",
+    "Deeds in full ownership. New = sold by the developer (price agreed a year or two before the deed). Flats 2017–20 nearly empty, houses\n"
+    "recorded from 2017; cooperative flats are often missing; 2026 is partial. Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k.":
+        "Akty w pełnej własności. Nowe = sprzedane przez dewelopera (cena uzgodniona rok–dwa przed aktem). Mieszkania 2017–20 prawie puste,\n"
+        "domy od 2017; mieszkań spółdzielczych często brak; 2026 niepełny. " + SRC,
+    "265,364 flat sales: 157,473 resales and 107,544 from developers (347 without a market label), plus\n"
+    "7,605 house sales (recorded from 2017). Most trade in Mokotów, fewest in Rembertów.":
+        "265,364 sprzedanych mieszkań: 157,473 z drugiej ręki i 107,544 od deweloperów (347 bez oznaczenia\n"
+        "rynku) oraz 7,605 domów (od 2017). Najwięcej transakcji na Mokotowie, najmniej w Rembertowie.",
+    "thousand sales": "tys. transakcji",
+    "flat, resale": "mieszkania: wtórny",
+    "house, resale": "domy: wtórny",
+    "flat, new (developer)": "mieszkania: pierwotny",
+    "house, new (developer)": "domy: pierwotny",
+    "Sales per year": "Sprzedaż rocznie",
+    "thousand sales, 2006–2026": "tys. transakcji, 2006–2026",
+    "Where they are": "W których dzielnicach",
+
+    # --- r02 sizes
+    "What sizes sell where? Small in Praga, big in Wawer": "Jakie metraże gdzie? Małe na Pradze, duże w Wawrze",
+    "Flats sold by size, by district (2021–26) and across the years":
+        "Sprzedane mieszkania według metrażu: w dzielnicach (2021–26) i w kolejnych latach",
+    "RCN flat sales in full ownership, new and resale together. Size = usable floor area from the deed. Years with fewer than 300 sales left\n"
+    "out (2017–20, Warsaw's register data gap). Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k.":
+        "Sprzedaże mieszkań w pełnej własności z RCN, nowe i z drugiej ręki razem. Metraż = powierzchnia użytkowa z aktu. Lata z mniej niż 300\n"
+        "transakcjami pominięte (2017–20, luka w danych rejestru). " + SRC,
+    "Small flats (under 35 m²) are 27% of sales in Praga-Północ but 3% in Wesoła; flats of 70 m² or more\n"
+    "are most common in Wawer and Wilanów. Micro flats under 25 m² are rare: 3% of all sales.":
+        "Małe mieszkania (do 35 m²) to 27% transakcji na Pradze-Północ, ale 3% w Wesołej; te od 70 m²\n"
+        "są najczęstsze w Wawrze i Wilanowie. Mikro poniżej 25 m² to rzadkość: 3% wszystkich transakcji.",
+    "micro, under 25 m²": "mikro, do 25 m²",
+    "small, 25–35": "małe, 25–35",
+    "compact, 35–50": "kompaktowe, 35–50",
+    "medium, 50–70": "średnie, 50–70",
+    "spacious, 70–100": "przestronne, 70–100",
+    "large, 100+": "duże, 100+",
+    "micro": "mikro", "small": "małe", "compact": "kompaktowe", "medium": "średnie", "spacious": "przestronne",
+    "large": "duże",
+    "Share of flats sold, 2021–26": "Udział w sprzedanych mieszkaniach, 2021–26",
+    "Share of flats sold, by year": "Udział w sprzedanych mieszkaniach, rocznie",
+
+    # --- 01 prices over time
+    "Record prices? In real terms, just past 2008": "Rekordowe ceny? Realnie ledwie powyżej 2008",
+    "Flats cost 2.3× their 2013 price, but after inflation only 1.5×: just back at the 2008 peak":
+        "Mieszkania kosztują 2.3× tyle co w 2013, ale po inflacji tylko 1.5×: tyle co na szczycie z 2008",
+    "The same kind of flat each quarter (within-building comparisons). Real = deflated with GUS CPI to 2025 PLN. Dashed: 2017–20, too few sales\n"
+    "in Warsaw's register data. Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k.":
+        "Ten sam rodzaj mieszkania co kwartał (porównania w obrębie budynków). Realnie = po deflacji CPI GUS, zł z 2025. Przerywana: 2017–20,\n"
+        "za mało transakcji w rejestrze. " + SRC,
+    "Price as paid (nominal)": "Cena transakcyjna (nominalna)",
+    "In today's money (real, 2025 PLN)": "W dzisiejszych pieniądzach (realnie, zł z 2025)",
+    "PLN per m², typical flat": "zł za m², typowe mieszkanie",
+    "2008 peak, in today's money: 16,722": "Szczyt z 2008 w dzisiejszych pieniądzach: 16,722",
+    "mid-2026": "poł. 2026",
+    "price as paid\n2013 → 2025": "cena transakcyjna\n2013 → 2025",
+    "after inflation\n(today's money), 2013 → 2025": "po inflacji\n(dzisiejsze pieniądze), 2013 → 2025",
+    "2025 vs the 2008 peak,\nin today's money": "2025 wobec szczytu z 2008,\nw dzisiejszych pieniądzach",
+    "Warsaw ×1.4": "Warszawa ×1.4",
+    "And elsewhere? After inflation, 2016 → 2025": "A gdzie indziej? Po inflacji, 2016 → 2025",
+
+    # --- 03 what drives price
+    "What goes with the price of a Warsaw flat": "Co idzie w parze z ceną warszawskiego mieszkania",
+    "Buildings compared within the same district: how much more or less per m²":
+        "Budynki porównane w obrębie dzielnicy: o ile więcej lub mniej za m²",
+    "14,018 buildings with ≥ 3 flat sales; typical flat (date, floor, size removed); lines = 95% range. Złoty: % × the median building's price,\n"
+    "50 m². The features explain 62% of price differences. Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k.":
+        "14,018 budynków z ≥ 3 sprzedażami mieszkań; typowe mieszkanie (bez efektu daty, piętra, metrażu); kreski = przedział 95%. Złote: % ×\n"
+        "cena mediany budynków, 50 m². Cechy wyjaśniają 62% różnic cen. " + SRC,
+    "+11%  (off scale)": "+11%  (poza skalą)",
+    "+33%  (off scale)": "+33%  (poza skalą)",
+    "≈ on a\n50 m² flat": "≈ przy\n50 m²",
+    "Each km farther to walk to the\nmetro": "Każdy km dalej pieszo\ndo metra",
+    "Each km farther from the\ncenter": "Każdy km dalej\nod centrum",
+    "Tram & train noise 10 dB\nlouder": "Hałas tramwajów i pociągów\no 10 dB głośniejszy",
+    "Twice as many Żabka shops\nwithin a 7-min walk": "Dwa razy więcej Żabek\nw 7 min pieszo",
+    "Road noise 10 dB louder": "Hałas drogowy o 10 dB głośniejszy",
+    "Building 10 m taller": "Budynek wyższy o 10 m",
+    "Twice as many bus and tram\ndepartures": "Dwa razy więcej odjazdów\nautobusów i tramwajów",
+    "Built 1941–1960 (vs a 1961–90\nprefab block)": "Zbudowany 1941–1960 (wobec\nbloku z lat 1961–90)",
+    "Twice the building footprint": "Dwa razy większy obrys budynku",
+    "10 points more tree cover\nwithin 100 m": "10 pkt proc. więcej drzew\ndo 100 m",
+    "10 ha more park or forest\nwithin 500 m": "10 ha więcej parku lub lasu\ndo 500 m",
+    "Twice as many cafés,\nrestaurants and bars within a\n7-min walk": "Dwa razy więcej kawiarni,\nrestauracji i barów\nw 7 min pieszo",
+    "New building (sold by the\ndeveloper)": "Nowy budynek (sprzedaż\nod dewelopera)",
+    "Built 2011–2020 (vs a 1961–90\nprefab block)": "Zbudowany 2011–2020 (wobec\nbloku z lat 1961–90)",
+    "Change in price per m²": "Zmiana ceny za m²",
+    "Take two flats of the same size on the same floor, in the same district. One is in a 2011–20\n"
+    "building, the other in a 1961–90 prefab block: the newer one costs about 33% more per m²,\n"
+    "roughly 259k zł on a 50 m² flat. Every bar below is a comparison like that.":
+        "Weźmy dwa mieszkania tej samej wielkości, na tym samym piętrze, w tej samej dzielnicy. Jedno\n"
+        "w budynku z lat 2011–20, drugie w bloku z lat 1961–90: nowsze kosztuje za m² ok. 33% więcej,\n"
+        "czyli ok. 259 tys. zł przy 50 m². Każdy słupek poniżej to takie porównanie.",
+
+    # --- 23 blind spot
+    "What can't the register see? 1 in 6 flats": "Czego nie widzi rejestr? 1 na 6 mieszkań",
+    "Cooperative-right flats (spółdzielcze własnościowe prawo) often don't make it\ninto the register, and rented city blocks rarely sell":
+        "Spółdzielcze własnościowe prawa do lokalu często nie trafiają do rejestru,\na mieszkania komunalne rzadko są sprzedawane",
+    "Multi-family buildings only (3+ flats, BDOT10k / OSM); flats estimated from footprint × stories. Few sales = under 25% of the city's usual\n"
+    "sales per flat. The register mostly covers flats in full ownership. Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k.":
+        "Tylko budynki wielorodzinne (3+ mieszkań, BDOT10k / OSM); mieszkania szacowane z obrysu × kondygnacji. Mało transakcji = poniżej 25%\n"
+        "średniej miasta na mieszkanie. Rejestr obejmuje głównie pełną własność. " + SRC,
+    "1 in 6": "1 na 6",
+    "flats sits in a building with\nno recorded sale at all": "mieszkań jest w budynku bez żadnej\nzarejestrowanej sprzedaży",
+    "more are in buildings with\nonly a handful of sales": "kolejnych jest w budynkach\nz ledwie kilkoma sprzedażami",
+    "Share of the district's flats": "Udział mieszkań dzielnicy",
+    "No recorded sale": "Brak sprzedaży",
+    "Few sales": "Mało transakcji",
+    "Covered": "Pokryte",
+
+    # --- 35 house or flat
+    "A house costs 2.2× a flat, a square meter a third less": "Dom kosztuje 2.2× tyle co mieszkanie, metr o 1/3 mniej",
+    "Houses and resold flats sold 2023–2026 in the 14 districts with at least 40 house sales":
+        "Domy i mieszkania z drugiej ręki, 2023–2026, w 14 dzielnicach z min. 40 sprzedanymi domami",
+    "Houses: 2,629 sales with plot (RCN, from 2017); flats: 33,596 resales, same districts and years. House area: the deed's (33%) or estimated\n"
+    "from the building outline and floors. Source: GUGiK Rejestr Cen Nieruchomości (RCN), OSM, BDOT10k.":
+        "Domy: 2,629 transakcji z działką (RCN, od 2017); mieszkania: 33,596 z drugiej ręki, te same dzielnice i lata. Powierzchnia domu: z aktu\n"
+        "(33%) lub szacowana z obrysu i kondygnacji. " + SRC,
+    "In total a median house costs 1.6 M and a flat 0.73 M. Per m² it flips: 9.9K for a house, plot\n"
+    "included, 15.1K for a flat. A house buys much more space, and the land comes with it.":
+        "W sumie typowy dom kosztuje 1.6 M, a mieszkanie 0.73 M. Za metr odwrotnie: 9.9K za dom z działką,\n"
+        "15.1K za mieszkanie. Dom daje dużo więcej przestrzeni, a ziemia jest w pakiecie.",
+    "price paid, PLN": "zapłacona cena, zł",
+    "Resold flat": "Mieszkanie z drugiej ręki",
+    "House (with plot)": "Dom (z działką)",
+    "What you pay in total": "Ile płacisz w sumie",
+    "price per m² of living space, PLN": "cena za m² powierzchni użytkowej, zł",
+    "What a square meter costs": "Ile kosztuje metr",
 }
 
 PATTERNS = [
