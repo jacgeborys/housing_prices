@@ -3,6 +3,8 @@ The report: one deck in story order, built from the figure scripts of this proje
 
     python report/build_report.py             assemble output/report/ from the figures already built
     python report/build_report.py --rebuild   rerun every figure script first (pipeline order, ~1 h)
+    python report/build_report.py --pl        the map slides of SELECTED in Polish -> output/report/selected_pl/
+                                              (figure scripts run with REPORT_LANG=pl first: text in report/pl.py)
 
 Output: output/report/NN_<slide>.png (numbered copies) and output/report/warsaw_flats.pdf (one 8 x 10 in page per
 slide, images embedded losslessly). Slides come from output/summary/ (figure scripts in the project root and
@@ -67,6 +69,14 @@ SELECTED = [   # the posting set, two batches (2026-11-04) -> output/report/sele
     "10_district_anatomy",         # dense: last (2026-11-14)
 ]   # out: 41_pairs (user, 2026-11-04), 30_forward_test (repeats 14; its Stary Żoliborz +31 % clashes with 15's +23 %)
 
+PL_SCRIPTS = [   # the scripts behind the map slides of SELECTED; with REPORT_LANG=pl they write to output/summary_pl/ (2026-11-15)
+    "price_ridgelines.py", "price_points.py", "family_flats.py", "house_map.py", "house_cells.py", "offers/offers_story.py",
+    "flips.py", "summary_advanced.py", "reputation_covers.py", "building_age_story.py", "access/access_preview.py",
+    "summary_maps.py", "estates.py", "reputation_time.py", "report/other_cities.py",
+]
+NOT_MAPS = {"r01_data", "23_blind_spot", "01_prices_over_time", "r02_sizes", "35_house_or_flat", "03_what_drives_price",
+            "10_district_anatomy", "flat_aleja_solidarnosci_129_131_0"}   # charts only, or the flat page (flat_slide.py)
+
 PIPELINE = [   # figure scripts in dependency order (data fetches and price_index.py are not rerun here)
     "age_check.py", "price_drivers.py", "summary_charts.py", "summary_maps.py", "summary_advanced.py",
     "reputation_time.py", "estates.py", "infill.py", "flips.py", "building_age_story.py", "flat_sizes.py",
@@ -102,6 +112,34 @@ def post():
     path = os.path.join(OUT, "warsaw_beyond_price_batch2.pdf")
     pngs_to_pdf(path, [os.path.join(ROOT, "output", "summary", f"{s}.png") for s in b2])
     print(f"{len(b2)} slides -> {path} ({os.path.getsize(path) / 1e6:.1f} MB)")
+
+
+def polish(rebuild=True):
+    """The map slides of SELECTED in Polish, numbered as in selected/ -> output/report/selected_pl/."""
+    if rebuild:
+        env = dict(os.environ, LOKY_MAX_CPU_COUNT="8", REPORT_LANG="pl")
+        log = os.path.join(ROOT, "output", "summary_pl", "_untranslated.txt")
+        if os.path.exists(log):
+            os.remove(log)
+        for script in PL_SCRIPTS:
+            print(f"=== {script}", flush=True)
+            if subprocess.run([sys.executable, "-W", "ignore", script], cwd=ROOT, env=env).returncode:
+                sys.exit(f"{script} failed")
+    folders = {"summary": os.path.join(ROOT, "output", "summary_pl"), "src": os.path.join(OUT, "src_pl")}
+    where = {s: d for d, s in SLIDES}
+    where["r98_other_cities"] = "src"
+    sel = os.path.join(OUT, "selected_pl")
+    os.makedirs(sel, exist_ok=True)
+    for f in os.listdir(sel):
+        if f.endswith(".png"):
+            os.remove(os.path.join(sel, f))
+    n = 0
+    for i, stem in enumerate(SELECTED, 1):
+        if stem in NOT_MAPS:
+            continue
+        shutil.copyfile(os.path.join(folders[where[stem]], f"{stem}.png"), os.path.join(sel, f"{i:02d}_{stem}.png"))
+        n += 1
+    print(f"{n} map slides in Polish -> {sel}")
 
 
 def assemble():
@@ -147,7 +185,12 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--rebuild", action="store_true", help="rerun the figure scripts first")
     ap.add_argument("--post", action="store_true", help="only write the batch-2 PDF")
+    ap.add_argument("--pl", action="store_true", help="the map slides in Polish (reruns their scripts in Polish)")
+    ap.add_argument("--pl-copy", action="store_true", help="only copy the Polish map slides already built")
     a = ap.parse_args()
+    if a.pl or a.pl_copy:
+        polish(rebuild=a.pl)
+        sys.exit()
     if a.post:
         post()
         sys.exit()

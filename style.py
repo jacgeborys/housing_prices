@@ -194,3 +194,74 @@ def cpi_level(base_year=2025):
         lvl[y] = acc
     b = lvl[base_year]
     return {y: v / b for y, v in lvl.items()}
+
+
+# --- Polish version (2026-11-15) ----------------------------------------------
+# REPORT_LANG=pl: every string matplotlib draws goes through report/pl.py (exact strings, then regex templates),
+# numbers go Polish (17 405, 2,3, 600 tys., zł), and figures land in output/summary_pl/ and output/report/src_pl/
+# instead of the English folders. Strings with no translation are listed in output/summary_pl/_untranslated.txt.
+LANG = os.environ.get("REPORT_LANG", "en")
+
+
+def _install_pl():
+    import importlib.util
+    import re
+    from matplotlib.figure import Figure
+    from matplotlib.text import Text
+
+    spec = importlib.util.spec_from_file_location("pl", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                       "report", "pl.py"))
+    pl = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(pl)
+    patterns = [(re.compile(p, re.S), r) for p, r in pl.PATTERNS]
+    root = os.path.dirname(os.path.abspath(__file__))
+    log_path = os.path.join(root, "output", "summary_pl", "_untranslated.txt")
+    seen = set()
+    done = {pl.numbers(v) for v in pl.EXACT.values()}
+
+    def tr(s):
+        if s in pl.EXACT:
+            out = pl.EXACT[s]
+        else:
+            for rx, rep in patterns:
+                m = rx.fullmatch(s)
+                if m:
+                    out = rep(m) if callable(rep) else m.expand(rep)
+                    break
+            else:
+                out = s
+                if re.search(r"[A-Za-z]{3}", s) and s not in pl.KEEP and s not in done and s not in seen:   # done: Polish already
+                    seen.add(s)
+                    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                    with open(log_path, "a", encoding="utf-8") as f:
+                        f.write(repr(s) + "\n")
+        return pl.numbers(out)
+
+    orig_set_text = Text.set_text
+
+    def set_text(self, s):
+        if isinstance(s, str) and s:
+            s = tr(s)
+        return orig_set_text(self, s)
+
+    Text.set_text = set_text
+
+    orig_savefig = Figure.savefig
+
+    def savefig(self, fname, *a, **kw):
+        if isinstance(fname, (str, os.PathLike)):
+            p = os.path.abspath(str(fname))
+            for en, plf in ((os.path.join(root, "output", "summary"), os.path.join(root, "output", "summary_pl")),
+                            (os.path.join(root, "output", "report", "src"),
+                             os.path.join(root, "output", "report", "src_pl"))):
+                if os.path.dirname(p) == en:
+                    p = os.path.join(plf, os.path.basename(p))
+                    os.makedirs(plf, exist_ok=True)
+            fname = p
+        return orig_savefig(self, fname, *a, **kw)
+
+    Figure.savefig = savefig
+
+
+if LANG == "pl":
+    _install_pl()
